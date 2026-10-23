@@ -5,7 +5,7 @@ Instructions for any AI coding agent working in this repo (Claude Code, Codex, C
 ## Read first, in this order
 
 1. [PROGRESS.md](PROGRESS.md): the current phase and what is done.
-2. [docs/spec.md](docs/spec.md): **the binding requirements.** If any other doc conflicts with it, the spec wins.
+2. [docs/spec.md](docs/spec.md): **the binding requirements.** If any other doc conflicts with it, the spec wins, except for the user-approved deviations marked **Spec deviation** in the `PROGRESS.md` decision log.
 3. [docs/open-questions.md](docs/open-questions.md): what is *not* decided.
 4. [docs/architecture.md](docs/architecture.md): stack, data model, the server-only-writes rule.
 5. As needed: [docs/matching-algorithm.md](docs/matching-algorithm.md), [docs/design.md](docs/design.md), [SECURITY.md](SECURITY.md), [docs/product.md](docs/product.md).
@@ -20,11 +20,12 @@ Instructions for any AI coding agent working in this repo (Claude Code, Codex, C
 6. **Money is integer rupees.** No floats.
 7. **Audit every admin mutation** (actor, action, entity, before/after). Never log secrets, login codes, or tokens.
 8. **Keep secrets out of the client.** No service-role key or secret in `NEXT_PUBLIC_*`, client code, logs, or git.
-9. **The projector never switches content by itself** on phase change. Only the admin selects what it shows.
+9. **Projector:** each phase has a default screen and the admin can override it at any time (approved spec deviation). Never put private data on it (phones, codes, admin controls).
 10. **Don't build out-of-scope features**: judge portal, rubric, notifications, Google Form response import ([docs/product.md](docs/product.md#out-of-scope)).
 
 ## Workflow
 
+- **Before starting a phase, ask the user** about every open question and doubt it depends on, with concrete options, and wait for answers. The user expects this every time.
 - **One phase (or smaller) per change.** Never implement several phases in one unreviewable diff.
 - For each change: write or adjust tests first for rule logic → implement → run tests → update `PROGRESS.md` checkboxes.
 - Record any stack or design decision in the `PROGRESS.md` decision log with the date.
@@ -35,7 +36,7 @@ Instructions for any AI coding agent working in this repo (Claude Code, Codex, C
 
 ```bash
 npm run dev            # local dev server
-npm test               # Vitest unit tests
+npm test               # Vitest: unit tests + DB tests (PGlite)
 npm run lint
 npm run build          # also generates Next's route types (LayoutProps/PageProps) used by `npx tsc --noEmit`
 npx supabase db push   # apply new migrations to the linked Supabase project
@@ -51,6 +52,7 @@ npx supabase db push   # apply new migrations to the linked Supabase project
 - `supabase/db.test.ts`: runs all migrations in PGlite and checks constraints and permissions. Add a test there for every new DB rule.
 - `src/components/ActionForm.tsx`: the one form component; wraps a server action with `useActionState` and shows `error`/`notice`.
 - Every admin page and admin server action calls `requireAdmin()` first.
+- Routes: `/login`, `/me` (participant), `/team` (team workspace), `/admin/login`, `/admin/event`, `/admin` (participants), `/admin/matching`, `/admin/teams`, `/projector` (public).
 
 ## Conventions
 

@@ -6,13 +6,13 @@ Three interfaces:
 
 - **Participant portal / team workspace:** profile, swiping, team pitch, investment marketplace
 - **Admin control panel:** phases, timers, matching, team approval, marketplace, qualification, audit log
-- **Projector display:** admin-selected countdown, rules, teams, leaderboard, finalists
+- **Projector display:** a default screen per phase (rules, matchmaking animation, teams formed, team on stage) with admin override, and the timer in a corner
 
 ## Status
 
-🟨 **Phases 1–4 coded; waiting for the live Supabase check.** See [PROGRESS.md](PROGRESS.md).
+🟨 **Phases 1–4 built and committed; not yet run against a live Supabase project.** Next: Phase 5 (investment marketplace). See [PROGRESS.md](PROGRESS.md#next-session-start-here).
 
-## Stack (planned)
+## Stack
 
 Next.js (TypeScript) · Supabase (Postgres, Auth, Realtime) · Vercel. All on free tiers; see [architecture](docs/architecture.md#free-tier-limits-and-costs).
 
@@ -65,11 +65,22 @@ Needs Node.js 20+ and a free [Supabase](https://supabase.com) account. Docker is
    ```
    Open http://localhost:3000.
 
+### Logging in
+
+| Who | Where | How |
+|---|---|---|
+| Admin | `/admin/login` | Email + password of a Supabase Auth user listed in `admins` (setup step 5) |
+| Participant | `/login` | `P<n>` ID + 8-character code. Admin → Participants → **Add participant** shows the code once; **Reset code** issues a new one |
+| Team member | `/team` | No separate login: a participant in an approved team is sent there from `/me` |
+| Projector | `/projector` | No login; open it full-screen on the projector machine |
+
+Testing on phones on the same Wi-Fi: `npm run dev -- -H 0.0.0.0`, then open `http://<laptop-IP>:3000`.
+
 ### Scripts
 
 ```bash
 npm run dev     # dev server
-npm test        # unit tests (Vitest)
+npm test        # unit + DB tests (Vitest, PGlite)
 npm run lint
 npm run build
 ```
@@ -89,10 +100,10 @@ npm run build
 Run `npx supabase db push` first to apply the new migration. Use 4+ test participants (private windows or different browsers).
 
 1. Each participant fills in their profile. Leave one incomplete. Admin → Participants shows Complete/Incomplete and phone numbers.
-2. Admin → **Open matchmaking**. The confirm dialog warns about the incomplete profile.
+2. Admin → Event & projector → advance until **Advance → Matchmaking**. The confirm dialog warns about the incomplete profile.
 3. Participants refresh `/me`: profiles are locked and a card appears ("Profile 1 of N"). The incomplete participant sees the "talk to an organiser" message.
 4. Make two pairs swipe ♥ on each other; everything else ✕. Admin → Participants shows swipe progress.
-5. Admin → **Close matchmaking**, then Matching & teams → **Run matching**. Both mutual pairs appear as proposals with ranks and scores; the rest are listed as unassigned.
+5. Admin → Event & projector → **Advance → Rest** (closes swiping), then Matching → **Run matching**. Both mutual pairs appear as proposals with ranks and scores; the rest are listed as unassigned.
 6. Approve one, reject the other. Create a manual team from two unassigned participants; it shows the "Manual override" badge.
 7. A participant in an approved team refreshes `/me` and sees their teammate's name.
 8. Supabase → `audit_log` has rows for discovery, the matching run, approve/reject, and the manual team.

@@ -29,30 +29,30 @@ Every text/background pair must meet WCAG AA contrast (4.5:1). The projector sho
 
 ## Participant portal (phone)
 
-**Persistent header:** phase name + countdown, always visible.
+**Persistent header (`PhaseBar`, built):** phase name + countdown, always visible; the page updates live.
 
-1. **Profile** (Skill Filling phase)
+1. **Profile** (editable until Matchmaking starts)
    - Fields: phone (organisers only), skills, preferences, summary. All free text ([OQ-3](open-questions.md), [OQ-5](open-questions.md)).
    - Summary max 160 characters; skills and preferences max 200. Partial saves allowed.
-   - A completion indicator: "Profile 2/3 complete".
+   - A completion indicator: "Profile 3/4 complete".
 2. **Discovery / swipe** (Matchmaking phase)
    - One card at a time: summary, skills, and preferences. Show no private fields.
    - Visible ✕ Pass / ♥ Interested buttons (built). A swipe gesture can be added later on top, never instead.
    - Progress: "Profile 12 of 30".
    - No undo: swipes are final ([OQ-6](open-questions.md)).
-   - Locked state: "Discovery closed. Waiting for team approval."
-3. **Waiting** (after Matchmaking, before approval): a neutral message only. Do not hint at match results before the admin approves.
+   - Participants whose profile was incomplete when Matchmaking began are told to see an organiser.
+3. **Waiting** (after Matchmaking, before approval): a neutral message only. Do not hint at match results before the admin approves. As soon as a team is approved, its members are moved to `/team` automatically.
 
 ## Team workspace (phone + laptop)
 
 Members land here automatically (`/me` → `/team`) once their team is approved. There is no separate team login.
 
-- **Header:** "Team 7", assigned domain (prominent), member names. Phase countdown arrives in Phase 4.
+- **Header:** phase bar with countdown, "Team 7", assigned domain (prominent), member names.
 - **Startup Development:**
-  - A marketplace pitch editor (either member can edit; no product length limit) with save state ("saved at 14:02", flagged if an organiser edited it).
+  - A marketplace pitch editor, **only during Startup Development** (either member can edit; no product length limit; read-only text before and after), with save state ("saved at 14:02", flagged if an organiser edited it).
   - A Google Form button that opens the admin-configured URL in a new tab.
   - Submission status checklist: pitch saved ✓/✗; deck goes through the form (not tracked in the app).
-- **Investment Marketplace:**
+- **Investment Marketplace (planned, Phase 5):**
   1. **Select:** a grid of cards. Each card shows **only** the team/startup identifier and the two-line pitch (spec §8). The team's own card is excluded. A counter reads "4 / 7 selected".
   2. **Allocate:** 7 rows, each with an integer ₹ input. Live checks:
      - remaining = ₹5,000 − sum, shown big;
@@ -67,19 +67,17 @@ Members land here automatically (`/me` → `/team`) once their team is approved.
 
 ## Admin control panel (desktop)
 
-A left nav with one page per section from spec §12, and a top bar with phase + timer + quick controls.
+A top nav (`AdminHeader`) on every admin page; all admin pages update live.
 
-| Page | Key widgets |
-|---|---|
-| Overview | Phase/timer card; counts (participants, teams, unassigned, submissions, marketplace completion); warnings list |
-| Participants | Searchable table, completion badge, swipe/match status, unassigned filter |
-| Matching & Teams | "Run matching" button; eligible pairs table (ranks, score); proposed teams with approve/reject; unassigned list; manual team builder (labelled **Manual override**); credential status |
-| Domains & Submissions | Domain per team; Google Form URL setting; pitch editor per team (logged) |
-| Timers | Phase list with durations; start, pause, resume, reset, end, advance |
-| Marketplace | Open/close switch; per-team status: draft / partial (n/7) / complete; counted totals and ranking; void/correct actions (audited) |
-| Qualification | Ranking; top-7 result; **unresolved tie banner** when [OQ-18](open-questions.md) applies; confirm button |
-| Projector | Content picker: timer, rules, confirmed teams, leaderboard, finalists. Shows a live preview of what is on screen. |
-| Audit log | Filterable table: actor, action, entity, time, before/after |
+| Page | Status | Key widgets |
+|---|---|---|
+| Event & projector (`/admin/event`) | Built | Phase + big timer; start/pause/resume, +1/+5 min, reset clock, end now, advance (confirm names side effects); Final Pitching team picker; projector screen picker (follow phase / override) + link to `/projector`; phase durations and rules |
+| Participants (`/admin`) | Built | Matchmaking status + incomplete-profile warning; add participant (code shown once); table: ID, name, phone, profile, swipe progress, team, reset code |
+| Matching (`/admin/matching`) | Built | Run matching, clear proposals, last-run summary + unassigned; proposed teams with ranks/score, approve/reject; eligible pairs table |
+| Teams & submissions (`/admin/teams`) | Built | Google Form link; approved teams with number, members, domain, source badge, editable pitch, dissolve; manual team builder (**Manual override**) |
+| Marketplace | Planned (5) | Per-team status: draft / partial (n/7) / complete; counted totals and ranking; void/correct actions (audited) |
+| Qualification | Planned (6) | Ranking; top-7 result; **unresolved tie banner** when [OQ-18](open-questions.md) applies; confirm button |
+| Overview, Audit log | Not built | Counts and warnings; filterable audit table (the log is in Supabase meanwhile) |
 
 Rules for the admin UI:
 
@@ -105,5 +103,5 @@ Rules for the admin UI:
 - Every interactive element is reachable by keyboard and has a visible focus ring.
 - Buttons have text labels, not only icons.
 - Colour is never the only signal (pair it with an icon or text).
-- Countdown changes are announced via `aria-live="polite"` at minute boundaries only, to avoid noise.
+- Countdowns use `role="timer"`. Minute-boundary `aria-live` announcements are not built yet.
 - Respect `prefers-reduced-motion` for swipe animations.

@@ -4,6 +4,30 @@ Phase plan from [spec.md §16](docs/spec.md#16-implementation-phases). Each phas
 
 Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 
+## Next session: start here
+
+*Last updated 2026-10-27.*
+
+**Where things stand**
+- Phases 0–4 are built and committed (last commit `e5f6536`, Phase 4). Working tree clean.
+- Checks at that commit: 47 tests pass (`npm test`: unit + PGlite DB tests); lint, type check, and build are clean.
+- **Nothing has run against a real Supabase project yet.** The user plans to do the setup later: create the project, `.env.local`, `npx supabase db push` (4 migrations), first admin. Then run the README manual checks for Phases 1–4.
+
+**Next: Phase 5, investment marketplace.** Before writing code, ask the user about:
+- **OQ-13:** the time split inside the 15-minute marketplace (5-minute allocation, then confirmation). How long is confirmation and what starts it: a second timer, the remaining time, or an admin action?
+- **OQ-14:** how confirmation progress shows on the admin and projector screens without counting partial teams.
+- **OQ-15:** what admins can do with a team that confirms fewer than 7 before close (current rule: none of its investments count).
+- **OQ-16:** whether admins can edit or void a confirmed investment, and how totals recalculate.
+- **OQ-17:** do teams see every startup or only those with a saved pitch? Startup names are not used; teams show as "Team N".
+- **OQ-34:** amount granularity (any whole rupee, or multiples of ₹50/₹100?).
+- **OQ-35:** what if fewer than 8 teams have pitches (each team must pick 7 others)?
+- Already decided: totals are visible on the projector during the marketplace (OQ-31) but never on participant pages; the marketplace is open only during the Investment Marketplace phase (OQ-32); the projector gets a **Leaderboard** screen as the default for that phase.
+
+**Known gaps to remember**
+- Admin can't edit a participant's profile (spec §12 "authorised corrections"); add if needed.
+- No admin Overview or Audit log page yet (the audit log is readable in Supabase).
+- OQ-7 (human tie-break rule for matching) and OQ-36 (odd participant count) are still open.
+
 ## Phases
 
 | # | Phase | Status | Blocked by [open questions](docs/open-questions.md) |
@@ -44,7 +68,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 ### Phase 2 — Profiles & matching 🟨
 
 - [x] Profile form (phone, skills, preferences, summary) + completion status; partial saves; locked once matchmaking opens
-- [x] Admin open/close matchmaking switch; random decks built at first open from complete profiles only
+- [x] Admin open/close matchmaking switch (replaced in Phase 4: the Matchmaking phase now opens/closes it); random decks built at first open from complete profiles only
 - [x] Swipe cards with Pass / Interested buttons; swipes final; DB constraints on self-swipe, duplicates, ranks
 - [x] `src/lib/matching` (blossom, max-cardinality) + all tests in [matching-algorithm.md](docs/matching-algorithm.md#required-tests), incl. brute-force oracle and determinism
 - [x] Admin: run matching, eligible pairs with ranks/scores, proposals, approve/reject, rerun, clear proposals, unassigned list
@@ -62,7 +86,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - [x] Team pitch editor (either member) + submission checklist; admin pitch edit (audited, flagged to the team)
 - [x] New admin page "Teams & submissions": form link, approved teams with domain/source/pitch, dissolve, manual team
 - [x] DB tests for numbers/domains, pitch audit, https check, permissions (32 tests total)
-- [ ] Not built: locking pitch edits at a given time. Decide with phases in Phase 4/5 ([OQ-32](docs/open-questions.md)).
+- [x] Locking pitch edits: done in Phase 4 (editable only during Startup Development, [OQ-32](docs/open-questions.md))
 - [ ] **User:** push the migration and click through the [Phase 3 manual check](README.md#phase-3-manual-check)
 
 ### Phase 4 — Timers & projector 🟨
@@ -79,11 +103,16 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 
 ### Phase 5 — Marketplace
 
-- [ ] `src/lib/marketplace` validation + tests
-- [ ] Select 7 → allocate → confirm each; idempotent confirmations
-- [ ] Counted-investments view; draft and partial excluded
-- [ ] Admin live view + open/close + audited void/correct
-- [ ] Totals hidden from participants
+Ask the open questions listed under [Next session](#next-session-start-here) first.
+
+- [ ] `src/lib/marketplace` validation + tests (7 distinct others, no self, ≥ ₹200 each, no repeated amount, sum = ₹5,000, integers)
+- [ ] `investments` table + SQL functions; marketplace open only in the Investment Marketplace phase
+- [ ] Team UI: select 7 → allocate → confirm each; idempotent confirmations
+- [ ] Counted-investments view; draft and partial (< 7 confirmed) excluded
+- [ ] Admin marketplace page: per-team draft/partial/complete, counted totals and ranking, audited void/correct (per OQ-15/16)
+- [ ] Projector **Leaderboard** screen, default for the marketplace phase, live (OQ-31)
+- [ ] Totals never shown on participant pages
+- [ ] DB tests + unit tests for every rule in spec §17 Marketplace
 
 ### Phase 6 — Qualification & rehearsal
 
@@ -130,3 +159,5 @@ Record each decision with a date. Answers to open questions also go in [docs/ope
 | 2026-10-27 | Advancing starts the next timer; at 0 the phase stays open until the admin advances | Admin stays in control of transitions |
 | 2026-10-27 | Realtime carries only a "changed" signal on `event_state`; pages re-render on the server | One public row, no private data over the wire, no payload-building code |
 | 2026-10-27 | `projector_state` merged into `event_state` | One row, one subscription |
+| 2026-10-27 | Supersedes 2026-10-24 rows on admin live views and Realtime rows: admin pages also refresh live via the `event_state` signal (no polling), and browsers read no table data over Realtime | Same mechanism everywhere; less code |
+| 2026-10-27 | Pages reading `getEventState()` call `connection()` | `/projector` was being prerendered at build time, which would have shown stale data |

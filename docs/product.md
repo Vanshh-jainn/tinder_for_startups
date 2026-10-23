@@ -24,14 +24,14 @@ Judges do **not** use the platform.
 | # | Stage | Minutes | Platform does |
 |---:|---|---:|---|
 | 1 | Introduction | 10 | Shows the countdown; the projector shows the rules |
-| 2 | Skill Filling | 5 | Participants fill in skills, preferences, and a two-line summary |
-| 3 | Matchmaking | 10 | Participants swipe; mutual right-swipes become eligible pairs |
+| 2 | Skill Filling | 5 | Participants fill in phone, skills, preferences, and a short summary (editable until Matchmaking starts) |
+| 3 | Matchmaking | 10 | Advancing into this phase builds random swipe decks; participants swipe; mutual right-swipes become eligible pairs. The projector shows the matchmaking animation |
 | 4 | Rest | 10 | Admin runs matching, reviews it, and approves teams. Each team gets a number and a random domain; members' own logins open the team workspace. |
-| 5 | Startup Development | 50 | Teams write the 2-line pitch in the dashboard and submit pitch + deck via the Google Form |
+| 5 | Startup Development | 50 | Teams write the pitch in their workspace (editable only in this phase) and submit pitch + deck via the Google Form |
 | 6 | Break | 5 | Countdown |
 | 7 | Investment Marketplace | 15 | Teams pick 7 startups, allocate ₹5,000, and confirm each investment |
 | 8 | Break & Top 7 | 5 | Admin confirms the top 7; the projector reveals the finalists |
-| 9 | Final Pitching | 70 | 7 teams × (7 min pitch + 2 min Q&A + 1 min rollover); the projector shows the timer |
+| 9 | Final Pitching | 70 | 7 teams × (7 min pitch + 2 min Q&A + 1 min rollover); the admin starts each team's timer; the projector shows the team on stage |
 
 Total: 180 minutes.
 
