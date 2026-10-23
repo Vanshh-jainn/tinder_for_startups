@@ -11,7 +11,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 | 0 | Documentation & planning | ✅ Done | |
 | 1 | Foundation | 🟨 Code done; waiting for the live Supabase check | 1 |
 | 2 | Profiles & matching | 🟨 Code done; waiting for the live Supabase check | 7 (tie rule), 36 |
-| 3 | Team workspace & submissions | ⬜ Not started | 9, 10, 11, 12 |
+| 3 | Team workspace & submissions | 🟨 Code done; waiting for the live Supabase check | |
 | 4 | Timers & projector | ⬜ Not started | 20, 22, 30, 32 |
 | 5 | Marketplace | ⬜ Not started | 13, 14, 15, 16, 17, 34, 35 |
 | 6 | Qualification & rehearsal | ⬜ Not started | 18, 19 |
@@ -54,13 +54,16 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - [ ] Not built: admin editing a participant's profile (spec §12 "authorised corrections"). Add when needed.
 - [ ] **User:** push the migration and click through the [Phase 2 manual check](README.md#phase-2-manual-check)
 
-### Phase 3 — Team workspace & submissions
+### Phase 3 — Team workspace & submissions 🟨
 
-- [ ] Team credentials: generate, hash, show once, reset/revoke
-- [ ] Team login + rate limiting
-- [ ] Random domain assignment on approval
-- [ ] Configurable Google Form link
-- [ ] Two-line pitch editor; admin edit (audited); submission status
+- [x] Team access through members' own logins (`requireTeamMember`); `/me` redirects approved members to `/team`. No team codes, so no team login or rate limiting is needed
+- [x] Team number ("Team 7") + random domain assigned on approval and manual creation; no reroll
+- [x] Admin sets the Google Form link (https only, audited); teams get a button to it
+- [x] Team pitch editor (either member) + submission checklist; admin pitch edit (audited, flagged to the team)
+- [x] New admin page "Teams & submissions": form link, approved teams with domain/source/pitch, dissolve, manual team
+- [x] DB tests for numbers/domains, pitch audit, https check, permissions (32 tests total)
+- [ ] Not built: locking pitch edits at a given time. Decide with phases in Phase 4/5 ([OQ-32](docs/open-questions.md)).
+- [ ] **User:** push the migration and click through the [Phase 3 manual check](README.md#phase-3-manual-check)
 
 ### Phase 4 — Timers & projector
 
@@ -112,3 +115,7 @@ Record each decision with a date. Answers to open questions also go in [docs/ope
 | 2026-10-25 | Multi-step admin changes are SQL functions with in-transaction audit rows | Atomic; no half-applied team changes; closes the Phase 1 audit-ordering shortcut for these actions |
 | 2026-10-25 | Team "edit" = dissolve + create manual team | Keeps algorithm run records intact (spec §17) |
 | 2026-10-25 | DB tests run migrations in PGlite with stand-in Supabase roles | Catches constraint/permission mistakes without a live project |
+| 2026-10-26 | **Spec deviation (§4 step 6):** no shared team username/code. Members use their own participant login to reach the team workspace | User decision: nothing shared to leak, every action traceable to a person |
+| 2026-10-26 | OQ-9: team changes = dissolve + recreate. OQ-10/29: no domain reroll. OQ-11: link-out Google Form set by admin. OQ-12: deck rules handled in the form. OQ-28: no notifications | User decision |
+| 2026-10-26 | Marketplace pitch: no product length limit; 2,000-char abuse cap in DB and form | User said no limit; cap only blocks megabyte pastes |
+| 2026-10-26 | Team numbers come from a sequence at approval | Rejected/superseded proposals don't leave gaps |

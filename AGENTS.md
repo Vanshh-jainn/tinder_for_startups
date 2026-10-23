@@ -43,7 +43,7 @@ npx supabase db push   # apply new migrations to the linked Supabase project
 
 ## Code map
 
-- `src/server/`: server-only code. `supabase.ts` (DB clients), `session.ts` (cookie sessions), `auth.ts` (`requireAdmin`, `requireParticipant`), `rateLimit.ts`, `audit.ts`, `queries.ts` (`rpc`, `fetchAll`, shared reads).
+- `src/server/`: server-only code. `supabase.ts` (DB clients), `session.ts` (cookie sessions), `auth.ts` (`requireAdmin`, `requireParticipant`, `requireTeamMember`), `rateLimit.ts`, `audit.ts`, `queries.ts` (`rpc` + `adminResult` for admin DB functions, `fetchAll`, shared reads).
 - `src/lib/`: pure, tested logic. `matching/` is the team optimiser.
 - `supabase/migrations/`: schema + SQL functions. Multi-step admin changes go in a SQL function that also writes the audit row; revoke `EXECUTE` from `public, anon, authenticated` on every new function.
 - `supabase/db.test.ts`: runs all migrations in PGlite and checks constraints and permissions. Add a test there for every new DB rule.

@@ -5,14 +5,8 @@ import { requireAdmin } from '@/server/auth';
 import { getActiveMemberships, getDiscoveryStatus, getSwipes } from '@/server/queries';
 import { db } from '@/server/supabase';
 import { AdminHeader } from '../AdminHeader';
-import {
-  approveTeam,
-  createManualTeam,
-  dissolveTeam,
-  rejectTeam,
-  resetMatchingAction,
-  runMatchingAction,
-} from './actions';
+import Link from 'next/link';
+import { approveTeam, rejectTeam, resetMatchingAction, runMatchingAction } from './actions';
 
 type Team = {
   id: string;
@@ -74,7 +68,7 @@ export default async function MatchingPage() {
         </div>
         {run && (
           <p className="muted">
-            Last run {new Date(run.created_at).toLocaleTimeString('en-IN')}: {run.team_count} team(s), total score{' '}
+            Last run {new Date(run.created_at).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })}: {run.team_count} team(s), total score{' '}
             {run.total_score}. Unassigned: {run.unassigned.length ? run.unassigned.map(label).join(', ') : 'none'}.
           </p>
         )}
@@ -113,60 +107,9 @@ export default async function MatchingPage() {
         </table>
       </section>
 
-      <section>
-        <h2>Approved teams ({approved.length})</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Members</th>
-              <th>Source</th>
-              <th>Score</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {approved.map((t) => (
-              <tr key={t.id}>
-                <td>{members(t).map(label).join(' + ')}</td>
-                <td>{t.formation_source === 'manual' ? <span className="badge">Manual override</span> : 'Algorithm'}</td>
-                <td>{t.pair_score ?? '—'}</td>
-                <td>
-                  <ActionForm
-                    action={dissolveTeam}
-                    submitLabel="Dissolve"
-                    confirmText="Dissolve this team? Both members become unassigned."
-                    className="secondary-form"
-                  >
-                    <input type="hidden" name="teamId" value={t.id} />
-                  </ActionForm>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-
-      <section>
-        <h2>Manual team</h2>
-        <p className="muted">Creates an approved team marked as a manual override. No mutual swipe needed.</p>
-        <ActionForm action={createManualTeam} submitLabel="Create manual team">
-          {(['a', 'b'] as const).map((field) => (
-            <label key={field}>
-              Member {field.toUpperCase()}
-              <select name={field} required defaultValue="">
-                <option value="" disabled>
-                  Choose an unassigned participant
-                </option>
-                {eligible.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {label(p.id)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ))}
-        </ActionForm>
-      </section>
+      <p className="muted">
+        {approved.length} approved team(s). Manage them on <Link href="/admin/teams">Teams &amp; submissions</Link>.
+      </p>
 
       <section>
         <h2>Eligible pairs ({pairs.length})</h2>

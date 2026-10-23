@@ -1,4 +1,6 @@
 import 'server-only';
+import { revalidatePath } from 'next/cache';
+import type { FormState } from '@/components/ActionForm';
 import type { Swipe } from '@/lib/matching';
 import { db } from './supabase';
 
@@ -25,6 +27,13 @@ export async function rpc(fn: string, args: Record<string, unknown>): Promise<{ 
   if (error.code === 'P0001') return { error: error.message };
   if (error.code === '23505') return { error: 'Someone in this team is already in another active team.' };
   throw error;
+}
+
+// Turns an rpc() result into form feedback and refreshes every admin page on success.
+export function adminResult(result: { error?: string }, notice: string): FormState {
+  if (result.error) return result;
+  revalidatePath('/admin', 'layout');
+  return { notice };
 }
 
 export async function getDiscoveryStatus(): Promise<'not_started' | 'open' | 'closed'> {

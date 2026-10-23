@@ -11,15 +11,15 @@ Status values: `Open` · `Proposed` (someone suggested an answer and is waiting 
 | 1 | Capacity | Earlier notes say both 20 teams and 10 participants. What is the real capacity? | 1, 7 | Open | |
 | 2 | Registration | Who can take part? Do people register only on Unstop, or inside this app as well? | 1, 2 | Open | |
 | 3 | Identity | Which identity fields are required beyond skills, preferences, and the two-line summary? | 2 | Resolved | 2026-10-25: display name (entered by admin) + phone (entered by participant, visible to admins only, never on cards). |
-| 4 | Credentials | How do participants get individual access before matchmaking? How are team credentials handed over after approval? | 1, 3 | Open (partly resolved) | **Participants (2026-10-24):** the admin adds each participant and issues a login code (ID `P<n>` + 8-character code, shown to the admin once, reusable until reset). **Team credential delivery:** still open. |
+| 4 | Credentials | How do participants get individual access before matchmaking? How are team credentials handed over after approval? | 1, 3 | Resolved | **Participants (2026-10-24):** the admin adds each participant and issues a login code (ID `P<n>` + 8-character code, shown to the admin once, reusable until reset). **Teams (2026-10-26):** no separate team code; once a team is approved, each member's own login opens the team workspace (`/me` → `/team`). |
 | 5 | Preferences | What exact options and structure do preferences have? Can a profile change after matchmaking starts? | 2 | Resolved | 2026-10-25: skills and preferences are free text (max 200 chars each); summary max 160 chars. Profiles lock when the admin opens matchmaking. |
 | 6 | Swipes | Can a swipe be undone or changed? When does discovery lock? | 2 | Resolved | 2026-10-25: swipes are final. The admin opens/closes matchmaking with a switch; closing stops all swiping. Only profiles complete at the first open get a deck and appear in decks. |
 | 7 | Matching tie-break | Which stable, deterministic tie-break rule should apply? It must not depend on database order. | 2 | Open | Determinism (sorted inputs) is built; the human-readable rule is still open. See [matching-algorithm.md §Tie-breaking](matching-algorithm.md#tie-breaking). |
 | 8 | Manual overrides | Admin-made teams without mutual right-swipes are recorded as overrides. Are any other guardrails needed? | 2 | Open | |
-| 9 | Team changes | What happens if an approved team changes after its credentials are issued? | 3 | Open | |
-| 10 | Domain reroll | Can the admin reroll or change a domain after it is assigned? | 3 | Open | |
-| 11 | Google Form | What is the exact URL? Is the Form only a link-out, or are submissions verified or imported? | 3 | Open | |
-| 12 | Pitch deck | Which file types and size limits are allowed? What is the late-submission policy? How are decks verified? | 3 | Open | |
+| 9 | Team changes | What happens if an approved team changes after its credentials are issued? | 3 | Resolved | 2026-10-26: the admin dissolves the team and creates a new manual team (new number and domain; the pitch starts empty). |
+| 10 | Domain reroll | Can the admin reroll or change a domain after it is assigned? | 3 | Resolved | 2026-10-26: no. The domain is random at approval/creation and fixed. |
+| 11 | Google Form | What is the exact URL? Is the Form only a link-out, or are submissions verified or imported? | 3 | Resolved | 2026-10-26: the organiser builds the form and pastes its https link in the admin panel. Link-out only; no import. |
+| 12 | Pitch deck | Which file types and size limits are allowed? What is the late-submission policy? How are decks verified? | 3 | Resolved | 2026-10-26: handled entirely in the Google Form; the organiser closes the form when time ends. The app does not track deck status. |
 | 13 | Marketplace timing | The marketplace is 15 minutes with a 5-minute allocation period. How long is the confirmation phase, and what starts it? | 5 | Open | |
 | 14 | Live leaderboard | How should confirmation progress be shown while making sure partial investments never count? | 5 | Open | |
 | 15 | Incomplete investments | How does the admin handle a team that confirms fewer than 7 before close? The current rule is that none of its investments count. | 5 | Open | |
@@ -35,8 +35,8 @@ Status values: `Open` · `Proposed` (someone suggested an answer and is waiting 
 | 25 | Privacy and retention | When should profiles, swipes, login records, and investment records be exported, archived, or deleted? | 7 | Open | |
 | 26 | Concurrency | How many participants and teams are expected? This decides quota and load needs. | 7 | Open | |
 | 27 | Deployment | Is there a preferred host or domain? The current default is the free tiers of Vercel and Supabase. | 7 | Open | |
-| 28 | Notifications | Do participants need email or WhatsApp messages for credentials, approvals, or phase changes? | 3 | Open | |
-| 29 | Admin domain controls | Can domains change after random assignment? This overlaps with #10. | 3 | Open | |
+| 28 | Notifications | Do participants need email or WhatsApp messages for credentials, approvals, or phase changes? | 3 | Resolved | 2026-10-26: none. |
+| 29 | Admin domain controls | Can domains change after random assignment? This overlaps with #10. | 3 | Resolved | Same as #10: no. |
 | 30 | Timer reset | Does resetting a timer reset only the clock, or also the data submitted in that phase? | 4 | Open | |
 | 31 | Leaderboard privacy | Can the projector show live counted totals during the marketplace, or only after it closes? Participants must not see totals during the marketplace. | 4, 5 | Open | |
 | 32 | Phase transitions | Does advancing a phase close the previous phase's participant actions automatically? Can the admin reopen it? | 4 | Open | |

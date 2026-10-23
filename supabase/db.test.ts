@@ -206,3 +206,75 @@ describe('teams', () => {
     ).rejects.toThrow(/check/);
   });
 });
+
+describe('team workspace data', () => {
+  const DOMAINS = ['Travel & Tourism', 'FinTech', 'EdTech', 'HealthTech', 'AI for Social Good', 'SaaS-Based Startups'];
+
+  async function manualTeam(): Promise<string> {
+    const { rows } = await call('select create_manual_team($1, $2, $3) as id', [await addParticipant('A'), await addParticipant('B')]);
+    return (rows[0] as { id: string }).id;
+  }
+
+  it('gives approved and manual teams a number and a valid domain; proposals and rejects get neither', async () => {
+    const a = await addParticipant('P');
+    const b = await addParticipant('Q');
+    await call(`select set_discovery($1, 'open')`);
+    await swipeRight(a, b);
+    await swipeRight(b, a);
+    const [x, y] = [a, b].sort();
+    const team = { a: x, b: y, rankAB: await rank(x, y), rankBA: await rank(y, x) };
+    await call(`select save_matching_run($1, 'v1', $2, '{}', $3)`, [
+      team.rankAB * team.rankBA,
+      JSON.stringify([{ ...team, score: team.rankAB * team.rankBA }]),
+    ]);
+    const proposal = await db.query<{ id: string; number: number | null; domain: string | null }>('select id, number, domain from teams');
+    expect(proposal.rows[0]).toMatchObject({ number: null, domain: null });
+
+    await call('select decide_team($1, $2, true)', [proposal.rows[0].id]);
+    const manualId = await manualTeam();
+    const { rows } = await db.query<{ id: string; number: number; domain: string }>('select id, number, domain from teams order by number');
+    expect(rows.map((r) => r.number)).toEqual([1, 2]);
+    expect(rows.map((r) => r.id)).toEqual([proposal.rows[0].id, manualId]);
+    for (const r of rows) expect(DOMAINS).toContain(r.domain);
+  });
+
+  it('refuses an approved team without number or domain, and unknown domains', async () => {
+    const id = await manualTeam();
+    await expect(db.query('update teams set domain = null where id = $1', [id])).rejects.toThrow(/check/);
+    await expect(db.query(`update teams set domain = 'Crypto' where id = $1`, [id])).rejects.toThrow(/check/);
+  });
+
+  it('audits admin pitch edits and only for approved teams', async () => {
+    const id = await manualTeam();
+    await db.query(`insert into submissions (team_id, pitch, updated_by) values ($1, 'old', 'participant:x')`, [id]);
+    await call('select admin_set_pitch($1, $2, $3)', [id, 'new']);
+    const { rows } = await db.query<{ pitch: string; updated_by: string }>('select pitch, updated_by from submissions');
+    expect(rows[0]).toEqual({ pitch: 'new', updated_by: `admin:${ADMIN}` });
+    const audit = await db.query<{ before: unknown; after: unknown }>(
+      `select before, after from audit_log where action = 'submission.edit_pitch'`,
+    );
+    expect(audit.rows[0]).toEqual({ before: { pitch: 'old' }, after: { pitch: 'new' } });
+
+    await call('select dissolve_team($1, $2)', [id]);
+    await expect(call('select admin_set_pitch($1, $2, $3)', [id, 'x'])).rejects.toThrow(/not approved/);
+  });
+
+  it('caps pitch length and only accepts https form links', async () => {
+    const id = await manualTeam();
+    await expect(
+      db.query(`insert into submissions (team_id, pitch, updated_by) values ($1, repeat('x', 2001), 'a')`, [id]),
+    ).rejects.toThrow(/check/);
+    await expect(call('select set_form_url($1, $2)', ['http://forms.gle/x'])).rejects.toThrow(/check/);
+    await call('select set_form_url($1, $2)', ['https://forms.gle/x']);
+    await call('select set_form_url($1, null)');
+  });
+
+  it('blocks anon from the new tables and functions', async () => {
+    await db.exec('reset role; set role anon');
+    await expect(db.query('select * from config')).rejects.toThrow(/permission denied/);
+    await expect(db.query('select * from submissions')).rejects.toThrow(/permission denied/);
+    await expect(db.query('select set_form_url($1, null)', [ADMIN])).rejects.toThrow(/permission denied/);
+    await expect(db.query('select decide_team($1, $1, true)', [ADMIN])).rejects.toThrow(/permission denied/);
+    await expect(db.query('select random_domain()')).rejects.toThrow(/permission denied/);
+  });
+});

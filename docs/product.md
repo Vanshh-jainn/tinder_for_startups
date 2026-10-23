@@ -13,7 +13,7 @@ This platform runs the event: profiles, swiping, matching, team workspaces, time
 | User | Device | Goal |
 |---|---|---|
 | Participant (individual) | Phone | Build a profile, swipe, get matched |
-| Team (2 members, shared login) | Phone / laptop | See the domain, submit the pitch, invest ₹5,000 across 7 startups |
+| Team (2 members, each using their own login) | Phone / laptop | See the domain, submit the pitch, invest ₹5,000 across 7 startups |
 | Admin (organiser) | Laptop | Run the event: phases, timers, matching approval, marketplace, qualification, projector |
 | Audience | Projector screen | Follow the phase, the countdown, teams, the leaderboard, and the finalists |
 
@@ -26,7 +26,7 @@ Judges do **not** use the platform.
 | 1 | Introduction | 10 | Shows the countdown; the projector shows the rules |
 | 2 | Skill Filling | 5 | Participants fill in skills, preferences, and a two-line summary |
 | 3 | Matchmaking | 10 | Participants swipe; mutual right-swipes become eligible pairs |
-| 4 | Rest | 10 | Admin runs matching, reviews it, and approves teams. Teams get credentials and a random domain. |
+| 4 | Rest | 10 | Admin runs matching, reviews it, and approves teams. Each team gets a number and a random domain; members' own logins open the team workspace. |
 | 5 | Startup Development | 50 | Teams write the 2-line pitch in the dashboard and submit pitch + deck via the Google Form |
 | 6 | Break | 5 | Countdown |
 | 7 | Investment Marketplace | 15 | Teams pick 7 startups, allocate ₹5,000, and confirm each investment |

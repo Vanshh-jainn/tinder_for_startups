@@ -11,7 +11,7 @@ Found a problem? Tell the event organisers directly. Do not open a public issue 
 | Role | Authenticates with | Can do |
 |---|---|---|
 | Admin | Email + password checked by Supabase Auth, must be in `admins` → server session | Everything in the admin panel; every action is audited |
-| Team | Team username + login code → server session | Its own workspace: pitch, marketplace selections/allocations/confirmations |
+| Team member | Their own participant session + an active membership in an approved team (no shared team code) | Their team's workspace: pitch, marketplace selections/allocations/confirmations |
 | Participant | Admin-issued participant ID (`P12`) + login code → server session | Own profile, swiping |
 | Projector | None (public read-only) | Reads `event_state` and `projector_state` only |
 
@@ -21,12 +21,12 @@ Found a problem? Tell the event organisers directly. Do not open a public issue 
 2. **Never trust the client** for role, team ID, participant ID, investment amount, totals, score, rank position, approval state, or phase. The server derives identity from the session and recomputes everything else from the DB.
 3. **The service-role key and all secrets are server-only.** Nothing secret goes in `NEXT_PUBLIC_*` env vars, client bundles, logs, or the repo. `.env*` files are git-ignored.
 4. **No default admin password.** The first admin is created with a one-time setup step (a CLI script or the Supabase dashboard), documented in the README at Phase 1.
-5. **Participant and team login codes**
+5. **Participant login codes**
    - are generated with a CSPRNG (`crypto.randomInt` / `crypto.getRandomValues`), not `Math.random`;
    - are stored only as a slow hash (bcrypt/argon2), because codes are short;
    - are shown in plaintext once, to the admin, when issued;
    - can be reset or revoked by an admin (audited).
-6. **Rate limiting.** Failed logins are tracked per account (participant ID, team username, admin email) in `login_attempts`. Five failures in 15 minutes lock that account for the rest of the window; resetting the code clears the lock. There is no per-IP limit, because the whole venue shares one Wi-Fi IP and an IP limit would lock everyone out.
+6. **Rate limiting.** Failed logins are tracked per account (participant ID, admin email) in `login_attempts`. Five failures in 15 minutes lock that account for the rest of the window; resetting the code clears the lock. There is no per-IP limit, because the whole venue shares one Wi-Fi IP and an IP limit would lock everyone out.
 7. **Sessions** use random tokens in `httpOnly; Secure; SameSite=Lax` cookies. Only the token hash is stored. Sessions expire and can be revoked by an admin.
 8. **Never log** passwords, raw login codes, session tokens, or secrets, including in `audit_log` before/after values.
 9. **Least privilege.** RLS is on for every table, deny by default. Anonymous clients can read only `event_state` and `projector_state`, which hold public-safe data. Every SQL function has `EXECUTE` revoked from `public`, `anon`, and `authenticated` (Postgres grants it to everyone by default), so only the server can call them.

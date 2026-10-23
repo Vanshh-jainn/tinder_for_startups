@@ -1,7 +1,8 @@
+import { redirect } from 'next/navigation';
 import { ActionForm } from '@/components/ActionForm';
 import { formatParticipantId } from '@/lib/security';
 import { requireParticipant } from '@/server/auth';
-import { getDiscoveryStatus } from '@/server/queries';
+import { getActiveMemberships, getDiscoveryStatus } from '@/server/queries';
 import { db } from '@/server/supabase';
 import { logout } from '../actions';
 import { saveProfile, swipe } from './actions';
@@ -10,6 +11,7 @@ type Me = Awaited<ReturnType<typeof requireParticipant>>;
 
 export default async function ParticipantHome() {
   const me = await requireParticipant();
+  if ((await getActiveMemberships()).has(me.id)) redirect('/team');
   const status = await getDiscoveryStatus();
 
   return (
@@ -27,7 +29,7 @@ export default async function ParticipantHome() {
       </header>
       {status === 'not_started' && <Profile me={me} />}
       {status === 'open' && <Discovery meId={me.id} />}
-      {status === 'closed' && <Waiting meId={me.id} />}
+      {status === 'closed' && <p>Matchmaking is closed. Wait for the organisers to announce teams, then refresh.</p>}
     </main>
   );
 }
@@ -110,31 +112,5 @@ async function Discovery({ meId }: { meId: string }) {
       </form>
       <p className="muted">Choices are final.</p>
     </section>
-  );
-}
-
-async function Waiting({ meId }: { meId: string }) {
-  const { data: membership, error } = await db()
-    .from('team_members')
-    .select('team_id')
-    .eq('participant_id', meId)
-    .eq('status', 'active')
-    .maybeSingle();
-  if (error) throw error;
-  if (!membership) return <p>Matchmaking is closed. Wait for the organisers to announce teams.</p>;
-
-  const { data: partner, error: partnerError } = await db()
-    .from('team_members')
-    .select('participants(display_name)')
-    .eq('team_id', membership.team_id)
-    .neq('participant_id', meId)
-    .single();
-  if (partnerError) throw partnerError;
-  const name = (partner.participants as unknown as { display_name: string }).display_name;
-
-  return (
-    <p>
-      You&apos;re in a team with <strong>{name}</strong>. Your team workspace opens soon.
-    </p>
   );
 }

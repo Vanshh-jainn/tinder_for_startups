@@ -45,13 +45,13 @@ Every text/background pair must meet WCAG AA contrast (4.5:1). The projector sho
 
 ## Team workspace (phone + laptop)
 
-Shown after a team logs in with its username and code.
+Members land here automatically (`/me` → `/team`) once their team is approved. There is no separate team login.
 
-- **Header:** team identifier, assigned domain (prominent), phase countdown.
+- **Header:** "Team 7", assigned domain (prominent), member names. Phase countdown arrives in Phase 4.
 - **Startup Development:**
-  - A two-line marketplace pitch editor with save state ("Saved · 14:02") and validation messages.
-  - A Google Form button that opens the configured URL in a new tab, labelled "Submit pitch + deck on Google Form".
-  - Submission status checklist: pitch saved ✓ / deck (status where known).
+  - A marketplace pitch editor (either member can edit; no product length limit) with save state ("saved at 14:02", flagged if an organiser edited it).
+  - A Google Form button that opens the admin-configured URL in a new tab.
+  - Submission status checklist: pitch saved ✓/✗; deck goes through the form (not tracked in the app).
 - **Investment Marketplace:**
   1. **Select:** a grid of cards. Each card shows **only** the team/startup identifier and the two-line pitch (spec §8). The team's own card is excluded. A counter reads "4 / 7 selected".
   2. **Allocate:** 7 rows, each with an integer ₹ input. Live checks:

@@ -7,7 +7,8 @@ export function AdminHeader() {
       <nav className="row">
         <strong>Admin</strong>
         <Link href="/admin">Participants</Link>
-        <Link href="/admin/matching">Matching &amp; teams</Link>
+        <Link href="/admin/matching">Matching</Link>
+        <Link href="/admin/teams">Teams &amp; submissions</Link>
       </nav>
       <form action={logout}>
         <button type="submit" className="secondary">

@@ -11,7 +11,7 @@ Status: **planned**. No code exists yet. Update this file when an implementation
 | App framework | Next.js (App Router) + TypeScript | One codebase for the participant portal, team workspace, admin panel, and projector. Server Actions and Route Handlers keep every write on the server. |
 | Database | Supabase Postgres | Relational constraints enforce rules in the DB itself: unique membership, integer money, no self-swipe. Row-level security (RLS) is a second defence line. |
 | Admin auth | Supabase Auth verifies the email + password; the server then issues its own session | Real accounts with no default password, but one session system for all roles. No `@supabase/ssr` or proxy needed. |
-| Participant/team auth | Custom server sessions (httpOnly cookie, `sessions` table) | Participants log in with an admin-issued ID + code ([OQ-4](open-questions.md)); teams will use a shared username + code. |
+| Participant/team auth | Custom server sessions (httpOnly cookie, `sessions` table) | Participants log in with an admin-issued ID + code ([OQ-4](open-questions.md)). Team members reach the team workspace through their own login (`requireTeamMember()`); there is no shared team code. |
 | Live updates | Supabase Realtime (Postgres Changes) for public-safe tables; admin pages poll the server | The timer and projector update without polling. Admin live views (leaderboard) poll every few seconds, which is fine for a handful of admins. |
 | Validation | `zod` at every server entry point | One schema per request body. |
 | Tests | Vitest (unit, pure modules); Playwright (rehearsal, Phase 6) | |
@@ -67,25 +67,25 @@ supabase/
 
 Mapped from [spec.md §14](spec.md#14-suggested-data-model). Money is `integer` rupees everywhere. Tables are created by the phase that first needs them; Phase 1 created `admins`, `participants` (ID, name, code hash), `sessions`, `login_attempts`, and `audit_log`. Phase 2 added profile columns, `discovery`, `swipes`, `matching_runs`, `teams`, and `team_members`.
 
-Multi-step admin changes are **SQL functions** (`set_discovery`, `save_matching_run`, `reset_matching`, `decide_team`, `create_manual_team`, `dissolve_team`). Each runs in one transaction and writes its own audit row, so a change can never land without its audit entry or half-applied. The server calls them via `rpc()` in `src/server/queries.ts`. Supabase caps API responses at 1,000 rows, so large reads (swipes) go through `fetchAll()`, which pages.
+Multi-step admin changes are **SQL functions** (`set_discovery`, `save_matching_run`, `reset_matching`, `decide_team`, `create_manual_team`, `dissolve_team`, `set_form_url`, `admin_set_pitch`). Each runs in one transaction and writes its own audit row, so a change can never land without its audit entry or half-applied. The server calls them via `rpc()` in `src/server/queries.ts`. Supabase caps API responses at 1,000 rows, so large reads (swipes) go through `fetchAll()`, which pages.
 
 | Table | Key columns | DB-level guarantees |
 |---|---|---|
 | `participants` | id, number (shown as `P<number>`), display_name, code_hash, phone, skills, preferences, summary, profile_complete (generated) | Phone format, length limits |
 | `discovery` | single row: status (`not_started`/`open`/`closed`) | Profiles lock once it leaves `not_started` |
-| `sessions` | token_hash, subject_type (`admin`/`participant`, `team` added in Phase 3), subject_id, expires_at, revoked_at | Stores only the token hash |
+| `sessions` | token_hash, subject_type (`admin`/`participant`), subject_id, expires_at, revoked_at | Stores only the token hash |
 | `admins` | auth user id. Several admins, one permission level ([OQ-21](open-questions.md)) | |
 | `swipes` | one row per deck card: viewer_id, viewed_id, rank, direction (null until swiped), swiped_at. Deck built at first open in random order | `CHECK (viewer_id <> viewed_id)`; PK `(viewer_id, viewed_id)`; `UNIQUE (viewer_id, rank)`; `CHECK (rank >= 1)` |
 | `matching_runs` | id, admin_id, created_at, algorithm_version, team_count, total_score, unassigned | |
-| `teams` | id, approval_state (`proposed`/`approved`/`rejected`/`superseded`/`dissolved`), formation_source (`algorithm`/`manual`), matching_run_id, rank_ab, rank_ba, pair_score, created_by, decided_by; Phase 3 adds identifier, domain, username, code_hash | Algorithm teams must have run + ranks + score, manual teams must not; manual teams are never `proposed` |
+| `teams` | id, approval_state (`proposed`/`approved`/`rejected`/`superseded`/`dissolved`), formation_source (`algorithm`/`manual`), matching_run_id, rank_ab, rank_ba, pair_score, created_by, decided_by, number ("Team 7", from a sequence at approval), domain (random at approval) | Algorithm teams must have run + ranks + score, manual teams must not; manual teams are never `proposed`; approved/dissolved teams must have number + one of the six domains |
 | `team_members` | team_id, participant_id, status (`proposed`/`active`/`ended`) | Partial unique index on `participant_id WHERE status = 'active'` |
-| `submissions` | team_id, pitch (two lines), deck_status, updated_by, updated_at | `UNIQUE (team_id)` |
+| `submissions` | team_id (PK), pitch, updated_by (`participant:<id>`/`admin:<id>`), updated_at. Deck lives in the Google Form only | Pitch ≤ 2,000 chars (abuse cap, no product limit) |
 | `investments` | investor_team_id, target_team_id, amount, confirmed_at, voided_at | `CHECK (investor_team_id <> target_team_id)`; `CHECK (amount >= 200)`; `UNIQUE (investor_team_id, target_team_id)`; `UNIQUE (investor_team_id, amount)` |
 | `event_state` | single row: phase, status, started_at, duration_ms, elapsed_before_pause_ms, marketplace_open | Single-row table |
 | `projector_state` | single row: content_type, payload (JSON snapshot), updated_by, updated_at | Payload is built on the server and holds public-safe data only |
 | `audit_log` | actor, action, entity, entity_id, before, after, created_at | Append-only (no UPDATE/DELETE grants) |
 | `login_attempts` | key (username or IP), attempted_at | Used for rate limiting |
-| `config` | google_form_url, phase durations, domains | |
+| `config` | single row: google_form_url (Phase 4 adds phase durations) | `https://` only |
 
 **Counted investments** come from a SQL view. A team's rows count only when the team has exactly 7 non-voided rows, all 7 have `confirmed_at`, and they were confirmed while the marketplace was open. The leaderboard is `SUM(amount)` per target over that view. Draft rows never reach it.
 

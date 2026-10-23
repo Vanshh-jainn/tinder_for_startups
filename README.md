@@ -10,7 +10,7 @@ Three interfaces:
 
 ## Status
 
-🟨 **Phases 1–2 coded; waiting for the live Supabase check.** See [PROGRESS.md](PROGRESS.md).
+🟨 **Phases 1–3 coded; waiting for the live Supabase check.** See [PROGRESS.md](PROGRESS.md).
 
 ## Stack (planned)
 
@@ -96,3 +96,16 @@ Run `npx supabase db push` first to apply the new migration. Use 4+ test partici
 6. Approve one, reject the other. Create a manual team from two unassigned participants; it shows the "Manual override" badge.
 7. A participant in an approved team refreshes `/me` and sees their teammate's name.
 8. Supabase → `audit_log` has rows for discovery, the matching run, approve/reject, and the manual team.
+
+### Phase 3 manual check
+
+Run `npx supabase db push` first. Continue from the Phase 2 check (at least one approved team).
+
+1. Admin → Teams & submissions: each approved team shows "Team N", one of the six domains, and its source.
+2. Paste an `http://` link: rejected. Paste your `https://` Google Form link: saved.
+3. A member of an approved team opens `/me` and is sent to `/team`: team number, domain, both member names, the Google Form button.
+4. That member saves a pitch. The other member refreshes and sees it; the admin Teams page shows it.
+5. Admin edits the pitch. The team page now says "(edited by an organiser)".
+6. A participant without a team opens `/team` and is sent back to `/me`.
+7. Admin dissolves a team: its members land on `/me` again and can be put in a new manual team (new number + domain).
+8. `audit_log` has `config.google_form_url`, `submission.edit_pitch`, and approve/manual rows that include the number and domain.
