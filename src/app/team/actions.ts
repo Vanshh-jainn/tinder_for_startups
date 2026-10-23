@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import type { FormState } from '@/components/ActionForm';
 import { requireTeamMember } from '@/server/auth';
-import { getEventState } from '@/server/queries';
+import { getEventState, rpc } from '@/server/queries';
 import { db } from '@/server/supabase';
 
 const pitchSchema = z.object({
@@ -28,4 +28,40 @@ export async function savePitch(_prev: FormState, formData: FormData): Promise<F
   if (error) throw error;
   revalidatePath('/team');
   return { notice: 'Pitch saved.' };
+}
+
+const allocationSchema = z
+  .array(z.object({ target: z.uuid(), amount: z.number().int() }))
+  .min(1)
+  .max(7);
+
+// Rules are enforced in save_allocation (SQL); team id always comes from the member's session.
+export async function saveAllocation(_prev: FormState, formData: FormData): Promise<FormState> {
+  const { me, teamId } = await requireTeamMember();
+  let items: unknown;
+  try {
+    items = JSON.parse(String(formData.get('items') ?? ''));
+  } catch {
+    return { error: 'Invalid allocation.' };
+  }
+  const parsed = allocationSchema.safeParse(items);
+  if (!parsed.success) return { error: 'Pick your startups and enter whole-rupee amounts.' };
+
+  const result = await rpc('save_allocation', { p_actor: `participant:${me.id}`, p_team: teamId, p_items: parsed.data });
+  if (result.error) return result;
+  revalidatePath('/team');
+  return { notice: 'Allocation saved. Confirm each investment when confirmation time starts.' };
+}
+
+const confirmSchema = z.object({ target: z.uuid() });
+
+export async function confirmInvestment(_prev: FormState, formData: FormData): Promise<FormState> {
+  const { me, teamId } = await requireTeamMember();
+  const parsed = confirmSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: 'Invalid investment.' };
+
+  const result = await rpc('confirm_investment', { p_actor: `participant:${me.id}`, p_team: teamId, p_target: parsed.data.target });
+  if (result.error) return result;
+  revalidatePath('/team');
+  return { notice: 'Confirmed.' };
 }

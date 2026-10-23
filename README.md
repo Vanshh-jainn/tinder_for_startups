@@ -6,11 +6,11 @@ Three interfaces:
 
 - **Participant portal / team workspace:** profile, swiping, team pitch, investment marketplace
 - **Admin control panel:** phases, timers, matching, team approval, marketplace, qualification, audit log
-- **Projector display:** a default screen per phase (rules, matchmaking animation, teams formed, team on stage) with admin override, and the timer in a corner
+- **Projector display:** a default screen per phase (rules, matchmaking animation, teams formed, investment leaderboard, team on stage) with admin override, and the timer in a corner
 
 ## Status
 
-🟨 **Phases 1–4 built and committed; not yet run against a live Supabase project.** Next: Phase 5 (investment marketplace). See [PROGRESS.md](PROGRESS.md#next-session-start-here).
+🟨 **Phases 1–5 built; not yet run against a live Supabase project.** Next: Phase 6 (qualification + rehearsal). See [PROGRESS.md](PROGRESS.md#next-session-start-here).
 
 ## Stack
 
@@ -133,3 +133,15 @@ Run `npx supabase db push` first. `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SU
 6. In Startup Development, a team can save its pitch; one phase later, the editor disappears.
 7. Pick a different screen under Projector: it switches; advancing returns it to the phase default.
 8. In Final Pitching, choose a team and start its timer. The projector shows "Pitch · 07:00", then Q&A, then the rollover.
+
+### Phase 5 manual check
+
+Run `npx supabase db push` first. You need at least 3 approved teams with saved pitches (8+ to test the full "pick 7" rule).
+
+1. Advance into **Investment Marketplace**. The confirm dialog mentions the decision/confirmation split (and fewer than 8 startups, if so). The projector shows the leaderboard with "Decision time · 10:00 left".
+2. On a team page: cards for other teams with a pitch only (not its own). Pick, type amounts. Break each rule (₹150, ₹250, two equal amounts, total ≠ ₹5,000, too few picks): the list explains it and Save stays disabled. Fix and save; the other member sees the saved allocation.
+3. Admin → Marketplace shows that team as "Saved, not confirmed".
+4. Wait 10 minutes, or click **End now**, which jumps straight to confirmation time (the timer shows "Time's up", but confirmations stay open until you advance). The team page switches to Confirm buttons by itself; editing is gone; the projector says "Confirmation time · live".
+5. Confirm 6 of 7: the leaderboard doesn't change. Confirm the 7th: totals appear on the projector and admin page within a second, and "1 of N teams fully confirmed".
+6. Admin → **Void** that team: totals drop; the team can redo and re-confirm.
+7. Advance past the marketplace: confirm buttons disappear; the team sees whether its investments counted. Participant pages never show totals.

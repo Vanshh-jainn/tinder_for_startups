@@ -1,11 +1,13 @@
 import { ActionForm } from '@/components/ActionForm';
 import { PhaseBar } from '@/components/PhaseBar';
+import { MARKETPLACE_PHASE, requiredPicks } from '@/lib/marketplace';
 import { formatParticipantId } from '@/lib/security';
 import { requireTeamMember } from '@/server/auth';
 import { getEventState } from '@/server/queries';
 import { db } from '@/server/supabase';
 import { logout } from '../actions';
 import { savePitch } from './actions';
+import { MarketplacePanel } from './MarketplacePanel';
 
 const time = (iso: string) => new Date(iso).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', timeStyle: 'short' });
 
@@ -60,6 +62,13 @@ export default async function TeamPage() {
         )}
       </section>
 
+      {(event.phase_idx ?? 0) >= MARKETPLACE_PHASE && (
+        <section>
+          <h2>Investment marketplace</h2>
+          <Marketplace teamId={teamId} event={event} />
+        </section>
+      )}
+
       <section>
         <h2>Marketplace pitch</h2>
         <p className="muted">
@@ -82,5 +91,36 @@ export default async function TeamPage() {
         )}
       </section>
     </main>
+  );
+}
+
+async function Marketplace({ teamId, event }: { teamId: string; event: Awaited<ReturnType<typeof getEventState>> }) {
+  const [targetsRes, investmentsRes] = await Promise.all([
+    db()
+      .from('teams')
+      .select('id, number, submissions!inner(pitch)')
+      .eq('approval_state', 'approved')
+      .neq('id', teamId)
+      .order('number'),
+    db().from('investments').select('target_team_id, amount, confirmed_at, voided_at').eq('investor_team_id', teamId),
+  ]);
+  for (const res of [targetsRes, investmentsRes]) if (res.error) throw res.error;
+  const targets = targetsRes.data!.map((t) => ({
+    id: t.id,
+    number: t.number,
+    pitch: (t.submissions as unknown as { pitch: string }).pitch,
+  }));
+  const live = investmentsRes.data!.filter((i) => !i.voided_at);
+
+  return (
+    <MarketplacePanel
+      phaseIdx={event.phase_idx}
+      timer={event}
+      serverNow={event.serverNow}
+      targets={targets}
+      saved={live.map((i) => ({ target: i.target_team_id, amount: i.amount, confirmed: !!i.confirmed_at }))}
+      required={requiredPicks(targets.length)}
+      wasVoided={investmentsRes.data!.some((i) => i.voided_at)}
+    />
   );
 }

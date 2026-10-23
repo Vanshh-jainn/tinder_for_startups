@@ -9,12 +9,13 @@ type Props = {
   submitLabel: string;
   confirmText?: string;
   className?: string;
+  disabled?: boolean;
   children?: ReactNode;
 };
 
 // Submits via onSubmit instead of the `action` prop: React resets `action` forms even when the
 // server returns a validation error, wiping what the user typed. Here fields reset only on success.
-export function ActionForm({ action, submitLabel, confirmText, className, children }: Props) {
+export function ActionForm({ action, submitLabel, confirmText, className, disabled, children }: Props) {
   const [state, formAction, pending] = useActionState(action, undefined);
   const form = useRef<HTMLFormElement>(null);
 
@@ -34,7 +35,7 @@ export function ActionForm({ action, submitLabel, confirmText, className, childr
       }}
     >
       {children}
-      <button type="submit" disabled={pending}>
+      <button type="submit" disabled={pending || disabled}>
         {pending ? 'Working…' : submitLabel}
       </button>
       {state?.error && <p role="alert" className="error">{state.error}</p>}

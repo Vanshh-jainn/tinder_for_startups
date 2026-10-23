@@ -20,16 +20,18 @@ function Timer({ action, label, confirm, minutes }: TimerProps) {
 
 export default async function EventPage() {
   await requireAdmin();
-  const [event, phasesRes, teamsRes, incompleteRes] = await Promise.all([
+  const [event, phasesRes, teamsRes, incompleteRes, pitchesRes] = await Promise.all([
     getEventState(),
     db().from('phases').select('idx, name, duration_seconds, rules').order('idx'),
     db().from('teams').select('id, number').eq('approval_state', 'approved').order('number'),
     db().from('participants').select('id', { count: 'exact', head: true }).eq('profile_complete', false),
+    db().from('teams').select('id, submissions!inner(team_id)', { count: 'exact', head: true }).eq('approval_state', 'approved'),
   ]);
-  for (const res of [phasesRes, teamsRes, incompleteRes]) if (res.error) throw res.error;
+  for (const res of [phasesRes, teamsRes, incompleteRes, pitchesRes]) if (res.error) throw res.error;
   const phases = phasesRes.data!;
   const teams = teamsRes.data!;
   const incomplete = incompleteRes.count ?? 0;
+  const startups = pitchesRes.count ?? 0; // marketplace targets
 
   const current = event.phase_idx;
   const next = phases.find((p) => p.idx === (current === null ? 0 : current + 1));
@@ -42,6 +44,11 @@ export default async function EventPage() {
     next?.idx === 2 && 'Matchmaking opens: profiles lock and swipe decks are built.',
     next?.idx === 2 && incomplete > 0 && `${incomplete} incomplete profile(s) will be left out.`,
     current === 2 && 'Swiping closes.',
+    next?.idx === 4 && 'Pitch editing opens.',
+    current === 4 && 'Pitch editing closes.',
+    next?.idx === 6 && 'Marketplace opens: 10 minutes of decision time, then confirmation time.',
+    next?.idx === 6 && startups < 8 && `Only ${startups} startup(s) have a pitch, so teams invest in all available instead of 7.`,
+    current === 6 && "The marketplace closes. Teams that didn't confirm every investment count as zero.",
   ]
     .filter(Boolean)
     .join(' ');

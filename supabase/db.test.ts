@@ -364,3 +364,117 @@ describe('event timer and projector', () => {
     await expect(db.query(`select timer_action($1, 'advance')`, [ADMIN])).rejects.toThrow(/permission denied/);
   });
 });
+
+describe('marketplace', () => {
+  const AMOUNTS = [200, 300, 400, 500, 600, 700, 2300]; // distinct, multiples of 100, sum 5000
+
+  async function teams(n: number, withPitch = n): Promise<string[]> {
+    const ids: string[] = [];
+    for (let i = 0; i < n; i++) {
+      const { rows } = await call('select create_manual_team($1, $2, $3) as id', [
+        await addParticipant(`a${i}`),
+        await addParticipant(`b${i}`),
+      ]);
+      const id = (rows[0] as { id: string }).id;
+      ids.push(id);
+      if (i < withPitch) await db.query(`insert into submissions (team_id, pitch, updated_by) values ($1, 'p', 'x')`, [id]);
+    }
+    return ids;
+  }
+  const toMarketplace = async () => {
+    for (let i = 0; i < 7; i++) await call(`select timer_action($1, 'advance')`);
+  };
+  const toConfirmation = () => db.query('update event_state set elapsed_ms = 600000');
+  const items = (targets: string[], amounts = AMOUNTS) => targets.map((target, i) => ({ target, amount: amounts[i] }));
+  const save = (team: string, list: object[]) =>
+    db.query(`select save_allocation('participant:x', $1, $2)`, [team, JSON.stringify(list)]);
+  const confirm = (team: string, target: string) => db.query(`select confirm_investment('participant:x', $1, $2)`, [team, target]);
+  const counted = async (investor: string) =>
+    (await db.query<{ amount: number }>('select amount from counted_investments where investor_team_id = $1', [investor])).rows;
+
+  it('is closed outside the marketplace phase and enforces every allocation rule', async () => {
+    const [me, ...others] = await teams(9);
+    const seven = others.slice(0, 7);
+    await expect(save(me, items(seven))).rejects.toThrow(/not open/);
+    await toMarketplace();
+
+    await save(me, items(seven));
+    await expect(save(me, items([me, ...seven.slice(1)]))).rejects.toThrow(/other teams that have a pitch/);
+    await expect(save(me, items(seven.slice(0, 6)))).rejects.toThrow(/exactly 7/);
+    await expect(save(me, items([seven[0], ...seven.slice(0, 6)]))).rejects.toThrow(/only once/);
+    await expect(save(me, items(seven, [250, 300, 400, 500, 600, 700, 2250]))).rejects.toThrow(/multiple of ₹100/);
+    await expect(save(me, items(seven, [100, 300, 400, 500, 600, 700, 2400]))).rejects.toThrow(/at least ₹200/);
+    await expect(save(me, items(seven, [200, 200, 400, 500, 600, 700, 2400]))).rejects.toThrow(/different/);
+    await expect(save(me, items(seven, [200, 300, 400, 500, 600, 700, 2400]))).rejects.toThrow(/exactly ₹5,000/);
+  });
+
+  it('excludes teams without a pitch and asks for all available when fewer than 7', async () => {
+    const [a, b, c, d, noPitch] = await teams(5, 4);
+    await toMarketplace();
+    await expect(save(a, items([b, c, noPitch], [1000, 1500, 2500]))).rejects.toThrow(/have a pitch/);
+    await expect(save(a, items([b, c], [2000, 3000]))).rejects.toThrow(/exactly 3/);
+    await save(a, items([b, c, d], [1000, 1500, 2500]));
+    await save(noPitch, items([a, b, c, d], [500, 1000, 1500, 2000])); // a team without a pitch can still invest
+  });
+
+  it('separates decision and confirmation time, locks after the first confirm, and counts only complete submissions', async () => {
+    const [me, ...others] = await teams(8);
+    await toMarketplace();
+    await save(me, items(others));
+    await expect(confirm(me, others[0])).rejects.toThrow(/confirmation time/);
+
+    await toConfirmation();
+    await expect(save(me, items(others))).rejects.toThrow(/Decision time is over/);
+    for (const target of others.slice(0, 6)) await confirm(me, target);
+    await confirm(me, others[0]); // idempotent
+    expect(await counted(me)).toHaveLength(0); // 6 of 7 confirmed: nothing counts
+
+    await confirm(me, others[6]);
+    const rows = await counted(me);
+    expect(rows).toHaveLength(7);
+    expect(rows.reduce((s, r) => s + r.amount, 0)).toBe(5000);
+    await expect(confirm(me, me)).rejects.toThrow(/not in your allocation/);
+  });
+
+  it('lets a voided team redo its submission during confirmation time, and audits the void', async () => {
+    const [me, ...others] = await teams(8);
+    await toMarketplace();
+    await save(me, items(others));
+    await toConfirmation();
+    for (const target of others) await confirm(me, target);
+    expect(await counted(me)).toHaveLength(7);
+
+    await call('select void_investments($1, $2)', [me]);
+    expect(await counted(me)).toHaveLength(0);
+    const audit = await db.query(`select 1 from audit_log where action = 'investments.void'`);
+    expect(audit.rows).toHaveLength(1);
+
+    await save(me, items(others, [2300, 700, 600, 500, 400, 300, 200]));
+    for (const target of others) await confirm(me, target);
+    expect(await counted(me)).toHaveLength(7);
+  });
+
+  it('refuses a void with nothing to void, and closes when the phase advances', async () => {
+    const [me, ...others] = await teams(8);
+    await toMarketplace();
+    await expect(call('select void_investments($1, $2)', [me])).rejects.toThrow(/no investments/);
+    await save(me, items(others));
+    await call(`select timer_action($1, 'advance')`);
+    await expect(confirm(me, others[0])).rejects.toThrow(/confirmation time/);
+  });
+
+  it('refreshes clients on investment changes, allows the leaderboard screen, and blocks anon', async () => {
+    const [me, ...others] = await teams(8);
+    await toMarketplace();
+    await db.query(`update event_state set updated_at = '2000-01-01'`);
+    await save(me, items(others));
+    const { rows } = await db.query<{ old: boolean }>(`select updated_at < '2001-01-01' as old from event_state`);
+    expect(rows[0].old).toBe(false);
+    await call('select set_projector_screen($1, $2)', ['leaderboard']);
+
+    await db.exec('reset role; set role anon');
+    await expect(db.query('select * from investments')).rejects.toThrow(/permission denied/);
+    await expect(db.query('select * from counted_investments')).rejects.toThrow(/permission denied/);
+    await expect(db.query(`select confirm_investment('x', $1, $1)`, [me])).rejects.toThrow(/permission denied/);
+  });
+});

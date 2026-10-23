@@ -6,27 +6,26 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 
 ## Next session: start here
 
-*Last updated 2026-10-27.*
+*Last updated 2026-10-28.*
 
 **Where things stand**
-- Phases 0–4 are built and committed (last commit `e5f6536`, Phase 4). Working tree clean.
-- Checks at that commit: 47 tests pass (`npm test`: unit + PGlite DB tests); lint, type check, and build are clean.
-- **Nothing has run against a real Supabase project yet.** The user plans to do the setup later: create the project, `.env.local`, `npx supabase db push` (4 migrations), first admin. Then run the README manual checks for Phases 1–4.
+- Phases 0–5 are built. Phase 5 (marketplace) is waiting for the user's commit; Phases 0–4 are committed and pushed to `origin/main`.
+- Checks: 60 tests pass (`npm test`: unit + PGlite DB tests); lint, type check, and build are clean.
+- **Nothing has run against a real Supabase project yet.** The user plans to do the setup later: create the project, `.env.local`, `npx supabase db push` (5 migrations), first admin. Then run the README manual checks for Phases 1–5.
 
-**Next: Phase 5, investment marketplace.** Before writing code, ask the user about:
-- **OQ-13:** the time split inside the 15-minute marketplace (5-minute allocation, then confirmation). How long is confirmation and what starts it: a second timer, the remaining time, or an admin action?
-- **OQ-14:** how confirmation progress shows on the admin and projector screens without counting partial teams.
-- **OQ-15:** what admins can do with a team that confirms fewer than 7 before close (current rule: none of its investments count).
-- **OQ-16:** whether admins can edit or void a confirmed investment, and how totals recalculate.
-- **OQ-17:** do teams see every startup or only those with a saved pitch? Startup names are not used; teams show as "Team N".
-- **OQ-34:** amount granularity (any whole rupee, or multiples of ₹50/₹100?).
-- **OQ-35:** what if fewer than 8 teams have pitches (each team must pick 7 others)?
-- Already decided: totals are visible on the projector during the marketplace (OQ-31) but never on participant pages; the marketplace is open only during the Investment Marketplace phase (OQ-32); the projector gets a **Leaderboard** screen as the default for that phase.
+**Next: Phase 6, qualification + rehearsal.** Before writing code, ask the user about:
+- **OQ-18:** when a tie *above* 7th creates more than 7 potential finalists, which tied team(s) are removed? The spec says remove the lowest-ranked teams but gives no tie-breaker.
+- **OQ-19:** what if fewer than 7 teams received counted investment, or several have ₹0?
+- **OQ-23:** does the platform only announce finalists, or should the admin also publish final winners after judging?
+- How the finalist reveal looks on the projector (all at once, or one by one), and whether the Final Pitching team picker should list only finalists.
+- How to run the rehearsal: a scripted simulation (seed N fake participants and run every phase automatically) or a manual run-through checklist.
+- Already decided: qualification ranks teams by counted investment received; the confirmed tie rules are in spec §10; there's no judge portal or rubric (OQ-24).
 
 **Known gaps to remember**
 - Admin can't edit a participant's profile (spec §12 "authorised corrections"); add if needed.
 - No admin Overview or Audit log page yet (the audit log is readable in Supabase).
 - OQ-7 (human tie-break rule for matching) and OQ-36 (odd participant count) are still open.
+- If a team is dissolved during the marketplace, investments it already made still count. Unlikely; decide if it matters.
 
 ## Phases
 
@@ -37,7 +36,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 | 2 | Profiles & matching | 🟨 Code done; waiting for the live Supabase check | 7 (tie rule), 36 |
 | 3 | Team workspace & submissions | 🟨 Code done; waiting for the live Supabase check | |
 | 4 | Timers & projector | 🟨 Code done; waiting for the live Supabase check | |
-| 5 | Marketplace | ⬜ Not started | 13, 14, 15, 16, 17, 34, 35 |
+| 5 | Marketplace | 🟨 Code done; waiting for the live Supabase check | |
 | 6 | Qualification & rehearsal | ⬜ Not started | 18, 19 |
 | 7 | Hardening & deployment | ⬜ Not started | 25, 26, 27 |
 
@@ -101,18 +100,19 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - [x] Tests: 8 DB tests (phases, discovery coupling, reset, pitch timers, override, audit, triggers, anon access) + 7 timer unit tests (47 total)
 - [ ] **User:** push the migration and click through the [Phase 4 manual check](README.md#phase-4-manual-check)
 
-### Phase 5 — Marketplace
+### Phase 5 — Marketplace 🟨
 
-Ask the open questions listed under [Next session](#next-session-start-here) first.
-
-- [ ] `src/lib/marketplace` validation + tests (7 distinct others, no self, ≥ ₹200 each, no repeated amount, sum = ₹5,000, integers)
-- [ ] `investments` table + SQL functions; marketplace open only in the Investment Marketplace phase
-- [ ] Team UI: select 7 → allocate → confirm each; idempotent confirmations
-- [ ] Counted-investments view; draft and partial (< 7 confirmed) excluded
-- [ ] Admin marketplace page: per-team draft/partial/complete, counted totals and ranking, audited void/correct (per OQ-15/16)
-- [ ] Projector **Leaderboard** screen, default for the marketplace phase, live (OQ-31)
-- [ ] Totals never shown on participant pages
-- [ ] DB tests + unit tests for every rule in spec §17 Marketplace
+- [x] `investments` table: multiples of ₹100, ≥ ₹200, no self-investment, one per target and distinct amounts among live rows; voided rows kept
+- [x] Marketplace window from the phase timer: 10 min decision time, then confirmation time (`marketplace_window()` in SQL, `marketplaceWindow()` in `src/lib/marketplace.ts`)
+- [x] `save_allocation` enforces every rule (7 picks or all available, pitch-holding targets only, distinct, sum ₹5,000); locked after decision time or after the first confirm
+- [x] `confirm_investment` (idempotent); `counted_investments` view counts only fully confirmed teams
+- [x] Admin `void_investments` (audited); the voided team may redo during confirmation time
+- [x] Team marketplace panel: pick cards + amounts with live checks, save; confirmation list with progress and warning; closed summary. Totals never shown on participant pages
+- [x] Admin Marketplace page: stage + countdown, counted leaderboard, per-team status and allocation, void
+- [x] Projector **Investment leaderboard** screen (default for the marketplace phase), live, with "X of N teams fully confirmed"
+- [x] Event page warnings when advancing into/out of the marketplace (incl. fewer than 8 startups)
+- [x] Tests: 6 DB tests + 7 unit tests for every spec §17 marketplace rule (60 total)
+- [ ] **User:** push the migration and click through the [Phase 5 manual check](README.md#phase-5-manual-check)
 
 ### Phase 6 — Qualification & rehearsal
 
@@ -161,3 +161,8 @@ Record each decision with a date. Answers to open questions also go in [docs/ope
 | 2026-10-27 | `projector_state` merged into `event_state` | One row, one subscription |
 | 2026-10-27 | Supersedes 2026-10-24 rows on admin live views and Realtime rows: admin pages also refresh live via the `event_state` signal (no polling), and browsers read no table data over Realtime | Same mechanism everywhere; less code |
 | 2026-10-27 | Pages reading `getEventState()` call `connection()` | `/projector` was being prerendered at build time, which would have shown stale data |
+| 2026-10-28 | **Spec deviation (§9):** marketplace = 10 min decision time + 5 min confirmation time (spec: 5-min allocation period); no edits during confirmation | User decision: confirmation time is the live "showtime" |
+| 2026-10-28 | **Spec deviation (§9):** with fewer than 7 other startups, teams invest in all available | User decision (OQ-35) |
+| 2026-10-28 | OQ-13/14/15/16/17/34 answered (see open-questions.md): progress line on leaderboard, void + redo, pitch-holding targets only, multiples of ₹100 | User decision |
+| 2026-10-28 | Marketplace rules live in SQL functions (authority); `src/lib/marketplace.ts` mirrors them for live browser feedback and ranking | Can't be bypassed; users still get instant feedback |
+| 2026-10-28 | Confirmation time starts once the phase timer has run 10 min; extensions add to confirmation time; confirmations accepted until the admin advances | Consistent with how every other phase closes |

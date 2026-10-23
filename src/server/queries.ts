@@ -2,6 +2,7 @@ import 'server-only';
 import { revalidatePath } from 'next/cache';
 import { connection } from 'next/server';
 import type { FormState } from '@/components/ActionForm';
+import { rankTotals } from '@/lib/marketplace';
 import type { Swipe } from '@/lib/matching';
 import type { Screen, TimerState } from '@/lib/timer';
 import { db } from './supabase';
@@ -78,4 +79,28 @@ export async function getActiveMemberships(): Promise<Map<string, string>> {
   const { data, error } = await db().from('team_members').select('participant_id, team_id').eq('status', 'active');
   if (error) throw error;
   return new Map(data.map((m) => [m.participant_id, m.team_id]));
+}
+
+export type Leaderboard = {
+  rows: { teamId: string; number: number; total: number; rank: number }[];
+  complete: number; // teams whose investments count
+  teams: number; // approved teams (possible investors)
+};
+
+// Counted totals only: draft and partial submissions never appear (spec §9).
+export async function getLeaderboard(): Promise<Leaderboard> {
+  const [targetsRes, countedRes, teamsRes] = await Promise.all([
+    db().from('teams').select('id, number, submissions!inner(team_id)').eq('approval_state', 'approved'),
+    db().from('counted_investments').select('investor_team_id, target_team_id, amount'),
+    db().from('teams').select('id', { count: 'exact', head: true }).eq('approval_state', 'approved'),
+  ]);
+  for (const res of [targetsRes, countedRes, teamsRes]) if (res.error) throw res.error;
+
+  const totals = new Map<string, number>();
+  for (const row of countedRes.data!) totals.set(row.target_team_id, (totals.get(row.target_team_id) ?? 0) + row.amount);
+  return {
+    rows: rankTotals(targetsRes.data!.map((t) => ({ teamId: t.id, number: t.number, total: totals.get(t.id) ?? 0 }))),
+    complete: new Set(countedRes.data!.map((r) => r.investor_team_id)).size,
+    teams: teamsRes.count ?? 0,
+  };
 }

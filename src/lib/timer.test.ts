@@ -51,6 +51,7 @@ describe('screenFor', () => {
     expect(screenFor(null, null)).toBe('welcome');
     expect(screenFor(2, null)).toBe('matchmaking');
     expect(screenFor(3, null)).toBe('teams');
+    expect(screenFor(6, null)).toBe('leaderboard');
     expect(screenFor(8, null)).toBe('pitching');
     expect(screenFor(2, 'rules')).toBe('rules');
   });

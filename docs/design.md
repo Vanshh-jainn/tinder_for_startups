@@ -52,17 +52,11 @@ Members land here automatically (`/me` → `/team`) once their team is approved.
   - A marketplace pitch editor, **only during Startup Development** (either member can edit; no product length limit; read-only text before and after), with save state ("saved at 14:02", flagged if an organiser edited it).
   - A Google Form button that opens the admin-configured URL in a new tab.
   - Submission status checklist: pitch saved ✓/✗; deck goes through the form (not tracked in the app).
-- **Investment Marketplace (planned, Phase 5):**
-  1. **Select:** a grid of cards. Each card shows **only** the team/startup identifier and the two-line pitch (spec §8). The team's own card is excluded. A counter reads "4 / 7 selected".
-  2. **Allocate:** 7 rows, each with an integer ₹ input. Live checks:
-     - remaining = ₹5,000 − sum, shown big;
-     - each amount ≥ ₹200;
-     - duplicate amounts highlighted;
-     - the confirm action is disabled until all rules pass.
-     The server re-validates everything.
-  3. **Confirm:** one confirm button per investment, with a progress bar "5 / 7 confirmed".
-     - Clear warning: **"If you don't confirm all 7, none of your investments count."**
-  - Investment totals and rankings are **never** shown to participants during the marketplace.
+- **Investment Marketplace (built):** shown once the marketplace phase starts.
+  1. **Decision time (first 10 min):** a countdown "Decision time: 04:12 left", then a card per startup (only teams with a pitch; "Team N" + pitch; not your own). Tick a card to pick it and type an amount. Live: "4/7 picked · ₹1,200 left to allocate", a list of broken rules (count, ≥ ₹200, multiples of ₹100, all different, total ₹5,000). Save is disabled until every rule passes; either member can save; the server re-checks everything.
+  2. **Confirmation time (last 5 min):** no edits. A row per investment with a **Confirm** button, "5/7 confirmed", and the warning **"Confirm all 7. If you don't confirm every one, none of your investments count."** A team that saved nothing is told it can't invest.
+  3. **After the marketplace:** "All 7 confirmed, so they counted" or "none of them counted".
+  - Investment totals and rankings are **never** shown on participant pages (the projector shows them in the hall, per [OQ-31](open-questions.md)).
 - **Read-only afterwards:** team members can't edit membership, domain, other teams, totals, or timers. These controls simply don't exist in the UI.
 
 ## Admin control panel (desktop)
@@ -75,7 +69,7 @@ A top nav (`AdminHeader`) on every admin page; all admin pages update live.
 | Participants (`/admin`) | Built | Matchmaking status + incomplete-profile warning; add participant (code shown once); table: ID, name, phone, profile, swipe progress, team, reset code |
 | Matching (`/admin/matching`) | Built | Run matching, clear proposals, last-run summary + unassigned; proposed teams with ranks/score, approve/reject; eligible pairs table |
 | Teams & submissions (`/admin/teams`) | Built | Google Form link; approved teams with number, members, domain, source badge, editable pitch, dissolve; manual team builder (**Manual override**) |
-| Marketplace | Planned (5) | Per-team status: draft / partial (n/7) / complete; counted totals and ranking; void/correct actions (audited) |
+| Marketplace (`/admin/marketplace`) | Built | Stage + countdown; counted leaderboard with "X of N teams fully confirmed"; per-team status (no allocation / saved / confirming m/k / complete), allocation summary, void (audited) |
 | Qualification | Planned (6) | Ranking; top-7 result; **unresolved tie banner** when [OQ-18](open-questions.md) applies; confirm button |
 | Overview, Audit log | Not built | Counts and warnings; filterable audit table (the log is in Supabase meanwhile) |
 
@@ -83,7 +77,7 @@ Rules for the admin UI:
 
 - Destructive or rule-changing actions (reset matching, void investment, reset timer, close marketplace, confirm qualification) need a confirm dialog that names the effect.
 - Visually distinguish **algorithm** and **manual** teams everywhere, for example with a badge.
-- Partial investments are shown with a different colour or label from counted ones. The exact treatment is open ([OQ-14](open-questions.md)).
+- Partial submissions are labelled by status on the admin Marketplace page and never appear in totals ([OQ-14](open-questions.md)).
 
 ## Projector (16:9, full screen)
 
@@ -91,11 +85,12 @@ Rules for the admin UI:
 - **Phase timer in the top-right corner on every screen** ([OQ-20](open-questions.md)); 0 shows "Time's up".
 - Screens. Each phase has a default; the admin can override at any time (cleared on advance):
   - **Welcome** (before the event): title.
-  - **Round rules** (default for Introduction, Skill Filling, Startup Development, breaks, Marketplace until Phase 5, Top 7): phase name + the admin's rules, one bullet per line.
+  - **Round rules** (default for Introduction, Skill Filling, Startup Development, breaks, Top 7): phase name + the admin's rules, one bullet per line.
   - **Matchmaking animation** (default for Matchmaking): cards swiping left/right, hearts floating, "Matchmaking in progress…". Static under `prefers-reduced-motion`.
   - **Teams formed** (default for Rest): grid of "Team 7 · names · domain", growing live as the admin approves.
   - **Team on stage** (default for Final Pitching): team number, names, domain, huge "Pitch · 06:12" segment timer.
-  - **Leaderboard** (Phase 5, shown live during the marketplace per [OQ-31](open-questions.md)) and **Finalists** (Phase 6) come later.
+  - **Investment leaderboard** (default for the marketplace): stage ("Decision time · 04:12 left" / "Confirmation time · live"), "X of N teams fully confirmed", rank · team · counted total, updating live as teams confirm ([OQ-31](open-questions.md)).
+  - **Finalists** (Phase 6) comes later.
 - Never show login codes, private profile data, or admin UI.
 
 ## Accessibility basics

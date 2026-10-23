@@ -378,3 +378,50 @@ tr.current {
     opacity: 1;
   }
 }
+
+.stat {
+  font-size: 1.2em;
+  font-weight: 700;
+}
+
+.target-grid {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.target-grid .card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 2px solid transparent;
+}
+
+.target-grid .card.picked {
+  border-color: var(--accent);
+}
+
+.pick {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+ul.error {
+  padding-left: 20px;
+}
+
+.leaderboard td,
+.leaderboard th {
+  font-variant-numeric: tabular-nums;
+}
+
+.projector .leaderboard {
+  font-size: 2.6vw;
+}
+
+.projector .stage {
+  font-size: 2.4vw;
+  color: var(--warn);
+  margin: -2vw 0 1vw;
+}

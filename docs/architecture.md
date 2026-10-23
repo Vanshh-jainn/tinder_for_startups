@@ -2,7 +2,7 @@
 
 System design for Tinder for Startups. Requirements come from [spec.md](spec.md). UI and visual design live in [design.md](design.md). Matching details live in [matching-algorithm.md](matching-algorithm.md).
 
-Status: **Phases 1–4 built** (foundation, profiles + matching, team workspace, timers + projector). Phases 5–7 (marketplace, qualification, hardening) are still design only; their sections are marked *planned*. Update this file when an implementation choice changes.
+Status: **Phases 1–5 built** (foundation, profiles + matching, team workspace, timers + projector, marketplace). Phases 6–7 (qualification, hardening) are still design only; their sections are marked *planned*. Update this file when an implementation choice changes.
 
 ## Stack
 
@@ -45,7 +45,7 @@ Rule logic stays out of UI and DB code so it can be tested alone:
 | `src/lib/security.ts` (built) | Login-code generation, participant ID parsing, audit secret redaction | §4 |
 | `src/lib/matching/` (built) | Max-cardinality, min-cost matching | §6 |
 | `src/lib/timer.ts` (built) | Remaining time, clock format, Final Pitching segments, projector screen per phase | §3, §13 |
-| `src/lib/marketplace/` (planned, Phase 5) | Validates an allocation: 7 distinct targets, no self-investment, each ≥ ₹200, no repeated amount, sum = ₹5,000. Decides whether a submission counts. | §9, §15 |
+| `src/lib/marketplace.ts` (built) | Marketplace window (decision/confirmation), required picks, allocation errors for live feedback, leaderboard ranking. Mirrors the SQL rules, which stay the authority | §9, §15 |
 | `src/lib/qualification/` (planned, Phase 6) | Ranks teams and applies the confirmed top-7 tie rules. Returns `unresolved` with the tied teams when [OQ-18](open-questions.md) applies, so it never invents a tie-breaker. | §10 |
 
 ## Layout
@@ -56,15 +56,16 @@ src/
     page.tsx            home: links to participant and admin login
     login/              participant login (P-ID + code)
     me/                 participant: profile → swipe cards → waiting (redirects team members to /team)
-    team/               team workspace: number, domain, pitch, Google Form link (marketplace in Phase 5)
+    team/               team workspace: number, domain, pitch, Google Form link, marketplace panel
     admin/
       login/            admin login
       event/            Event & projector: timer controls, pitch timer, projector screen, phase durations + rules
       page.tsx          Participants: add, reset code, profile/swipe/team status
       matching/         run matching, proposals, eligible pairs
       teams/            Teams & submissions: form link, pitches, dissolve, manual team
+      marketplace/      stage, counted leaderboard, per-team submission status, void
     projector/          public read-only display
-  components/           ActionForm, Countdown, LiveRefresh, PhaseBar
+  components/           ActionForm, Countdown, LiveRefresh, PhaseBar, MarketStage, LeaderboardTable
   lib/                  pure modules (above)
   server/               DB clients, sessions, auth guards, rate limit, audit, shared queries
   types/                type stubs for untyped packages
@@ -75,9 +76,9 @@ supabase/
 
 ## Data model
 
-Mapped from [spec.md §14](spec.md#14-suggested-data-model). Money is `integer` rupees everywhere. Tables are created by the phase that first needs them; Phase 1 created `admins`, `participants` (ID, name, code hash), `sessions`, `login_attempts`, and `audit_log`. Phase 2 added profile columns, `discovery`, `swipes`, `matching_runs`, `teams`, and `team_members`. Phase 3 added team `number`/`domain`, `submissions`, and `config`. Phase 4 added `phases` and `event_state`. `investments` is planned for Phase 5.
+Mapped from [spec.md §14](spec.md#14-suggested-data-model). Money is `integer` rupees everywhere. Tables are created by the phase that first needs them; Phase 1 created `admins`, `participants` (ID, name, code hash), `sessions`, `login_attempts`, and `audit_log`. Phase 2 added profile columns, `discovery`, `swipes`, `matching_runs`, `teams`, and `team_members`. Phase 3 added team `number`/`domain`, `submissions`, and `config`. Phase 4 added `phases` and `event_state`. Phase 5 added `investments` and the `counted_investments` view.
 
-Multi-step admin changes are **SQL functions** (`set_discovery`, `save_matching_run`, `reset_matching`, `decide_team`, `create_manual_team`, `dissolve_team`, `set_form_url`, `admin_set_pitch`, `timer_action`, `start_pitch`, `set_projector_screen`, `update_phase`). Each runs in one transaction and writes its own audit row, so a change can never land without its audit entry or half-applied. The server calls them via `rpc()` in `src/server/queries.ts`. Supabase caps API responses at 1,000 rows, so large reads (swipes) go through `fetchAll()`, which pages.
+Multi-step admin changes are **SQL functions** (`set_discovery`, `save_matching_run`, `reset_matching`, `decide_team`, `create_manual_team`, `dissolve_team`, `set_form_url`, `admin_set_pitch`, `timer_action`, `start_pitch`, `set_projector_screen`, `update_phase`, `void_investments`). Team marketplace writes also go through SQL functions (`save_allocation`, `confirm_investment`) so every rule is checked in one place. Each runs in one transaction and writes its own audit row, so a change can never land without its audit entry or half-applied. The server calls them via `rpc()` in `src/server/queries.ts`. Supabase caps API responses at 1,000 rows, so large reads (swipes) go through `fetchAll()`, which pages.
 
 | Table | Key columns | DB-level guarantees |
 |---|---|---|
@@ -90,18 +91,22 @@ Multi-step admin changes are **SQL functions** (`set_discovery`, `save_matching_
 | `teams` | id, approval_state (`proposed`/`approved`/`rejected`/`superseded`/`dissolved`), formation_source (`algorithm`/`manual`), matching_run_id, rank_ab, rank_ba, pair_score, created_by, decided_by, number ("Team 7", from a sequence at approval), domain (random at approval) | Algorithm teams must have run + ranks + score, manual teams must not; manual teams are never `proposed`; approved/dissolved teams must have number + one of the six domains |
 | `team_members` | team_id, participant_id, status (`proposed`/`active`/`ended`) | Partial unique index on `participant_id WHERE status = 'active'` |
 | `submissions` | team_id (PK), pitch, updated_by (`participant:<id>`/`admin:<id>`), updated_at. Deck lives in the Google Form only | Pitch ≤ 2,000 chars (abuse cap, no product limit) |
-| `investments` (planned, Phase 5) | investor_team_id, target_team_id, amount, confirmed_at, voided_at | `CHECK (investor_team_id <> target_team_id)`; `CHECK (amount >= 200)`; `UNIQUE (investor_team_id, target_team_id)`; `UNIQUE (investor_team_id, amount)` |
+| `investments` | investor_team_id, target_team_id, amount, created_by, confirmed_at, confirmed_by, voided_at | `CHECK (investor_team_id <> target_team_id)`; `CHECK (amount >= 200 AND amount % 100 = 0)`; partial unique `(investor, target)` and `(investor, amount)` where not voided |
 | `phases` | idx 0–8, name, duration_seconds, rules (admin-edited text) | Duration 1–240 min; rules ≤ 2,000 chars |
 | `event_state` | single row: phase_idx (null = not started), timer_status, duration_ms, elapsed_ms, started_at, pitching_team_id, projector_screen (null = follow phase), updated_at | `running` ⇔ `started_at` set; screen from a fixed list. Public read for Realtime |
 | `audit_log` | actor, action, entity, entity_id, before, after, created_at | Append-only (no UPDATE/DELETE grants) |
 | `login_attempts` | key (`participant:<n>` or `admin:<email>`), attempted_at | Failed logins only; per-account lockout |
 | `config` | single row: google_form_url | `https://` only |
 
-*Planned for Phase 5; details may change with OQ-13–17, 34, 35.* The marketplace is open while the event is in the Investment Marketplace phase (OQ-32: phases drive participant access).
+### Marketplace
 
-**Counted investments** come from a SQL view. A team's rows count only when the team has exactly 7 non-voided rows, all 7 have `confirmed_at`, and they were confirmed while the marketplace was open. The leaderboard is `SUM(amount)` per target over that view. Draft rows never reach it.
-
-**Idempotent confirmation:** `UPDATE investments SET confirmed_at = now() WHERE id = $1 AND investor_team_id = $session_team AND confirmed_at IS NULL`, run only while the marketplace phase is active. A repeated call updates 0 rows, so nothing is counted twice.
+- **Window:** `marketplace_window()` is `closed` outside the Investment Marketplace phase, `decision` for the first 10 minutes of its timer, then `confirmation`. Clients compute the same thing (`marketplaceWindow()`) to switch screens at minute 10 without a round-trip.
+- **Targets:** approved teams with a saved pitch, except the investor (`investment_targets()`). Required picks = min(7, targets).
+- **`save_allocation`** (decision time, or after an admin void): checks every rule, then replaces the team's live rows. Refused once any row is confirmed.
+- **`confirm_investment`** (confirmation time): `UPDATE … WHERE confirmed_at IS NULL`, so repeats change nothing.
+- **Counted investments** come from the `counted_investments` view: a team's live rows count only when all of them are confirmed. The leaderboard is `SUM(amount)` per target over that view, ranked with shared ranks for ties. Drafts and partial submissions never reach it.
+- **`void_investments`** (admin): marks a team's live rows voided (kept for the record, audited). Totals recalculate through the view; the team may redo it.
+- Every investment change bumps `event_state`, so the admin page and projector leaderboard update live. *Ceiling:* every open page refreshes on each confirmation (about teams × 7 events in 5 minutes); fine for tens of teams.
 
 ## Timer
 
@@ -121,10 +126,10 @@ remaining = duration_ms − elapsed_ms − (timer_status = running ? now − sta
 ## Projector
 
 - `/projector` is a public, read-only, server-rendered page. It re-renders on every `event_state` change.
-- Screen = admin override if set, else the phase default (`screenFor` in `src/lib/timer.ts`): Matchmaking → animation, Rest → teams formed, Final Pitching → team on stage, other phases → that round's rules. Advancing clears the override. This deliberately changes the spec's "never switch automatically" rule (user decision, 2026-10-27).
+- Screen = admin override if set, else the phase default (`screenFor` in `src/lib/timer.ts`): Matchmaking → animation, Rest → teams formed, Investment Marketplace → leaderboard, Final Pitching → team on stage, other phases → that round's rules. Advancing clears the override. This deliberately changes the spec's "never switch automatically" rule (user decision, 2026-10-27).
 - The phase timer is always in a corner (on the pitching screen it is the main element).
 - Team changes, rule edits, and form-link changes bump `event_state.updated_at` through triggers, so the projector and every open page refresh.
-- Shows only team numbers, member names (approved by the organiser), domains, and rules. Never phones, codes, or admin controls.
+- Shows only team numbers, member names (approved by the organiser), domains, rules, and counted investment totals. Never phones, codes, or admin controls.
 
 ## Free-tier limits and costs
 

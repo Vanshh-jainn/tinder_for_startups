@@ -1,13 +1,16 @@
 import type { Metadata } from 'next';
 import { Countdown } from '@/components/Countdown';
+import { LeaderboardTable } from '@/components/LeaderboardTable';
 import { LiveRefresh } from '@/components/LiveRefresh';
+import { MarketStage } from '@/components/MarketStage';
 import { screenFor } from '@/lib/timer';
-import { getEventState, type EventState } from '@/server/queries';
+import { getEventState, getLeaderboard, type EventState } from '@/server/queries';
 import { db } from '@/server/supabase';
 
 export const metadata: Metadata = { title: 'Projector · Tinder for Startups' };
 
-// Public, read-only. Shows only what the hall may see: team numbers, member names, domains, rules.
+// Public, read-only. Shows only what the hall may see: team numbers, member names, domains, rules,
+// and counted investment totals (live during the marketplace, OQ-31).
 export default async function ProjectorPage() {
   const event = await getEventState();
   const screen = screenFor(event.phase_idx, event.projector_screen);
@@ -30,6 +33,7 @@ export default async function ProjectorPage() {
       {screen === 'rules' && <Rules event={event} />}
       {screen === 'matchmaking' && <Matchmaking />}
       {screen === 'teams' && <Teams />}
+      {screen === 'leaderboard' && <LeaderboardScreen event={event} />}
       {screen === 'pitching' && <Pitching event={event} />}
     </main>
   );
@@ -139,6 +143,19 @@ async function Pitching({ event }: { event: EventState }) {
       <p className="stage-timer">
         <Countdown timer={event} serverNow={event.serverNow} pitch />
       </p>
+    </div>
+  );
+}
+
+async function LeaderboardScreen({ event }: { event: EventState }) {
+  const board = await getLeaderboard();
+  return (
+    <div>
+      <h1>Investment leaderboard</h1>
+      <p className="stage">
+        <MarketStage phaseIdx={event.phase_idx} timer={event} serverNow={event.serverNow} />
+      </p>
+      <LeaderboardTable board={board} />
     </div>
   );
 }

@@ -7,9 +7,13 @@ export type TimerState = {
   started_at: string | null;
 };
 
-export function remainingMs(t: TimerState, nowMs: number): number {
+export function elapsedMs(t: TimerState, nowMs: number): number {
   const running = t.timer_status === 'running' && t.started_at ? nowMs - Date.parse(t.started_at) : 0;
-  return Math.max(0, t.duration_ms - t.elapsed_ms - running);
+  return t.elapsed_ms + running;
+}
+
+export function remainingMs(t: TimerState, nowMs: number): number {
+  return Math.max(0, t.duration_ms - elapsedMs(t, nowMs));
 }
 
 export function formatClock(ms: number): string {
@@ -32,7 +36,7 @@ export function pitchSegment(t: TimerState, nowMs: number): { label: string; rem
   return { label: 'Scoring rollover', remainingMs: remaining };
 }
 
-export const SCREENS = ['welcome', 'rules', 'matchmaking', 'teams', 'pitching'] as const;
+export const SCREENS = ['welcome', 'rules', 'matchmaking', 'teams', 'leaderboard', 'pitching'] as const;
 export type Screen = (typeof SCREENS)[number];
 
 export const SCREEN_LABELS: Record<Screen, string> = {
@@ -40,11 +44,12 @@ export const SCREEN_LABELS: Record<Screen, string> = {
   rules: 'Round rules',
   matchmaking: 'Matchmaking animation',
   teams: 'Teams formed',
+  leaderboard: 'Investment leaderboard',
   pitching: 'Team on stage',
 };
 
 // Default projector screen per phase index (0 Introduction … 8 Final Pitching).
-const DEFAULT_SCREENS: Screen[] = ['rules', 'rules', 'matchmaking', 'teams', 'rules', 'rules', 'rules', 'rules', 'pitching'];
+const DEFAULT_SCREENS: Screen[] = ['rules', 'rules', 'matchmaking', 'teams', 'rules', 'rules', 'leaderboard', 'rules', 'pitching'];
 
 export function screenFor(phaseIdx: number | null, override: Screen | null): Screen {
   return override ?? (phaseIdx === null ? 'welcome' : DEFAULT_SCREENS[phaseIdx]);
