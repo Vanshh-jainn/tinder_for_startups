@@ -1,6 +1,8 @@
 import { ActionForm } from '@/components/ActionForm';
+import { PhaseBar } from '@/components/PhaseBar';
 import { formatParticipantId } from '@/lib/security';
 import { requireTeamMember } from '@/server/auth';
+import { getEventState } from '@/server/queries';
 import { db } from '@/server/supabase';
 import { logout } from '../actions';
 import { savePitch } from './actions';
@@ -9,20 +11,23 @@ const time = (iso: string) => new Date(iso).toLocaleTimeString('en-IN', { timeZo
 
 export default async function TeamPage() {
   const { teamId } = await requireTeamMember();
-  const [teamRes, membersRes, submissionRes, configRes] = await Promise.all([
+  const [teamRes, membersRes, submissionRes, configRes, event] = await Promise.all([
     db().from('teams').select('number, domain').eq('id', teamId).single(),
     db().from('team_members').select('participants(number, display_name)').eq('team_id', teamId).eq('status', 'active'),
     db().from('submissions').select('pitch, updated_by, updated_at').eq('team_id', teamId).maybeSingle(),
     db().from('config').select('google_form_url').single(),
+    getEventState(),
   ]);
   for (const res of [teamRes, membersRes, submissionRes, configRes]) if (res.error) throw res.error;
   const team = teamRes.data!;
   const members = membersRes.data!.map((m) => m.participants as unknown as { number: number; display_name: string });
   const submission = submissionRes.data;
   const formUrl = configRes.data!.google_form_url as string | null;
+  const canEditPitch = event.phase_idx === 4; // Startup Development only (OQ-32)
 
   return (
     <main className="narrow">
+      <PhaseBar event={event} />
       <header className="row">
         <h1>Team {team.number}</h1>
         <form action={logout}>
@@ -51,7 +56,7 @@ export default async function TeamPage() {
             Open the Google Form
           </a>
         ) : (
-          <p className="muted">The organisers haven&apos;t shared the Google Form yet. Refresh later.</p>
+          <p className="muted">The organisers haven&apos;t shared the Google Form yet. It appears here when they do.</p>
         )}
       </section>
 
@@ -59,11 +64,22 @@ export default async function TeamPage() {
         <h2>Marketplace pitch</h2>
         <p className="muted">
           Your two-line startup pitch. Other teams see only this in the investment marketplace, not your deck.
-          Either team member can edit it.
+          Either team member can edit it during Startup Development.
         </p>
-        <ActionForm action={savePitch} submitLabel="Save pitch">
-          <textarea name="pitch" defaultValue={submission?.pitch ?? ''} maxLength={2000} rows={3} required />
-        </ActionForm>
+        {canEditPitch ? (
+          <ActionForm action={savePitch} submitLabel="Save pitch">
+            <textarea name="pitch" defaultValue={submission?.pitch ?? ''} maxLength={2000} rows={3} required />
+          </ActionForm>
+        ) : (
+          <>
+            {submission && <p className="card">{submission.pitch}</p>}
+            <p className="muted">
+              {(event.phase_idx ?? 0) < 4
+                ? 'Pitch editing opens when Startup Development begins.'
+                : 'Pitch editing is closed.'}
+            </p>
+          </>
+        )}
       </section>
     </main>
   );

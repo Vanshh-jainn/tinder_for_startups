@@ -12,7 +12,7 @@ Status: **planned**. No code exists yet. Update this file when an implementation
 | Database | Supabase Postgres | Relational constraints enforce rules in the DB itself: unique membership, integer money, no self-swipe. Row-level security (RLS) is a second defence line. |
 | Admin auth | Supabase Auth verifies the email + password; the server then issues its own session | Real accounts with no default password, but one session system for all roles. No `@supabase/ssr` or proxy needed. |
 | Participant/team auth | Custom server sessions (httpOnly cookie, `sessions` table) | Participants log in with an admin-issued ID + code ([OQ-4](open-questions.md)). Team members reach the team workspace through their own login (`requireTeamMember()`); there is no shared team code. |
-| Live updates | Supabase Realtime (Postgres Changes) for public-safe tables; admin pages poll the server | The timer and projector update without polling. Admin live views (leaderboard) poll every few seconds, which is fine for a handful of admins. |
+| Live updates | Supabase Realtime (Postgres Changes) on the single public `event_state` row, used as a "something changed" signal | `LiveRefresh` re-renders the page from the server when it fires. Data never travels over Realtime, so private fields can't leak through it. |
 | Validation | `zod` at every server entry point | One schema per request body. |
 | Tests | Vitest (unit, pure modules); Playwright (rehearsal, Phase 6) | |
 | Hosting | Vercel Hobby + Supabase Free | $0. See [limits](#free-tier-limits-and-costs). Default unless [OQ-27](open-questions.md) says otherwise. |
@@ -33,7 +33,7 @@ Browser ──(Server Action / Route Handler)──► Next.js server ──(ser
   5. writes an audit-log row for admin actions.
 - The service-role key exists only in server env vars. It must never appear in any `NEXT_PUBLIC_*` variable.
 - RLS is **enabled on every table**, and table grants are revoked from `anon`/`authenticated`. The default is deny. The only planned read policy:
-  - `anon`: `SELECT` on `event_state` and `projector_state` (Phase 4). These contain no private data (see below).
+  - `anon`/`authenticated`: `SELECT` on `event_state` only (phase, timer fields, projector screen, team on stage). Needed for Realtime; holds no private data.
 - Participants and teams read their own data through server-rendered pages, not through direct DB access.
 
 ## Pure domain modules
@@ -67,7 +67,7 @@ supabase/
 
 Mapped from [spec.md §14](spec.md#14-suggested-data-model). Money is `integer` rupees everywhere. Tables are created by the phase that first needs them; Phase 1 created `admins`, `participants` (ID, name, code hash), `sessions`, `login_attempts`, and `audit_log`. Phase 2 added profile columns, `discovery`, `swipes`, `matching_runs`, `teams`, and `team_members`.
 
-Multi-step admin changes are **SQL functions** (`set_discovery`, `save_matching_run`, `reset_matching`, `decide_team`, `create_manual_team`, `dissolve_team`, `set_form_url`, `admin_set_pitch`). Each runs in one transaction and writes its own audit row, so a change can never land without its audit entry or half-applied. The server calls them via `rpc()` in `src/server/queries.ts`. Supabase caps API responses at 1,000 rows, so large reads (swipes) go through `fetchAll()`, which pages.
+Multi-step admin changes are **SQL functions** (`set_discovery`, `save_matching_run`, `reset_matching`, `decide_team`, `create_manual_team`, `dissolve_team`, `set_form_url`, `admin_set_pitch`, `timer_action`, `start_pitch`, `set_projector_screen`, `update_phase`). Each runs in one transaction and writes its own audit row, so a change can never land without its audit entry or half-applied. The server calls them via `rpc()` in `src/server/queries.ts`. Supabase caps API responses at 1,000 rows, so large reads (swipes) go through `fetchAll()`, which pages.
 
 | Table | Key columns | DB-level guarantees |
 |---|---|---|
@@ -81,8 +81,8 @@ Multi-step admin changes are **SQL functions** (`set_discovery`, `save_matching_
 | `team_members` | team_id, participant_id, status (`proposed`/`active`/`ended`) | Partial unique index on `participant_id WHERE status = 'active'` |
 | `submissions` | team_id (PK), pitch, updated_by (`participant:<id>`/`admin:<id>`), updated_at. Deck lives in the Google Form only | Pitch ≤ 2,000 chars (abuse cap, no product limit) |
 | `investments` | investor_team_id, target_team_id, amount, confirmed_at, voided_at | `CHECK (investor_team_id <> target_team_id)`; `CHECK (amount >= 200)`; `UNIQUE (investor_team_id, target_team_id)`; `UNIQUE (investor_team_id, amount)` |
-| `event_state` | single row: phase, status, started_at, duration_ms, elapsed_before_pause_ms, marketplace_open | Single-row table |
-| `projector_state` | single row: content_type, payload (JSON snapshot), updated_by, updated_at | Payload is built on the server and holds public-safe data only |
+| `phases` | idx 0–8, name, duration_seconds, rules (admin-edited text) | Duration 1–240 min; rules ≤ 2,000 chars |
+| `event_state` | single row: phase_idx (null = not started), timer_status, duration_ms, elapsed_ms, started_at, pitching_team_id, projector_screen (null = follow phase), updated_at | `running` ⇔ `started_at` set; screen from a fixed list. Public read for Realtime |
 | `audit_log` | actor, action, entity, entity_id, before, after, created_at | Append-only (no UPDATE/DELETE grants) |
 | `login_attempts` | key (username or IP), attempted_at | Used for rate limiting |
 | `config` | single row: google_form_url (Phase 4 adds phase durations) | `https://` only |
@@ -96,20 +96,23 @@ Multi-step admin changes are **SQL functions** (`set_discovery`, `save_matching_
 The timer is authoritative in the DB, not in any browser.
 
 ```
-remaining = duration_ms − elapsed_before_pause_ms − (status = running ? now − started_at : 0)
+remaining = duration_ms − elapsed_ms − (timer_status = running ? now − started_at : 0)
 ```
 
-- Admin actions (start, pause, resume, reset, end, advance) update `event_state` in one transaction and write an `audit_log` row.
-- Clients get `event_state` through Realtime and compute `remaining` locally every frame. They correct for clock skew using a server-time offset fetched on load, so their local clock does not matter.
-- A refresh or reconnect re-reads the row, so the timer never resets on the client side.
-- What a reset or advance does to phase data is open ([OQ-22](open-questions.md), [OQ-30](open-questions.md), [OQ-32](open-questions.md)).
+- Admin actions go through `timer_action(start | pause | reset | end | extend | advance)` and `start_pitch(team)`; each updates `event_state` and writes an `audit_log` row in one transaction.
+- **Advance** is one way and starts the next phase's timer. Entering Matchmaking opens discovery (decks built); leaving it closes discovery. Participant actions follow the phase: profile edits until Matchmaking, swiping only in Matchmaking, pitch edits only in Startup Development ([OQ-32](open-questions.md)).
+- **Reset** changes only the clock ([OQ-30](open-questions.md)). **Extend** adds minutes to the current timer only ([OQ-22](open-questions.md)). **End** sets it to 0 without advancing.
+- **Final Pitching** runs a 10-minute timer per team (`start_pitch`); clients split it into Pitch 7 / Q&A 2 / rollover 1 (`pitchSegment` in `src/lib/timer.ts`).
+- Clients compute `remaining` locally 4× a second. Each server render passes `serverNow`, and `Countdown` corrects for the device clock being off.
+- A refresh or reconnect re-reads the row, so the timer never resets on the client side. `getEventState()` calls `connection()` so pages that read it are never prerendered.
 
 ## Projector
 
-- A read-only page subscribes to `projector_state`.
-- The admin chooses the content type. The server builds a public-safe `payload` (for example, a leaderboard snapshot without private fields) and writes it.
-- If the content holds live data (the leaderboard), the server rewrites the payload when the source data changes, and only while that content is selected.
-- A phase change never changes `projector_state` by itself.
+- `/projector` is a public, read-only, server-rendered page. It re-renders on every `event_state` change.
+- Screen = admin override if set, else the phase default (`screenFor` in `src/lib/timer.ts`): Matchmaking → animation, Rest → teams formed, Final Pitching → team on stage, other phases → that round's rules. Advancing clears the override. This deliberately changes the spec's "never switch automatically" rule (user decision, 2026-10-27).
+- The phase timer is always in a corner (on the pitching screen it is the main element).
+- Team changes, rule edits, and form-link changes bump `event_state.updated_at` through triggers, so the projector and every open page refresh.
+- Shows only team numbers, member names (approved by the organiser), domains, and rules. Never phones, codes, or admin controls.
 
 ## Free-tier limits and costs
 

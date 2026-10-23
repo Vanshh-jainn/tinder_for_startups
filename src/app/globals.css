@@ -213,3 +213,168 @@ td textarea {
   width: 100%;
   min-width: 220px;
 }
+
+.phasebar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--surface);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.big-timer {
+  font-size: 3em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  margin: 8px 0;
+}
+
+tr.current {
+  outline: 2px solid var(--accent);
+}
+
+/* Projector: readable from the back of a hall. */
+.projector {
+  min-height: 100vh;
+  max-width: none;
+  padding: 4vw;
+  font-size: 2.4vw;
+  position: relative;
+}
+
+.projector h1 {
+  font-size: 5vw;
+  margin: 0 0 3vw;
+}
+
+.projector .center {
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.corner-timer {
+  position: absolute;
+  top: 2vw;
+  right: 2vw;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 3.5vw;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.corner-timer small {
+  font-size: 1.4vw;
+  color: var(--muted);
+}
+
+.rules {
+  text-align: left;
+  font-size: 3vw;
+  line-height: 1.6;
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(22vw, 1fr));
+  gap: 1.5vw;
+}
+
+.team-grid h2 {
+  margin: 0;
+}
+
+.team-grid .domain {
+  font-size: 1em;
+}
+
+.stage-timer {
+  font-size: 12vw;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  margin: 2vw 0 0;
+}
+
+.mm-stage {
+  position: relative;
+  width: 40vw;
+  height: 30vw;
+}
+
+.mm-card {
+  position: absolute;
+  left: 50%;
+  top: 10%;
+  width: 16vw;
+  height: 22vw;
+  margin-left: -8vw;
+  border-radius: var(--radius);
+  background: linear-gradient(160deg, var(--surface), #2a2a36);
+  border: 2px solid var(--muted);
+  opacity: 0;
+  animation: mm-swipe-right 4s infinite;
+}
+
+.mm-card:nth-child(2) {
+  animation-name: mm-swipe-left;
+  animation-delay: 1s;
+}
+
+.mm-card:nth-child(3) {
+  animation-delay: 2s;
+}
+
+.mm-card:nth-child(4) {
+  animation-name: mm-swipe-left;
+  animation-delay: 3s;
+}
+
+@keyframes mm-swipe-right {
+  0% { opacity: 0; transform: scale(0.9); }
+  15%, 55% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: translateX(22vw) rotate(18deg); }
+}
+
+@keyframes mm-swipe-left {
+  0% { opacity: 0; transform: scale(0.9); }
+  15%, 55% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: translateX(-22vw) rotate(-18deg); }
+}
+
+.mm-heart {
+  position: absolute;
+  bottom: 0;
+  color: var(--accent);
+  font-size: 3vw;
+  opacity: 0;
+  animation: mm-float 4s infinite;
+}
+
+.mm-heart:nth-of-type(1) { left: 10%; animation-delay: 0s; }
+.mm-heart:nth-of-type(2) { left: 25%; animation-delay: 0.7s; }
+.mm-heart:nth-of-type(3) { left: 45%; animation-delay: 1.4s; }
+.mm-heart:nth-of-type(4) { left: 60%; animation-delay: 2.1s; }
+.mm-heart:nth-of-type(5) { left: 75%; animation-delay: 2.8s; }
+.mm-heart:nth-of-type(6) { left: 90%; animation-delay: 3.5s; }
+
+@keyframes mm-float {
+  0% { opacity: 0; transform: translateY(0); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-28vw); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mm-card,
+  .mm-heart {
+    animation: none;
+    opacity: 1;
+  }
+}

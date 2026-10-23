@@ -27,9 +27,9 @@ Status values: `Open` · `Proposed` (someone suggested an answer and is waiting 
 | 17 | Marketplace visibility | Do teams see every startup, or only those with valid pitches? Do startup names need approval? | 5 | Open | |
 | 18 | Tie above 7th | What deterministic procedure applies when a tie above 7th creates more than 7 potential finalists? | 6 | Open | |
 | 19 | Top-7 edge cases | What happens if fewer than 7 teams have valid counted submissions, or several teams have zero investment? | 6 | Open | |
-| 20 | Projector content | What exactly shows in each phase? May participant or team-member names be shown publicly? | 4 | Open | |
+| 20 | Projector content | What exactly shows in each phase? May participant or team-member names be shown publicly? | 4 | Resolved | 2026-10-27: phase timer in a corner on every screen; Matchmaking shows an animation, then teams formed (number + member names + domain); other rounds show admin-entered rules. Each phase has a default screen; admin can override. |
 | 21 | Admin accounts | Is there one admin or several? Are there different permission levels? | 1 | Resolved | 2026-10-24: several admin accounts, all with the same permissions. |
-| 22 | Schedule recovery | What happens if a phase is extended, skipped, or reset? Do the later durations stay the same? | 4 | Open | |
+| 22 | Schedule recovery | What happens if a phase is extended, skipped, or reset? Do the later durations stay the same? | 4 | Resolved | 2026-10-27: the admin extends the current timer (+1/+5 min); later phases keep their durations. |
 | 23 | Final results | Does the platform only show finalists and timers, or can the admin publish winners after judging? | 6 | Open | |
 | 24 | Judging rubric | The earlier rubric and final-pitch tie-breaker were not approved. They stay out of enforced logic until confirmed. | 6 | Open | |
 | 25 | Privacy and retention | When should profiles, swipes, login records, and investment records be exported, archived, or deleted? | 7 | Open | |
@@ -37,9 +37,9 @@ Status values: `Open` · `Proposed` (someone suggested an answer and is waiting 
 | 27 | Deployment | Is there a preferred host or domain? The current default is the free tiers of Vercel and Supabase. | 7 | Open | |
 | 28 | Notifications | Do participants need email or WhatsApp messages for credentials, approvals, or phase changes? | 3 | Resolved | 2026-10-26: none. |
 | 29 | Admin domain controls | Can domains change after random assignment? This overlaps with #10. | 3 | Resolved | Same as #10: no. |
-| 30 | Timer reset | Does resetting a timer reset only the clock, or also the data submitted in that phase? | 4 | Open | |
-| 31 | Leaderboard privacy | Can the projector show live counted totals during the marketplace, or only after it closes? Participants must not see totals during the marketplace. | 4, 5 | Open | |
-| 32 | Phase transitions | Does advancing a phase close the previous phase's participant actions automatically? Can the admin reopen it? | 4 | Open | |
+| 30 | Timer reset | Does resetting a timer reset only the clock, or also the data submitted in that phase? | 4 | Resolved | 2026-10-27: clock only; phase data is untouched. |
+| 31 | Leaderboard privacy | Can the projector show live counted totals during the marketplace, or only after it closes? Participants must not see totals during the marketplace. | 4, 5 | Resolved | 2026-10-27: the projector may show live counted totals during the marketplace (built in Phase 5). Participants still don't see totals in their own pages. |
+| 32 | Phase transitions | Does advancing a phase close the previous phase's participant actions automatically? Can the admin reopen it? | 4 | Resolved | 2026-10-27: yes. Advancing is one way and closes the previous phase for participants (profiles until Matchmaking, swiping in Matchmaking, pitch edits in Startup Development). |
 | 33 | Suggestion rank source | The algorithm uses `Rank(A→B)`, defined as "suggestion rank" in the discovery sequence (§5). Is the rank the order in which the system showed profiles, or does the participant rank people? If the system decides the order, what decides it? | 2 | Resolved | 2026-10-25: each participant's deck is a random order built when matchmaking first opens; rank = position in that deck (1 = shown first). |
 | 34 | Investment granularity | Can amounts be any whole rupee, or must they be multiples of something like ₹50 or ₹100? The spec requires integers only. | 5 | Open | Found during analysis. |
 | 35 | Minimum team count | Each team must pick exactly 7 other startups, so at least 8 teams with marketplace pitches are needed. What happens if fewer exist? | 5 | Open | Found during analysis. Related to #19. |

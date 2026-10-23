@@ -1,8 +1,9 @@
 import { redirect } from 'next/navigation';
 import { ActionForm } from '@/components/ActionForm';
+import { PhaseBar } from '@/components/PhaseBar';
 import { formatParticipantId } from '@/lib/security';
 import { requireParticipant } from '@/server/auth';
-import { getActiveMemberships, getDiscoveryStatus } from '@/server/queries';
+import { getActiveMemberships, getDiscoveryStatus, getEventState } from '@/server/queries';
 import { db } from '@/server/supabase';
 import { logout } from '../actions';
 import { saveProfile, swipe } from './actions';
@@ -12,10 +13,11 @@ type Me = Awaited<ReturnType<typeof requireParticipant>>;
 export default async function ParticipantHome() {
   const me = await requireParticipant();
   if ((await getActiveMemberships()).has(me.id)) redirect('/team');
-  const status = await getDiscoveryStatus();
+  const [status, event] = await Promise.all([getDiscoveryStatus(), getEventState()]);
 
   return (
     <main className="narrow">
+      <PhaseBar event={event} />
       <header className="row">
         <div>
           <h1>Hi, {me.display_name}</h1>
@@ -29,7 +31,7 @@ export default async function ParticipantHome() {
       </header>
       {status === 'not_started' && <Profile me={me} />}
       {status === 'open' && <Discovery meId={me.id} />}
-      {status === 'closed' && <p>Matchmaking is closed. Wait for the organisers to announce teams, then refresh.</p>}
+      {status === 'closed' && <p>Matchmaking is closed. Wait for the organisers to announce teams. This page updates by itself.</p>}
     </main>
   );
 }
@@ -61,7 +63,7 @@ function Profile({ me }: { me: Me }) {
           <textarea name="summary" defaultValue={me.summary} maxLength={160} rows={2} />
         </label>
       </ActionForm>
-      <p className="muted">Swiping starts when the organisers open matchmaking. Refresh this page then.</p>
+      <p className="muted">Swiping starts automatically when the Matchmaking round begins.</p>
     </section>
   );
 }

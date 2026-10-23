@@ -44,7 +44,9 @@ npx supabase db push   # apply new migrations to the linked Supabase project
 ## Code map
 
 - `src/server/`: server-only code. `supabase.ts` (DB clients), `session.ts` (cookie sessions), `auth.ts` (`requireAdmin`, `requireParticipant`, `requireTeamMember`), `rateLimit.ts`, `audit.ts`, `queries.ts` (`rpc` + `adminResult` for admin DB functions, `fetchAll`, shared reads).
-- `src/lib/`: pure, tested logic. `matching/` is the team optimiser.
+- `src/lib/`: pure, tested logic. `matching/` is the team optimiser; `timer.ts` is countdown maths + projector screen choice.
+- `src/components/`: `LiveRefresh` (Realtime → `router.refresh()`, once per page), `Countdown`, `PhaseBar`.
+- Read live event state only through `getEventState()`: it opts the page out of prerendering.
 - `supabase/migrations/`: schema + SQL functions. Multi-step admin changes go in a SQL function that also writes the audit row; revoke `EXECUTE` from `public, anon, authenticated` on every new function.
 - `supabase/db.test.ts`: runs all migrations in PGlite and checks constraints and permissions. Add a test there for every new DB rule.
 - `src/components/ActionForm.tsx`: the one form component; wraps a server action with `useActionState` and shows `error`/`notice`.

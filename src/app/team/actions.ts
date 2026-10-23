@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import type { FormState } from '@/components/ActionForm';
 import { requireTeamMember } from '@/server/auth';
+import { getEventState } from '@/server/queries';
 import { db } from '@/server/supabase';
 
 const pitchSchema = z.object({
@@ -12,6 +13,7 @@ const pitchSchema = z.object({
 
 export async function savePitch(_prev: FormState, formData: FormData): Promise<FormState> {
   const { me, teamId } = await requireTeamMember();
+  if ((await getEventState()).phase_idx !== 4) return { error: 'Pitch editing is only open during Startup Development.' };
   const parsed = pitchSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 

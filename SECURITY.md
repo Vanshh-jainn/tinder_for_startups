@@ -13,7 +13,7 @@ Found a problem? Tell the event organisers directly. Do not open a public issue 
 | Admin | Email + password checked by Supabase Auth, must be in `admins` → server session | Everything in the admin panel; every action is audited |
 | Team member | Their own participant session + an active membership in an approved team (no shared team code) | Their team's workspace: pitch, marketplace selections/allocations/confirmations |
 | Participant | Admin-issued participant ID (`P12`) + login code → server session | Own profile, swiping |
-| Projector | None (public read-only) | Reads `event_state` and `projector_state` only |
+| Projector | None (public read-only page `/projector`) | Sees team numbers, member names, domains, rules, and the timer; the page is rendered by the server |
 
 ## Non-negotiable rules
 
@@ -29,7 +29,7 @@ Found a problem? Tell the event organisers directly. Do not open a public issue 
 6. **Rate limiting.** Failed logins are tracked per account (participant ID, admin email) in `login_attempts`. Five failures in 15 minutes lock that account for the rest of the window; resetting the code clears the lock. There is no per-IP limit, because the whole venue shares one Wi-Fi IP and an IP limit would lock everyone out.
 7. **Sessions** use random tokens in `httpOnly; Secure; SameSite=Lax` cookies. Only the token hash is stored. Sessions expire and can be revoked by an admin.
 8. **Never log** passwords, raw login codes, session tokens, or secrets, including in `audit_log` before/after values.
-9. **Least privilege.** RLS is on for every table, deny by default. Anonymous clients can read only `event_state` and `projector_state`, which hold public-safe data. Every SQL function has `EXECUTE` revoked from `public`, `anon`, and `authenticated` (Postgres grants it to everyone by default), so only the server can call them.
+9. **Least privilege.** RLS is on for every table, deny by default. Anonymous clients can read only `event_state` (phase, timer, projector screen; nothing private), which Realtime needs. Realtime is only a refresh signal; pages get data from the server. Every SQL function has `EXECUTE` revoked from `public`, `anon`, and `authenticated` (Postgres grants it to everyone by default), so only the server can call them.
 10. **Private profile data.** Phone numbers are shown only on admin pages; discovery cards show name, summary, skills, and preferences.
 
 ## Threats and controls

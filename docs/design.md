@@ -89,15 +89,15 @@ Rules for the admin UI:
 
 ## Projector (16:9, full screen)
 
-- No navigation, no cursor, no controls.
-- Base font size ~4–6 vw. Countdown ~20 vw, tabular numerals.
-- Content modes, chosen by the admin:
-  - **Phase + countdown:** phase name, big timer, next phase.
-  - **Rules:** the current phase's rules as ≤ 5 bullets.
-  - **Confirmed teams:** team identifier + domain. Whether member names may appear is open ([OQ-20](open-questions.md)).
-  - **Leaderboard:** rank, team, total. Shown only when the admin selects it; live-total visibility is open ([OQ-31](open-questions.md)).
-  - **Finalists:** a top-7 reveal.
-- The last 60 s of a countdown may change colour (`--warn`); 0 shows "Time's up".
+- No navigation, no cursor, no controls. Sizes in `vw` so it scales to any projector.
+- **Phase timer in the top-right corner on every screen** ([OQ-20](open-questions.md)); 0 shows "Time's up".
+- Screens. Each phase has a default; the admin can override at any time (cleared on advance):
+  - **Welcome** (before the event): title.
+  - **Round rules** (default for Introduction, Skill Filling, Startup Development, breaks, Marketplace until Phase 5, Top 7): phase name + the admin's rules, one bullet per line.
+  - **Matchmaking animation** (default for Matchmaking): cards swiping left/right, hearts floating, "Matchmaking in progress…". Static under `prefers-reduced-motion`.
+  - **Teams formed** (default for Rest): grid of "Team 7 · names · domain", growing live as the admin approves.
+  - **Team on stage** (default for Final Pitching): team number, names, domain, huge "Pitch · 06:12" segment timer.
+  - **Leaderboard** (Phase 5, shown live during the marketplace per [OQ-31](open-questions.md)) and **Finalists** (Phase 6) come later.
 - Never show login codes, private profile data, or admin UI.
 
 ## Accessibility basics

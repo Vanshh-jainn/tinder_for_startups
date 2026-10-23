@@ -12,7 +12,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 | 1 | Foundation | 🟨 Code done; waiting for the live Supabase check | 1 |
 | 2 | Profiles & matching | 🟨 Code done; waiting for the live Supabase check | 7 (tie rule), 36 |
 | 3 | Team workspace & submissions | 🟨 Code done; waiting for the live Supabase check | |
-| 4 | Timers & projector | ⬜ Not started | 20, 22, 30, 32 |
+| 4 | Timers & projector | 🟨 Code done; waiting for the live Supabase check | |
 | 5 | Marketplace | ⬜ Not started | 13, 14, 15, 16, 17, 34, 35 |
 | 6 | Qualification & rehearsal | ⬜ Not started | 18, 19 |
 | 7 | Hardening & deployment | ⬜ Not started | 25, 26, 27 |
@@ -65,11 +65,17 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - [ ] Not built: locking pitch edits at a given time. Decide with phases in Phase 4/5 ([OQ-32](docs/open-questions.md)).
 - [ ] **User:** push the migration and click through the [Phase 3 manual check](README.md#phase-3-manual-check)
 
-### Phase 4 — Timers & projector
+### Phase 4 — Timers & projector 🟨
 
-- [ ] `event_state` timer + admin controls + audit
-- [ ] Clients compute the countdown from the authoritative state; reconnect-safe
-- [ ] Projector page + admin content picker; no automatic switching on phase change
+- [x] `event_state` timer + `phases` (durations, rules); admin start/pause/resume/reset/end/extend/advance, all audited
+- [x] Phases drive participant access: matchmaking opens/closes with its phase (admin switch removed); pitch edits only in Startup Development
+- [x] Final Pitching: per-team 10-min timer split into Pitch 7 / Q&A 2 / rollover 1
+- [x] Countdown computed on each device from the authoritative state, corrected for clock skew; reconnect-safe
+- [x] Live updates via Realtime refresh signal on every participant, team, admin, and projector page (no more manual refresh)
+- [x] `/projector`: corner timer, default screen per phase + admin override, matchmaking animation, teams formed, rules, team on stage
+- [x] Admin "Event & projector" page: controls, pitch timer, projector picker, phase durations + rules
+- [x] Tests: 8 DB tests (phases, discovery coupling, reset, pitch timers, override, audit, triggers, anon access) + 7 timer unit tests (47 total)
+- [ ] **User:** push the migration and click through the [Phase 4 manual check](README.md#phase-4-manual-check)
 
 ### Phase 5 — Marketplace
 
@@ -119,3 +125,8 @@ Record each decision with a date. Answers to open questions also go in [docs/ope
 | 2026-10-26 | OQ-9: team changes = dissolve + recreate. OQ-10/29: no domain reroll. OQ-11: link-out Google Form set by admin. OQ-12: deck rules handled in the form. OQ-28: no notifications | User decision |
 | 2026-10-26 | Marketplace pitch: no product length limit; 2,000-char abuse cap in DB and form | User said no limit; cap only blocks megabyte pastes |
 | 2026-10-26 | Team numbers come from a sequence at approval | Rejected/superseded proposals don't leave gaps |
+| 2026-10-27 | **Spec deviation (§3, §13):** the projector follows a default screen per phase; admin can override any time | User decision |
+| 2026-10-27 | OQ-20/22/30/31/32 answered (see open-questions.md); Final Pitching uses per-team 7/2/1 timers; rules are typed text | User decision |
+| 2026-10-27 | Advancing starts the next timer; at 0 the phase stays open until the admin advances | Admin stays in control of transitions |
+| 2026-10-27 | Realtime carries only a "changed" signal on `event_state`; pages re-render on the server | One public row, no private data over the wire, no payload-building code |
+| 2026-10-27 | `projector_state` merged into `event_state` | One row, one subscription |

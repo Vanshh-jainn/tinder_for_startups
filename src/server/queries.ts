@@ -1,7 +1,9 @@
 import 'server-only';
 import { revalidatePath } from 'next/cache';
+import { connection } from 'next/server';
 import type { FormState } from '@/components/ActionForm';
 import type { Swipe } from '@/lib/matching';
+import type { Screen, TimerState } from '@/lib/timer';
 import { db } from './supabase';
 
 const PAGE = 1000; // Supabase's default API row cap
@@ -34,6 +36,27 @@ export function adminResult(result: { error?: string }, notice: string): FormSta
   if (result.error) return result;
   revalidatePath('/admin', 'layout');
   return { notice };
+}
+
+export type EventState = TimerState & {
+  phase_idx: number | null;
+  phase_name: string | null;
+  rules: string;
+  pitching_team_id: string | null;
+  projector_screen: Screen | null;
+  serverNow: number; // lets clients correct for their own clock being off
+};
+
+export async function getEventState(): Promise<EventState> {
+  await connection(); // live state: never prerender a page that reads it
+  const { data, error } = await db()
+    .from('event_state')
+    .select('phase_idx, timer_status, duration_ms, elapsed_ms, started_at, pitching_team_id, projector_screen, phases(name, rules)')
+    .single();
+  if (error) throw error;
+  const { phases, ...state } = data;
+  const phase = phases as unknown as { name: string; rules: string } | null;
+  return { ...state, phase_name: phase?.name ?? null, rules: phase?.rules ?? '', serverNow: Date.now() };
 }
 
 export async function getDiscoveryStatus(): Promise<'not_started' | 'open' | 'closed'> {

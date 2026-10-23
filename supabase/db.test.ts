@@ -17,6 +17,7 @@ beforeEach(async () => {
     create schema auth;
     create table auth.users (id uuid primary key);
     create role anon; create role authenticated; create role service_role bypassrls;
+    create publication supabase_realtime;
     grant usage on schema public to anon, authenticated, service_role;
     alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
     alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
@@ -276,5 +277,90 @@ describe('team workspace data', () => {
     await expect(db.query('select set_form_url($1, null)', [ADMIN])).rejects.toThrow(/permission denied/);
     await expect(db.query('select decide_team($1, $1, true)', [ADMIN])).rejects.toThrow(/permission denied/);
     await expect(db.query('select random_domain()')).rejects.toThrow(/permission denied/);
+  });
+});
+
+describe('event timer and projector', () => {
+  type State = { phase_idx: number | null; timer_status: string; duration_ms: number; elapsed_ms: number; projector_screen: string | null };
+  const state = async () =>
+    (await db.query<State>('select phase_idx, timer_status, duration_ms::int, elapsed_ms::int, projector_screen from event_state')).rows[0];
+  const timer = (action: string, minutes: number | null = null) => call('select timer_action($1, $2, $3)', [action, minutes]);
+
+  it('advances through phases, starting each timer with its configured duration', async () => {
+    expect(await state()).toMatchObject({ phase_idx: null, timer_status: 'idle' });
+    await expect(timer('start')).rejects.toThrow(/first phase/);
+    await timer('advance');
+    expect(await state()).toMatchObject({ phase_idx: 0, timer_status: 'running', duration_ms: 600000, elapsed_ms: 0 });
+    await timer('pause');
+    expect((await state()).timer_status).toBe('paused');
+    await timer('start');
+    await timer('extend', 5);
+    expect((await state()).duration_ms).toBe(900000);
+    await timer('advance');
+    expect((await state()).duration_ms).toBe(300000); // extension only affected the old phase
+  });
+
+  it('opens matchmaking on entering it and closes it on leaving', async () => {
+    const a = await addParticipant('A');
+    await addParticipant('B');
+    for (let i = 0; i < 3; i++) await timer('advance');
+    expect((await db.query<{ status: string }>('select status from discovery')).rows[0].status).toBe('open');
+    expect((await db.query('select 1 from swipes where viewer_id = $1', [a])).rows).toHaveLength(1);
+    await timer('advance');
+    expect((await db.query<{ status: string }>('select status from discovery')).rows[0].status).toBe('closed');
+  });
+
+  it('resets only the clock and ends with time up', async () => {
+    await addParticipant('A');
+    await addParticipant('B');
+    for (let i = 0; i < 3; i++) await timer('advance');
+    await timer('end');
+    expect(await state()).toMatchObject({ timer_status: 'idle', elapsed_ms: 600000 });
+    await timer('reset');
+    expect(await state()).toMatchObject({ timer_status: 'idle', elapsed_ms: 0, phase_idx: 2 });
+    expect((await db.query('select 1 from swipes')).rows).toHaveLength(2); // decks untouched
+  });
+
+  it('runs per-team pitch timers only in Final Pitching, and stops after it', async () => {
+    const { rows } = await call('select create_manual_team($1, $2, $3) as id', [await addParticipant('A'), await addParticipant('B')]);
+    const team = (rows[0] as { id: string }).id;
+    await expect(call('select start_pitch($1, $2)', [team])).rejects.toThrow(/Final Pitching only/);
+    for (let i = 0; i < 9; i++) await timer('advance');
+    expect(await state()).toMatchObject({ phase_idx: 8, timer_status: 'idle' });
+    await call('select start_pitch($1, $2)', [team]);
+    expect(await state()).toMatchObject({ timer_status: 'running', duration_ms: 600000 });
+    await expect(timer('advance')).rejects.toThrow(/last phase/);
+  });
+
+  it('resets the projector override on advance and validates screens', async () => {
+    await timer('advance');
+    await call('select set_projector_screen($1, $2)', ['teams']);
+    expect((await state()).projector_screen).toBe('teams');
+    await expect(call('select set_projector_screen($1, $2)', ['secret'])).rejects.toThrow(/check/);
+    await timer('advance');
+    expect((await state()).projector_screen).toBeNull();
+  });
+
+  it('audits timer actions and phase edits', async () => {
+    await timer('advance');
+    await call('select update_phase($1, $2, $3, $4)', [1, 7, 'Fill in every field']);
+    const { rows } = await db.query<{ action: string }>('select action from audit_log order by id');
+    expect(rows.map((r) => r.action)).toEqual(['timer.advance', 'phase.update']);
+    await expect(call('select update_phase($1, $2, $3, $4)', [1, 0, ''])).rejects.toThrow(/check/);
+  });
+
+  it('bumps event_state when teams change, so clients refresh', async () => {
+    await db.query(`update event_state set updated_at = '2000-01-01'`);
+    await call('select create_manual_team($1, $2, $3)', [await addParticipant('A'), await addParticipant('B')]);
+    const { rows } = await db.query<{ old: boolean }>(`select updated_at < '2001-01-01' as old from event_state`);
+    expect(rows[0].old).toBe(false);
+  });
+
+  it('lets anon read event_state only, and not change it', async () => {
+    await db.exec('reset role; set role anon');
+    expect((await db.query('select phase_idx from event_state')).rows).toHaveLength(1);
+    await expect(db.query('update event_state set phase_idx = 3')).rejects.toThrow(/permission denied/);
+    await expect(db.query('select * from phases')).rejects.toThrow(/permission denied/);
+    await expect(db.query(`select timer_action($1, 'advance')`, [ADMIN])).rejects.toThrow(/permission denied/);
   });
 });

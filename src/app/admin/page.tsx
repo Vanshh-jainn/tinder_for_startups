@@ -4,7 +4,8 @@ import { requireAdmin } from '@/server/auth';
 import { getActiveMemberships, getDiscoveryStatus, getSwipes } from '@/server/queries';
 import { db } from '@/server/supabase';
 import { AdminHeader } from './AdminHeader';
-import { createParticipant, resetParticipantCode, setDiscovery } from './actions';
+import Link from 'next/link';
+import { createParticipant, resetParticipantCode } from './actions';
 
 export default async function AdminPage() {
   await requireAdmin();
@@ -31,32 +32,15 @@ export default async function AdminPage() {
 
       <section>
         <h2>Matchmaking: {status.replace('_', ' ')}</h2>
-        {status === 'not_started' && (
-          <>
-            {incomplete.length > 0 && (
-              <p className="warn">
-                {incomplete.length} incomplete profile(s) will be left out of matchmaking:{' '}
-                {incomplete.map((p) => formatParticipantId(p.number)).join(', ')}
-              </p>
-            )}
-            <ActionForm
-              action={setDiscovery}
-              submitLabel="Open matchmaking"
-              confirmText={`Open matchmaking? All profiles lock now and swipe decks are built.${incomplete.length ? ` ${incomplete.length} incomplete profile(s) will be left out.` : ''}`}
-            >
-              <input type="hidden" name="status" value="open" />
-            </ActionForm>
-          </>
-        )}
-        {status === 'open' && (
-          <ActionForm action={setDiscovery} submitLabel="Close matchmaking" confirmText="Close matchmaking? Swiping stops for everyone.">
-            <input type="hidden" name="status" value="closed" />
-          </ActionForm>
-        )}
-        {status === 'closed' && (
-          <ActionForm action={setDiscovery} submitLabel="Reopen matchmaking" confirmText="Reopen matchmaking? Participants can swipe on their remaining cards.">
-            <input type="hidden" name="status" value="open" />
-          </ActionForm>
+        <p className="muted">
+          Matchmaking opens and closes with its phase on <Link href="/admin/event">Event &amp; projector</Link>. Profiles
+          lock when it opens.
+        </p>
+        {status === 'not_started' && incomplete.length > 0 && (
+          <p className="warn">
+            {incomplete.length} incomplete profile(s) will be left out of matchmaking:{' '}
+            {incomplete.map((p) => formatParticipantId(p.number)).join(', ')}
+          </p>
         )}
       </section>
 

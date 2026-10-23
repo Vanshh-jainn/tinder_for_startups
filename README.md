@@ -10,7 +10,7 @@ Three interfaces:
 
 ## Status
 
-🟨 **Phases 1–3 coded; waiting for the live Supabase check.** See [PROGRESS.md](PROGRESS.md).
+🟨 **Phases 1–4 coded; waiting for the live Supabase check.** See [PROGRESS.md](PROGRESS.md).
 
 ## Stack (planned)
 
@@ -109,3 +109,16 @@ Run `npx supabase db push` first. Continue from the Phase 2 check (at least one 
 6. A participant without a team opens `/team` and is sent back to `/me`.
 7. Admin dissolves a team: its members land on `/me` again and can be put in a new manual team (new number + domain).
 8. `audit_log` has `config.google_form_url`, `submission.edit_pitch`, and approve/manual rows that include the number and domain.
+
+### Phase 4 manual check
+
+Run `npx supabase db push` first. `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` must be set when you build or run, because live updates use them in the browser.
+
+1. Admin → Event & projector → in the phases table, type a few rules for Introduction (one per line), Save.
+2. Open `/projector` in another window. It shows "Tinder for Startups".
+3. Click **Advance → Introduction**. Without reloading, the projector shows the rules and a corner timer counting down; participant pages show the phase bar.
+4. Pause, +1 min, Resume, Reset clock, End now: the projector and phone timers follow each one.
+5. Advance to Matchmaking: participant pages switch to swipe cards by themselves, and the projector shows the animation. Advance again: swiping closes, and the projector shows "Teams formed", filling in as you approve teams.
+6. In Startup Development, a team can save its pitch; one phase later, the editor disappears.
+7. Pick a different screen under Projector: it switches; advancing returns it to the phase default.
+8. In Final Pitching, choose a team and start its timer. The projector shows "Pitch · 07:00", then Q&A, then the rollover.
