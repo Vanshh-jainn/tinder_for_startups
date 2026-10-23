@@ -10,9 +10,9 @@ Status: **planned**. No code exists yet. Update this file when an implementation
 |---|---|---|
 | App framework | Next.js (App Router) + TypeScript | One codebase for the participant portal, team workspace, admin panel, and projector. Server Actions and Route Handlers keep every write on the server. |
 | Database | Supabase Postgres | Relational constraints enforce rules in the DB itself: unique membership, integer money, no self-swipe. Row-level security (RLS) is a second defence line. |
-| Admin auth | Supabase Auth (email + password) | Real accounts for admins, with no default password. |
-| Participant/team auth | Custom server sessions (httpOnly cookie) | Teams log in with a shared username + code, which is not a fit for Supabase Auth. How participants get access is open ([OQ-4](open-questions.md)). |
-| Live updates | Supabase Realtime (Postgres Changes) | Timer, projector, and admin leaderboard update without polling. |
+| Admin auth | Supabase Auth verifies the email + password; the server then issues its own session | Real accounts with no default password, but one session system for all roles. No `@supabase/ssr` or proxy needed. |
+| Participant/team auth | Custom server sessions (httpOnly cookie, `sessions` table) | Participants log in with an admin-issued ID + code ([OQ-4](open-questions.md)); teams will use a shared username + code. |
+| Live updates | Supabase Realtime (Postgres Changes) for public-safe tables; admin pages poll the server | The timer and projector update without polling. Admin live views (leaderboard) poll every few seconds, which is fine for a handful of admins. |
 | Validation | `zod` at every server entry point | One schema per request body. |
 | Tests | Vitest (unit, pure modules); Playwright (rehearsal, Phase 6) | |
 | Hosting | Vercel Hobby + Supabase Free | $0. See [limits](#free-tier-limits-and-costs). Default unless [OQ-27](open-questions.md) says otherwise. |
@@ -32,9 +32,8 @@ Browser ──(Server Action / Route Handler)──► Next.js server ──(ser
   4. writes inside a transaction,
   5. writes an audit-log row for admin actions.
 - The service-role key exists only in server env vars. It must never appear in any `NEXT_PUBLIC_*` variable.
-- RLS is **enabled on every table**. The default is deny. Only these read policies exist:
-  - `anon`: `SELECT` on `event_state` and `projector_state`. These contain no private data (see below).
-  - authenticated admin: `SELECT` on admin-view tables for Realtime.
+- RLS is **enabled on every table**, and table grants are revoked from `anon`/`authenticated`. The default is deny. The only planned read policy:
+  - `anon`: `SELECT` on `event_state` and `projector_state` (Phase 4). These contain no private data (see below).
 - Participants and teams read their own data through server-rendered pages, not through direct DB access.
 
 ## Pure domain modules
@@ -55,8 +54,9 @@ src/
   app/
     (participant)/     profile, discovery/swipe
     team/              team workspace, pitch, marketplace
-    admin/             control panel (Supabase Auth protected)
+    admin/             control panel (admin session protected)
     projector/         read-only display
+  components/          shared client components (e.g. ActionForm)
   lib/                 pure modules (above)
   server/              DB access, sessions, auth guards, audit log
 supabase/
@@ -65,13 +65,13 @@ supabase/
 
 ## Data model
 
-Mapped from [spec.md §14](spec.md#14-suggested-data-model). Money is `integer` rupees everywhere.
+Mapped from [spec.md §14](spec.md#14-suggested-data-model). Money is `integer` rupees everywhere. Tables are created by the phase that first needs them; Phase 1 created `admins`, `participants` (ID, name, code hash), `sessions`, `login_attempts`, and `audit_log`.
 
 | Table | Key columns | DB-level guarantees |
 |---|---|---|
-| `participants` | id, identity fields ([OQ-3](open-questions.md)), skills, preferences, summary, profile_status | |
-| `participant_sessions` / `team_sessions` | token_hash, subject id, expires_at | Stores only the token hash |
-| `admins` | auth user id, role ([OQ-21](open-questions.md)) | |
+| `participants` | id, number (shown as `P<number>`), display_name, code_hash; Phase 2 adds skills, preferences, summary, profile_status; more identity fields per [OQ-3](open-questions.md) | |
+| `sessions` | token_hash, subject_type (`admin`/`participant`, `team` added in Phase 3), subject_id, expires_at, revoked_at | Stores only the token hash |
+| `admins` | auth user id. Several admins, one permission level ([OQ-21](open-questions.md)) | |
 | `swipes` | viewer_id, viewed_id, direction, rank, created_at | `CHECK (viewer_id <> viewed_id)`; `UNIQUE (viewer_id, viewed_id)`; `UNIQUE (viewer_id, rank)`; `CHECK (rank >= 1)` |
 | `matching_runs` | id, admin_id, created_at, algorithm_version, config, total_score, unassigned, status | |
 | `teams` | id, identifier, approval_state, formation_source (`algorithm`/`manual`), matching_run_id, rank_ab, rank_ba, pair_score, domain, username, code_hash | `UNIQUE (username)`; ranks/score set only if source = `algorithm` |

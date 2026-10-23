@@ -9,7 +9,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 | # | Phase | Status | Blocked by [open questions](docs/open-questions.md) |
 |---:|---|---|---|
 | 0 | Documentation & planning | ✅ Done | |
-| 1 | Foundation | ⬜ Not started | 1, 4, 21 (partly; can start with defaults) |
+| 1 | Foundation | 🟨 Code done; waiting for the live Supabase check | 1 |
 | 2 | Profiles & matching | ⬜ Not started | 3, 5, 6, 7, 33, 36 |
 | 3 | Team workspace & submissions | ⬜ Not started | 9, 10, 11, 12 |
 | 4 | Timers & projector | ⬜ Not started | 20, 22, 30, 32 |
@@ -27,16 +27,19 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - [x] docs: product, design, architecture, matching-algorithm, open-questions
 - [x] Record new open questions found during analysis (33–36)
 
-### Phase 1 — Foundation
+### Phase 1 — Foundation 🟨
 
-- [ ] Next.js + TypeScript app scaffold
-- [ ] Supabase project; migrations folder; schema with constraints from [architecture.md](docs/architecture.md#data-model)
-- [ ] RLS deny-by-default on all tables
-- [ ] Admin auth (Supabase Auth) + secure first-admin setup (no default password)
-- [ ] Session mechanism for participants/teams
-- [ ] Audit log helper
-- [ ] Test runner (Vitest) wired up
-- [ ] README setup section filled in
+- [x] Next.js 16 + TypeScript app scaffold (`cacheComponents` off)
+- [x] Supabase CLI + `supabase/migrations/`; foundation tables only (`admins`, `participants`, `sessions`, `login_attempts`, `audit_log`)
+- [x] RLS on + grants revoked from `anon`/`authenticated` on every table; `audit_log` append-only (verified in PGlite with stub roles)
+- [x] Admin login (Supabase Auth password check → server session) + first-admin setup with no default password (README)
+- [x] Session mechanism (`src/server/session.ts`): hashed tokens, httpOnly cookie, 12 h expiry, revocable
+- [x] Participant login with admin-issued ID + code; admin can add participants and reset codes
+- [x] Per-account login lockout (5 failures / 15 min)
+- [x] Audit log helper with secret redaction
+- [x] Vitest wired up (`npm test`, 7 passing); lint, typecheck, and build pass; no secrets in the client bundle
+- [x] README setup section
+- [ ] **User:** create the Supabase project, push the migration, create the first admin, and click through the [manual check](README.md#manual-check)
 
 ### Phase 2 — Profiles & matching
 
@@ -92,3 +95,9 @@ Record each decision with a date. Answers to open questions also go in [docs/ope
 | 2026-10-24 | All DB writes go through the Next.js server; browsers only read public-safe/admin rows via Realtime | Server-side enforcement (spec §1, §4) |
 | 2026-10-24 | Matching = Edmonds weighted blossom in max-cardinality mode, using an existing tested implementation | Spec §6 requires a global optimum on a general (non-bipartite) graph |
 | 2026-10-24 | Spec moved to `docs/spec.md`; open questions tracked in `docs/open-questions.md` | Keep the root clean; one live tracker |
+| 2026-10-24 | Dev uses a cloud Supabase project (no Docker); migrations applied with `npx supabase db push` | No Docker on the dev machine; free tier allows 2 projects |
+| 2026-10-24 | OQ-4 (participants): admin-issued ID + code. OQ-21: several admins, one permission level | User decision |
+| 2026-10-24 | Tables are added per phase, not all up front | Smaller reviews; open questions don't block early phases |
+| 2026-10-24 | Admin password checked by Supabase Auth, then our own session (no `@supabase/ssr`, no proxy); admin live views poll | One session system for all roles; less code |
+| 2026-10-24 | Next.js `cacheComponents` turned off | Every page depends on the session or live event state; caching risks stale data |
+| 2026-10-24 | No per-IP login limit, only per-account lockout | The whole venue shares one Wi-Fi IP |

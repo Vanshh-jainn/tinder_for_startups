@@ -11,7 +11,7 @@ Status values: `Open` · `Proposed` (someone suggested an answer and is waiting 
 | 1 | Capacity | Earlier notes say both 20 teams and 10 participants. What is the real capacity? | 1, 7 | Open | |
 | 2 | Registration | Who can take part? Do people register only on Unstop, or inside this app as well? | 1, 2 | Open | |
 | 3 | Identity | Which identity fields are required beyond skills, preferences, and the two-line summary? | 2 | Open | |
-| 4 | Credentials | How do participants get individual access before matchmaking? How are team credentials handed over after approval? | 1, 3 | Open | |
+| 4 | Credentials | How do participants get individual access before matchmaking? How are team credentials handed over after approval? | 1, 3 | Open (partly resolved) | **Participants (2026-10-24):** the admin adds each participant and issues a login code (ID `P<n>` + 8-character code, shown to the admin once, reusable until reset). **Team credential delivery:** still open. |
 | 5 | Preferences | What exact options and structure do preferences have? Can a profile change after matchmaking starts? | 2 | Open | |
 | 6 | Swipes | Can a swipe be undone or changed? When does discovery lock? | 2 | Open | |
 | 7 | Matching tie-break | Which stable, deterministic tie-break rule should apply? It must not depend on database order. | 2 | Open | See [matching-algorithm.md §Tie-breaking](matching-algorithm.md#tie-breaking) for the minimum that can be built now. |
@@ -28,7 +28,7 @@ Status values: `Open` · `Proposed` (someone suggested an answer and is waiting 
 | 18 | Tie above 7th | What deterministic procedure applies when a tie above 7th creates more than 7 potential finalists? | 6 | Open | |
 | 19 | Top-7 edge cases | What happens if fewer than 7 teams have valid counted submissions, or several teams have zero investment? | 6 | Open | |
 | 20 | Projector content | What exactly shows in each phase? May participant or team-member names be shown publicly? | 4 | Open | |
-| 21 | Admin accounts | Is there one admin or several? Are there different permission levels? | 1 | Open | |
+| 21 | Admin accounts | Is there one admin or several? Are there different permission levels? | 1 | Resolved | 2026-10-24: several admin accounts, all with the same permissions. |
 | 22 | Schedule recovery | What happens if a phase is extended, skipped, or reset? Do the later durations stay the same? | 4 | Open | |
 | 23 | Final results | Does the platform only show finalists and timers, or can the admin publish winners after judging? | 6 | Open | |
 | 24 | Judging rubric | The earlier rubric and final-pitch tie-breaker were not approved. They stay out of enforced logic until confirmed. | 6 | Open | |

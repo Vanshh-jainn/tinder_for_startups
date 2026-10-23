@@ -33,14 +33,20 @@ Instructions for any AI coding agent working in this repo (Claude Code, Codex, C
 
 ## Commands
 
-Not set up yet; they get added in Phase 1. Expected:
-
 ```bash
-npm run dev        # local dev server
-npm test           # Vitest unit tests
+npm run dev            # local dev server
+npm test               # Vitest unit tests
 npm run lint
-npm run build
+npm run build          # also generates Next's route types (LayoutProps/PageProps) used by `npx tsc --noEmit`
+npx supabase db push   # apply new migrations to the linked Supabase project
 ```
+
+## Code map
+
+- `src/server/`: server-only code. `supabase.ts` (DB clients), `session.ts` (cookie sessions), `auth.ts` (`requireAdmin`, `requireParticipant`), `rateLimit.ts`, `audit.ts`.
+- `src/lib/`: pure, tested logic.
+- `src/components/ActionForm.tsx`: the one form component; wraps a server action with `useActionState` and shows `error`/`notice`.
+- Every admin page and admin server action calls `requireAdmin()` first.
 
 ## Conventions
 
@@ -53,3 +59,13 @@ npm run build
 
 - **Never run `git commit` or `git push` yourself.** Stage changes only if asked. When work is ready, give the user the exact commit commands to run.
 - **Never add AI/tool attribution anywhere**: no `Co-Authored-By: Claude …`, no "Generated with Claude Code", no AI tags in commit messages, PR descriptions, code comments, or docs.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
