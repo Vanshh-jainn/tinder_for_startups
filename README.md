@@ -10,7 +10,7 @@ Three interfaces:
 
 ## Status
 
-🟨 **Phase 1 (foundation) in progress.** See [PROGRESS.md](PROGRESS.md).
+🟨 **Phases 1–2 coded; waiting for the live Supabase check.** See [PROGRESS.md](PROGRESS.md).
 
 ## Stack (planned)
 
@@ -83,3 +83,16 @@ npm run build
 5. As admin, click **Reset code**. The participant's open session is logged out, the old code fails, and the new code works.
 6. While logged in as the participant, open `/admin`. You should be sent to the admin login.
 7. In Supabase → Table Editor → `audit_log`, you should see `participant.create` and `participant.code_reset` rows with no codes or hashes in them.
+
+### Phase 2 manual check
+
+Run `npx supabase db push` first to apply the new migration. Use 4+ test participants (private windows or different browsers).
+
+1. Each participant fills in their profile. Leave one incomplete. Admin → Participants shows Complete/Incomplete and phone numbers.
+2. Admin → **Open matchmaking**. The confirm dialog warns about the incomplete profile.
+3. Participants refresh `/me`: profiles are locked and a card appears ("Profile 1 of N"). The incomplete participant sees the "talk to an organiser" message.
+4. Make two pairs swipe ♥ on each other; everything else ✕. Admin → Participants shows swipe progress.
+5. Admin → **Close matchmaking**, then Matching & teams → **Run matching**. Both mutual pairs appear as proposals with ranks and scores; the rest are listed as unassigned.
+6. Approve one, reject the other. Create a manual team from two unassigned participants; it shows the "Manual override" badge.
+7. A participant in an approved team refreshes `/me` and sees their teammate's name.
+8. Supabase → `audit_log` has rows for discovery, the matching run, approve/reject, and the manual team.

@@ -21,7 +21,7 @@ export async function requireParticipant() {
 
   const { data, error } = await db()
     .from('participants')
-    .select('id, number, display_name')
+    .select('id, number, display_name, phone, skills, preferences, summary')
     .eq('id', session.id)
     .maybeSingle();
   if (error) throw error;

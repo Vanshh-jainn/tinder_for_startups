@@ -10,7 +10,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 |---:|---|---|---|
 | 0 | Documentation & planning | ✅ Done | |
 | 1 | Foundation | 🟨 Code done; waiting for the live Supabase check | 1 |
-| 2 | Profiles & matching | ⬜ Not started | 3, 5, 6, 7, 33, 36 |
+| 2 | Profiles & matching | 🟨 Code done; waiting for the live Supabase check | 7 (tie rule), 36 |
 | 3 | Team workspace & submissions | ⬜ Not started | 9, 10, 11, 12 |
 | 4 | Timers & projector | ⬜ Not started | 20, 22, 30, 32 |
 | 5 | Marketplace | ⬜ Not started | 13, 14, 15, 16, 17, 34, 35 |
@@ -41,13 +41,18 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - [x] README setup section
 - [ ] **User:** create the Supabase project, push the migration, create the first admin, and click through the [manual check](README.md#manual-check)
 
-### Phase 2 — Profiles & matching
+### Phase 2 — Profiles & matching 🟨
 
-- [ ] Profile form + completion status
-- [ ] Discovery + swipe records (rank, direction, timestamp; DB constraints)
-- [ ] `src/lib/matching` pure module + all tests in [matching-algorithm.md](docs/matching-algorithm.md#required-tests)
-- [ ] Admin: run matching, eligible pairs, proposals, approve/reject, rerun/reset, unassigned list
-- [ ] Admin: manual team create/edit, labelled as an override
+- [x] Profile form (phone, skills, preferences, summary) + completion status; partial saves; locked once matchmaking opens
+- [x] Admin open/close matchmaking switch; random decks built at first open from complete profiles only
+- [x] Swipe cards with Pass / Interested buttons; swipes final; DB constraints on self-swipe, duplicates, ranks
+- [x] `src/lib/matching` (blossom, max-cardinality) + all tests in [matching-algorithm.md](docs/matching-algorithm.md#required-tests), incl. brute-force oracle and determinism
+- [x] Admin: run matching, eligible pairs with ranks/scores, proposals, approve/reject, rerun, clear proposals, unassigned list
+- [x] Admin: manual team creation labelled "Manual override"; edit = dissolve + recreate
+- [x] Admin participant table: phone, profile status, swipe progress, team status
+- [x] Atomic, audited SQL functions; DB tests (`supabase/db.test.ts`, PGlite) for constraints, permissions, decks, teams
+- [ ] Not built: admin editing a participant's profile (spec §12 "authorised corrections"). Add when needed.
+- [ ] **User:** push the migration and click through the [Phase 2 manual check](README.md#phase-2-manual-check)
 
 ### Phase 3 — Team workspace & submissions
 
@@ -101,3 +106,9 @@ Record each decision with a date. Answers to open questions also go in [docs/ope
 | 2026-10-24 | Admin password checked by Supabase Auth, then our own session (no `@supabase/ssr`, no proxy); admin live views poll | One session system for all roles; less code |
 | 2026-10-24 | Next.js `cacheComponents` turned off | Every page depends on the session or live event state; caching risks stale data |
 | 2026-10-24 | No per-IP login limit, only per-account lockout | The whole venue shares one Wi-Fi IP |
+| 2026-10-25 | OQ-33: rank = position in a random deck built at first open. OQ-5: free-text skills/preferences. OQ-6: swipes final, admin open/close switch. OQ-3: name + participant-entered phone (admin-only) | User decision |
+| 2026-10-25 | Decks include only profiles complete at first open; summary max 160 chars | User decision |
+| 2026-10-25 | Matching library: `edmonds-blossom-fixed` (MIT) | Supports max-cardinality; matched brute force on 3,000 random graphs; fixes the original port's accidental globals |
+| 2026-10-25 | Multi-step admin changes are SQL functions with in-transaction audit rows | Atomic; no half-applied team changes; closes the Phase 1 audit-ordering shortcut for these actions |
+| 2026-10-25 | Team "edit" = dissolve + create manual team | Keeps algorithm run records intact (spec §17) |
+| 2026-10-25 | DB tests run migrations in PGlite with stand-in Supabase roles | Catches constraint/permission mistakes without a live project |

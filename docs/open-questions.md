@@ -10,11 +10,11 @@ Status values: `Open` · `Proposed` (someone suggested an answer and is waiting 
 |---:|---|---|---|---|---|
 | 1 | Capacity | Earlier notes say both 20 teams and 10 participants. What is the real capacity? | 1, 7 | Open | |
 | 2 | Registration | Who can take part? Do people register only on Unstop, or inside this app as well? | 1, 2 | Open | |
-| 3 | Identity | Which identity fields are required beyond skills, preferences, and the two-line summary? | 2 | Open | |
+| 3 | Identity | Which identity fields are required beyond skills, preferences, and the two-line summary? | 2 | Resolved | 2026-10-25: display name (entered by admin) + phone (entered by participant, visible to admins only, never on cards). |
 | 4 | Credentials | How do participants get individual access before matchmaking? How are team credentials handed over after approval? | 1, 3 | Open (partly resolved) | **Participants (2026-10-24):** the admin adds each participant and issues a login code (ID `P<n>` + 8-character code, shown to the admin once, reusable until reset). **Team credential delivery:** still open. |
-| 5 | Preferences | What exact options and structure do preferences have? Can a profile change after matchmaking starts? | 2 | Open | |
-| 6 | Swipes | Can a swipe be undone or changed? When does discovery lock? | 2 | Open | |
-| 7 | Matching tie-break | Which stable, deterministic tie-break rule should apply? It must not depend on database order. | 2 | Open | See [matching-algorithm.md §Tie-breaking](matching-algorithm.md#tie-breaking) for the minimum that can be built now. |
+| 5 | Preferences | What exact options and structure do preferences have? Can a profile change after matchmaking starts? | 2 | Resolved | 2026-10-25: skills and preferences are free text (max 200 chars each); summary max 160 chars. Profiles lock when the admin opens matchmaking. |
+| 6 | Swipes | Can a swipe be undone or changed? When does discovery lock? | 2 | Resolved | 2026-10-25: swipes are final. The admin opens/closes matchmaking with a switch; closing stops all swiping. Only profiles complete at the first open get a deck and appear in decks. |
+| 7 | Matching tie-break | Which stable, deterministic tie-break rule should apply? It must not depend on database order. | 2 | Open | Determinism (sorted inputs) is built; the human-readable rule is still open. See [matching-algorithm.md §Tie-breaking](matching-algorithm.md#tie-breaking). |
 | 8 | Manual overrides | Admin-made teams without mutual right-swipes are recorded as overrides. Are any other guardrails needed? | 2 | Open | |
 | 9 | Team changes | What happens if an approved team changes after its credentials are issued? | 3 | Open | |
 | 10 | Domain reroll | Can the admin reroll or change a domain after it is assigned? | 3 | Open | |
@@ -40,7 +40,7 @@ Status values: `Open` · `Proposed` (someone suggested an answer and is waiting 
 | 30 | Timer reset | Does resetting a timer reset only the clock, or also the data submitted in that phase? | 4 | Open | |
 | 31 | Leaderboard privacy | Can the projector show live counted totals during the marketplace, or only after it closes? Participants must not see totals during the marketplace. | 4, 5 | Open | |
 | 32 | Phase transitions | Does advancing a phase close the previous phase's participant actions automatically? Can the admin reopen it? | 4 | Open | |
-| 33 | Suggestion rank source | The algorithm uses `Rank(A→B)`, defined as "suggestion rank" in the discovery sequence (§5). Is the rank the order in which the system showed profiles, or does the participant rank people? If the system decides the order, what decides it? | 2 | Open | Found during analysis. |
+| 33 | Suggestion rank source | The algorithm uses `Rank(A→B)`, defined as "suggestion rank" in the discovery sequence (§5). Is the rank the order in which the system showed profiles, or does the participant rank people? If the system decides the order, what decides it? | 2 | Resolved | 2026-10-25: each participant's deck is a random order built when matchmaking first opens; rank = position in that deck (1 = shown first). |
 | 34 | Investment granularity | Can amounts be any whole rupee, or must they be multiples of something like ₹50 or ₹100? The spec requires integers only. | 5 | Open | Found during analysis. |
 | 35 | Minimum team count | Each team must pick exactly 7 other startups, so at least 8 teams with marketplace pitches are needed. What happens if fewer exist? | 5 | Open | Found during analysis. Related to #19. |
 | 36 | Odd participant count | With 2-person teams, an odd number of participants always leaves someone unassigned. Is the admin expected to handle this (for example with a manual team of 3)? The spec says teams have exactly 2. | 2, 3 | Open | Found during analysis. |

@@ -12,7 +12,7 @@ Source of truth: [spec.md §6](spec.md#6-required-matching-algorithm). This docu
   2. Among all maximum-cardinality matchings, minimise the total `PairScore`.
   3. Break remaining ties deterministically (see [Tie-breaking](#tie-breaking)).
 
-The meaning of "suggestion rank" (system display order or participant's own ranking) is unresolved. See [OQ-33](open-questions.md). The algorithm does not care: it only needs an integer rank ≥ 1 per swipe.
+"Suggestion rank" is the card's position in the participant's random deck, built when matchmaking first opens ([OQ-33](open-questions.md), resolved). The algorithm only needs an integer rank ≥ 1 per swipe.
 
 ## Why not greedy or Hungarian
 
@@ -34,17 +34,17 @@ With max-cardinality mode on, the solver first fixes the largest possible team c
 
 All values are integers, so there is no floating-point error.
 
-**Implementation choice:** use an existing, tested implementation. For example, a JS/TS port of Joris van Rantwijk's `mwmatching` supports `maxcardinality`. Do not hand-write blossom from scratch. Before adopting a library, confirm that it supports max-cardinality mode and that its licence is compatible. Record the choice in [PROGRESS.md decision log](../PROGRESS.md#decision-log). The brute-force oracle test below catches porting bugs.
+**Implementation:** npm `edmonds-blossom-fixed` (MIT), a JS port of Joris van Rantwijk's `mwmatching` with max-cardinality support. The `-fixed` fork removes accidental global variables from the original port. Before adoption it matched a brute-force optimum on 3,000 random graphs; the oracle test in the suite keeps checking it.
 
 ## Module boundary
 
-The matching code is a **pure function**: no DB, no HTTP, no UI imports. Planned location: `src/lib/matching/`.
+The matching code is a **pure function**: no DB, no HTTP, no UI imports. Location: [src/lib/matching/index.ts](../src/lib/matching/index.ts), tests in `matching.test.ts` next to it.
 
 ```ts
 type Swipe = {
   viewerId: string;
   viewedId: string;
-  direction: 'right' | 'left';
+  direction: 'right' | 'left' | null; // null = card not swiped yet
   rank: number; // integer ≥ 1, unique per viewer
 };
 
@@ -73,10 +73,13 @@ Steps:
 4. Run the blossom solver with the weight transform above.
 5. Map the result back to IDs and sort the output.
 
-The caller (a server action, admin only) loads the data, calls `runMatching`, and stores:
+The caller (admin server action `runMatchingAction`) loads the data, calls `runMatching`, and passes the result to the SQL function `save_matching_run`, which in one transaction:
 
-- a `matching_runs` row: id, admin actor, timestamp, algorithm version, config, total score, unassigned list, status;
-- one proposed team per pair: both ranks, pair score, run ID, `formation_source = 'algorithm'`, `approval_state = 'proposed'`.
+- marks any still-pending proposals `superseded`;
+- re-checks every pair against `swipes` (mutual right, same ranks, same score) and aborts otherwise;
+- stores a `matching_runs` row (admin, time, algorithm version, team count, total score, unassigned list);
+- stores one team per pair: both ranks, pair score, run ID, `formation_source = 'algorithm'`, `approval_state = 'proposed'`;
+- writes the audit row.
 
 ## Worked example (from spec)
 
@@ -121,5 +124,5 @@ From [spec.md §17](spec.md#17-required-tests), plus an oracle:
 - Each participant appears in at most one team.
 - **Determinism:** shuffle the swipe and participant input order 50 times; the output is identical every time.
 - Unassigned participants are reported.
-- Manual override teams do not change stored run records.
+- Manual override teams do not change stored run records (DB test in `supabase/db.test.ts`).
 - **Brute-force oracle:** for random graphs with ≤ 10 vertices, enumerate every matching, take the best `(max cardinality, min total score)`, and assert the solver matches it on both values.

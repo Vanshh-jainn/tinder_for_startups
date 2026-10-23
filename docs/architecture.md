@@ -65,17 +65,20 @@ supabase/
 
 ## Data model
 
-Mapped from [spec.md §14](spec.md#14-suggested-data-model). Money is `integer` rupees everywhere. Tables are created by the phase that first needs them; Phase 1 created `admins`, `participants` (ID, name, code hash), `sessions`, `login_attempts`, and `audit_log`.
+Mapped from [spec.md §14](spec.md#14-suggested-data-model). Money is `integer` rupees everywhere. Tables are created by the phase that first needs them; Phase 1 created `admins`, `participants` (ID, name, code hash), `sessions`, `login_attempts`, and `audit_log`. Phase 2 added profile columns, `discovery`, `swipes`, `matching_runs`, `teams`, and `team_members`.
+
+Multi-step admin changes are **SQL functions** (`set_discovery`, `save_matching_run`, `reset_matching`, `decide_team`, `create_manual_team`, `dissolve_team`). Each runs in one transaction and writes its own audit row, so a change can never land without its audit entry or half-applied. The server calls them via `rpc()` in `src/server/queries.ts`. Supabase caps API responses at 1,000 rows, so large reads (swipes) go through `fetchAll()`, which pages.
 
 | Table | Key columns | DB-level guarantees |
 |---|---|---|
-| `participants` | id, number (shown as `P<number>`), display_name, code_hash; Phase 2 adds skills, preferences, summary, profile_status; more identity fields per [OQ-3](open-questions.md) | |
+| `participants` | id, number (shown as `P<number>`), display_name, code_hash, phone, skills, preferences, summary, profile_complete (generated) | Phone format, length limits |
+| `discovery` | single row: status (`not_started`/`open`/`closed`) | Profiles lock once it leaves `not_started` |
 | `sessions` | token_hash, subject_type (`admin`/`participant`, `team` added in Phase 3), subject_id, expires_at, revoked_at | Stores only the token hash |
 | `admins` | auth user id. Several admins, one permission level ([OQ-21](open-questions.md)) | |
-| `swipes` | viewer_id, viewed_id, direction, rank, created_at | `CHECK (viewer_id <> viewed_id)`; `UNIQUE (viewer_id, viewed_id)`; `UNIQUE (viewer_id, rank)`; `CHECK (rank >= 1)` |
-| `matching_runs` | id, admin_id, created_at, algorithm_version, config, total_score, unassigned, status | |
-| `teams` | id, identifier, approval_state, formation_source (`algorithm`/`manual`), matching_run_id, rank_ab, rank_ba, pair_score, domain, username, code_hash | `UNIQUE (username)`; ranks/score set only if source = `algorithm` |
-| `team_members` | team_id, participant_id, status | Partial unique index on `participant_id WHERE status = 'active'` |
+| `swipes` | one row per deck card: viewer_id, viewed_id, rank, direction (null until swiped), swiped_at. Deck built at first open in random order | `CHECK (viewer_id <> viewed_id)`; PK `(viewer_id, viewed_id)`; `UNIQUE (viewer_id, rank)`; `CHECK (rank >= 1)` |
+| `matching_runs` | id, admin_id, created_at, algorithm_version, team_count, total_score, unassigned | |
+| `teams` | id, approval_state (`proposed`/`approved`/`rejected`/`superseded`/`dissolved`), formation_source (`algorithm`/`manual`), matching_run_id, rank_ab, rank_ba, pair_score, created_by, decided_by; Phase 3 adds identifier, domain, username, code_hash | Algorithm teams must have run + ranks + score, manual teams must not; manual teams are never `proposed` |
+| `team_members` | team_id, participant_id, status (`proposed`/`active`/`ended`) | Partial unique index on `participant_id WHERE status = 'active'` |
 | `submissions` | team_id, pitch (two lines), deck_status, updated_by, updated_at | `UNIQUE (team_id)` |
 | `investments` | investor_team_id, target_team_id, amount, confirmed_at, voided_at | `CHECK (investor_team_id <> target_team_id)`; `CHECK (amount >= 200)`; `UNIQUE (investor_team_id, target_team_id)`; `UNIQUE (investor_team_id, amount)` |
 | `event_state` | single row: phase, status, started_at, duration_ms, elapsed_before_pause_ms, marketplace_open | Single-row table |

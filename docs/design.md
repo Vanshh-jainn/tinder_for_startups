@@ -32,14 +32,14 @@ Every text/background pair must meet WCAG AA contrast (4.5:1). The projector sho
 **Persistent header:** phase name + countdown, always visible.
 
 1. **Profile** (Skill Filling phase)
-   - Fields: skills, preferences, two-line summary. Field structure is open ([OQ-3](open-questions.md), [OQ-5](open-questions.md)).
-   - The summary is limited to 2 lines, with a live counter.
+   - Fields: phone (organisers only), skills, preferences, summary. All free text ([OQ-3](open-questions.md), [OQ-5](open-questions.md)).
+   - Summary max 160 characters; skills and preferences max 200. Partial saves allowed.
    - A completion indicator: "Profile 2/3 complete".
 2. **Discovery / swipe** (Matchmaking phase)
    - One card at a time: summary, skills, and preferences. Show no private fields.
-   - Swipe gesture **plus** visible ✕ / ♥ buttons, because gestures alone are not accessible. Keyboard: ← / →.
-   - Progress: "12 of 30 seen".
-   - Undo is not shown until [OQ-6](open-questions.md) is answered.
+   - Visible ✕ Pass / ♥ Interested buttons (built). A swipe gesture can be added later on top, never instead.
+   - Progress: "Profile 12 of 30".
+   - No undo: swipes are final ([OQ-6](open-questions.md)).
    - Locked state: "Discovery closed. Waiting for team approval."
 3. **Waiting** (after Matchmaking, before approval): a neutral message only. Do not hint at match results before the admin approves.
 

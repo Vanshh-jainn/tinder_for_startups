@@ -8,6 +8,7 @@ import type { FormState } from '@/components/ActionForm';
 import { formatParticipantId, generateLoginCode } from '@/lib/security';
 import { audit } from '@/server/audit';
 import { requireAdmin } from '@/server/auth';
+import { rpc } from '@/server/queries';
 import { clearFailures, isLockedOut, recordFailure } from '@/server/rateLimit';
 import { createSession, revokeSessions } from '@/server/session';
 import { authClient, db } from '@/server/supabase';
@@ -80,4 +81,17 @@ export async function resetParticipantCode(_prev: FormState, formData: FormData)
   await clearFailures(`participant:${data.number}`);
   await audit(`admin:${adminId}`, 'participant.code_reset', 'participants', id, null, null);
   return { notice: `New code ${code}. Shown only once.` };
+}
+
+const discoverySchema = z.object({ status: z.enum(['open', 'closed']) });
+
+export async function setDiscovery(_prev: FormState, formData: FormData): Promise<FormState> {
+  const adminId = await requireAdmin();
+  const parsed = discoverySchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: 'Invalid status.' };
+
+  const result = await rpc('set_discovery', { p_admin: adminId, p_status: parsed.data.status });
+  if (result.error) return result;
+  revalidatePath('/admin', 'layout');
+  return { notice: `Matchmaking ${parsed.data.status}.` };
 }
