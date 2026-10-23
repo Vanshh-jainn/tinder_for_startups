@@ -1,19 +1,18 @@
 // Investment marketplace rules (spec §9). Pure. The SQL functions in the marketplace migration are
 // the authority; this mirrors them for live feedback in the browser and for leaderboard ranking.
-import { elapsedMs, type TimerState } from './timer';
 
 export const BUDGET = 5000;
 export const MIN_AMOUNT = 200;
 export const STEP = 100;
 export const MAX_PICKS = 7;
-export const DECISION_MS = 10 * 60_000; // first 10 min of the phase: pick + allocate
 export const MARKETPLACE_PHASE = 6;
 
 export type MarketWindow = 'closed' | 'decision' | 'confirmation';
 
-export function marketplaceWindow(phaseIdx: number | null, t: TimerState, nowMs: number): MarketWindow {
+// Decision time until the admin starts confirmation time; the timer only displays time.
+export function marketplaceWindow(phaseIdx: number | null, confirmationStarted: boolean): MarketWindow {
   if (phaseIdx !== MARKETPLACE_PHASE) return 'closed';
-  return elapsedMs(t, nowMs) < DECISION_MS ? 'decision' : 'confirmation';
+  return confirmationStarted ? 'confirmation' : 'decision';
 }
 
 // Pick 7, or every available startup if there are fewer (OQ-35).

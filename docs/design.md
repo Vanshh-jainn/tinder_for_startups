@@ -53,8 +53,8 @@ Members land here automatically (`/me` → `/team`) once their team is approved.
   - A Google Form button that opens the admin-configured URL in a new tab.
   - Submission status checklist: pitch saved ✓/✗; deck goes through the form (not tracked in the app).
 - **Investment Marketplace (built):** shown once the marketplace phase starts.
-  1. **Decision time (first 10 min):** a countdown "Decision time: 04:12 left", then a card per startup (only teams with a pitch; "Team N" + pitch; not your own). Tick a card to pick it and type an amount. Live: "4/7 picked · ₹1,200 left to allocate", a list of broken rules (count, ≥ ₹200, multiples of ₹100, all different, total ₹5,000). Save is disabled until every rule passes; either member can save; the server re-checks everything.
-  2. **Confirmation time (last 5 min):** no edits. A row per investment with a **Confirm** button, "5/7 confirmed", and the warning **"Confirm all 7. If you don't confirm every one, none of your investments count."** A team that saved nothing is told it can't invest.
+  1. **Decision time (until the admin starts confirmation time):** a card per startup (only teams with a pitch; "Team N" + pitch; not your own). Tick a card to pick it and type an amount. Live: "4/7 picked · ₹1,200 left to allocate", a list of broken rules (count, ≥ ₹200, multiples of ₹100, all different, total ₹5,000). Save is disabled until every rule passes; either member can save; the server re-checks everything.
+  2. **Confirmation time (started by the admin, 5-minute display timer):** no edits. A row per investment with a **Confirm** button, "5/7 confirmed", and the warning **"Confirm all 7. If you don't confirm every one, none of your investments count."** A team that saved nothing is told it can't invest.
   3. **After the marketplace:** "All 7 confirmed, so they counted" or "none of them counted".
   - Investment totals and rankings are **never** shown on participant pages (the projector shows them in the hall, per [OQ-31](open-questions.md)).
 - **Read-only afterwards:** team members can't edit membership, domain, other teams, totals, or timers. These controls simply don't exist in the UI.
@@ -65,12 +65,12 @@ A top nav (`AdminHeader`) on every admin page; all admin pages update live.
 
 | Page | Status | Key widgets |
 |---|---|---|
-| Event & projector (`/admin/event`) | Built | Phase + big timer; start/pause/resume, +1/+5 min, reset clock, end now, advance (confirm names side effects); Final Pitching team picker; projector screen picker (follow phase / override) + link to `/projector`; phase durations and rules |
+| Event & projector (`/admin/event`) | Built | Phase + big timer (display only); start/pause/resume, +1/+5 min, reset clock, end now, advance (confirm names side effects); **Start confirmation time** in the marketplace; Final Pitching picker (finalists only); projector screen picker (follow phase / override) + link to `/projector`; phase durations and rules |
 | Participants (`/admin`) | Built | Matchmaking status + incomplete-profile warning; add participant (code shown once); table: ID, name, phone, profile, swipe progress, team, reset code |
 | Matching (`/admin/matching`) | Built | Run matching, clear proposals, last-run summary + unassigned; proposed teams with ranks/score, approve/reject; eligible pairs table |
 | Teams & submissions (`/admin/teams`) | Built | Google Form link; approved teams with number, members, domain, source badge, editable pitch, dissolve; manual team builder (**Manual override**) |
-| Marketplace (`/admin/marketplace`) | Built | Stage + countdown; counted leaderboard with "X of N teams fully confirmed"; per-team status (no allocation / saved / confirming m/k / complete), allocation summary, void (audited) |
-| Qualification | Planned (6) | Ranking; top-7 result; **unresolved tie banner** when [OQ-18](open-questions.md) applies; confirm button |
+| Marketplace (`/admin/marketplace`) | Built | Stage + countdown; Start confirmation time; counted leaderboard with "X of N teams fully confirmed"; per-team status (no allocation / saved / confirming m/k / complete), allocation summary, void (audited) |
+| Qualification (`/admin/qualification`) | Built | Top-7 result from counted totals; note for ties / ₹0 teams; checkboxes when a tie crosses the cut; confirm (from Break & Top 7); confirmed list; **Reveal next finalist** |
 | Overview, Audit log | Not built | Counts and warnings; filterable audit table (the log is in Supabase meanwhile) |
 
 Rules for the admin UI:
@@ -85,12 +85,12 @@ Rules for the admin UI:
 - **Phase timer in the top-right corner on every screen** ([OQ-20](open-questions.md)); 0 shows "Time's up".
 - Screens. Each phase has a default; the admin can override at any time (cleared on advance):
   - **Welcome** (before the event): title.
-  - **Round rules** (default for Introduction, Skill Filling, Startup Development, breaks, Top 7): phase name + the admin's rules, one bullet per line.
+  - **Round rules** (default for Introduction, Skill Filling, Startup Development, Break): phase name + the admin's rules, one bullet per line.
   - **Matchmaking animation** (default for Matchmaking): cards swiping left/right, hearts floating, "Matchmaking in progress…". Static under `prefers-reduced-motion`.
   - **Teams formed** (default for Rest): grid of "Team 7 · names · domain", growing live as the admin approves.
   - **Team on stage** (default for Final Pitching): team number, names, domain, huge "Pitch · 06:12" segment timer.
-  - **Investment leaderboard** (default for the marketplace): stage ("Decision time · 04:12 left" / "Confirmation time · live"), "X of N teams fully confirmed", rank · team · counted total, updating live as teams confirm ([OQ-31](open-questions.md)).
-  - **Finalists** (Phase 6) comes later.
+  - **Investment leaderboard** (default for the marketplace): stage ("Decision time · 08:12" / "Confirmation time · live · 03:40"), "X of N teams fully confirmed", rank · team · counted total, updating live as teams confirm ([OQ-31](open-questions.md)).
+  - **Finalist reveal** (default for Break & Top 7): one slot per finalist showing "?", revealed from the lowest up each time the admin clicks *Reveal next*: place, team, names, domain, with a short scale-in animation.
 - Never show login codes, private profile data, or admin UI.
 
 ## Accessibility basics

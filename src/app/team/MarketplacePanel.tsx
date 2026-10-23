@@ -1,37 +1,26 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ActionForm } from '@/components/ActionForm';
-import { allocationErrors, BUDGET, DECISION_MS, marketplaceWindow, MIN_AMOUNT, STEP } from '@/lib/marketplace';
-import { elapsedMs, formatClock, type TimerState } from '@/lib/timer';
+import { allocationErrors, BUDGET, MIN_AMOUNT, STEP, type MarketWindow } from '@/lib/marketplace';
 import { confirmInvestment, saveAllocation } from './actions';
 
 type Target = { id: string; number: number; pitch: string };
 type Saved = { target: string; amount: number; confirmed: boolean };
 
 type Props = {
-  phaseIdx: number | null;
-  timer: TimerState;
-  serverNow: number;
+  stage: MarketWindow; // the admin moves decision → confirmation; the page re-renders live
   targets: Target[];
   saved: Saved[];
   required: number;
   wasVoided: boolean; // admin voided an earlier submission: the team may redo it during confirmation time
 };
 
-export function MarketplacePanel({ phaseIdx, timer, serverNow, targets, saved, required, wasVoided }: Props) {
-  const [now, setNow] = useState(serverNow);
+export function MarketplacePanel({ stage, targets, saved, required, wasVoided }: Props) {
   const [picks, setPicks] = useState<Record<string, string>>(() =>
     Object.fromEntries(saved.map((s) => [s.target, String(s.amount)])),
   );
 
-  useEffect(() => {
-    const offset = serverNow - Date.now();
-    const id = setInterval(() => setNow(Date.now() + offset), 1000);
-    return () => clearInterval(id);
-  }, [serverNow]);
-
-  const stage = marketplaceWindow(phaseIdx, timer, now);
   const confirmed = saved.filter((s) => s.confirmed).length;
   const canEdit = confirmed === 0 && (stage === 'decision' || (stage === 'confirmation' && wasVoided));
   const byId = new Map(targets.map((t) => [t.id, t]));
@@ -53,13 +42,12 @@ export function MarketplacePanel({ phaseIdx, timer, serverNow, targets, saved, r
     const total = items.reduce((sum, i) => sum + (Number.isFinite(i.amount) ? i.amount : 0), 0);
     const unsaved =
       items.length !== saved.length || items.some((i) => saved.find((s) => s.target === i.target)?.amount !== i.amount);
-    const decisionLeft = Math.max(0, DECISION_MS - elapsedMs(timer, now));
 
     return (
       <section>
         <p className="muted">
           {stage === 'decision'
-            ? `Decision time: ${formatClock(decisionLeft)} left. Pick ${required} startup${required === 1 ? '' : 's'} and split ₹5,000. Amounts: at least ₹${MIN_AMOUNT}, multiples of ₹${STEP}, all different. You can't change it after decision time.`
+            ? `Decision time. Pick ${required} startup${required === 1 ? '' : 's'} and split ₹5,000. Amounts: at least ₹${MIN_AMOUNT}, multiples of ₹${STEP}, all different. Save before the organisers start confirmation time; after that nothing can change.`
             : 'An organiser reset your investments. Redo and save them, then confirm each one.'}
         </p>
         <p className="stat">

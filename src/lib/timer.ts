@@ -36,7 +36,7 @@ export function pitchSegment(t: TimerState, nowMs: number): { label: string; rem
   return { label: 'Scoring rollover', remainingMs: remaining };
 }
 
-export const SCREENS = ['welcome', 'rules', 'matchmaking', 'teams', 'leaderboard', 'pitching'] as const;
+export const SCREENS = ['welcome', 'rules', 'matchmaking', 'teams', 'leaderboard', 'finalists', 'pitching'] as const;
 export type Screen = (typeof SCREENS)[number];
 
 export const SCREEN_LABELS: Record<Screen, string> = {
@@ -45,11 +45,12 @@ export const SCREEN_LABELS: Record<Screen, string> = {
   matchmaking: 'Matchmaking animation',
   teams: 'Teams formed',
   leaderboard: 'Investment leaderboard',
+  finalists: 'Finalist reveal',
   pitching: 'Team on stage',
 };
 
 // Default projector screen per phase index (0 Introduction … 8 Final Pitching).
-const DEFAULT_SCREENS: Screen[] = ['rules', 'rules', 'matchmaking', 'teams', 'rules', 'rules', 'leaderboard', 'rules', 'pitching'];
+const DEFAULT_SCREENS: Screen[] = ['rules', 'rules', 'matchmaking', 'teams', 'rules', 'rules', 'leaderboard', 'finalists', 'pitching'];
 
 export function screenFor(phaseIdx: number | null, override: Screen | null): Screen {
   return override ?? (phaseIdx === null ? 'welcome' : DEFAULT_SCREENS[phaseIdx]);

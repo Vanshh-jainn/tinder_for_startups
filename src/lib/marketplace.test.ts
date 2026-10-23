@@ -1,22 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { allocationErrors, marketplaceWindow, rankTotals, requiredPicks } from './marketplace';
-import type { TimerState } from './timer';
 
-const T0 = Date.parse('2026-10-28T10:00:00Z');
-const running: TimerState = { timer_status: 'running', duration_ms: 900_000, elapsed_ms: 0, started_at: new Date(T0).toISOString() };
 const valid = [200, 300, 400, 500, 600, 700, 2300].map((amount, i) => ({ target: `t${i}`, amount }));
 
 describe('marketplaceWindow', () => {
-  it('is decision time for the first 10 minutes, then confirmation time', () => {
-    expect(marketplaceWindow(6, running, T0 + 9 * 60_000)).toBe('decision');
-    expect(marketplaceWindow(6, running, T0 + 10 * 60_000)).toBe('confirmation');
-  });
-
-  it('counts banked time while paused and is closed in other phases', () => {
-    const paused: TimerState = { ...running, timer_status: 'paused', started_at: null, elapsed_ms: 600_000 };
-    expect(marketplaceWindow(6, paused, T0)).toBe('confirmation');
-    expect(marketplaceWindow(5, running, T0)).toBe('closed');
-    expect(marketplaceWindow(null, running, T0)).toBe('closed');
+  it('is decision time until the admin starts confirmation time, and closed in other phases', () => {
+    expect(marketplaceWindow(6, false)).toBe('decision');
+    expect(marketplaceWindow(6, true)).toBe('confirmation');
+    expect(marketplaceWindow(5, true)).toBe('closed');
+    expect(marketplaceWindow(null, false)).toBe('closed');
   });
 });
 

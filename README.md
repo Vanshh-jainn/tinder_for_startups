@@ -6,11 +6,11 @@ Three interfaces:
 
 - **Participant portal / team workspace:** profile, swiping, team pitch, investment marketplace
 - **Admin control panel:** phases, timers, matching, team approval, marketplace, qualification, audit log
-- **Projector display:** a default screen per phase (rules, matchmaking animation, teams formed, investment leaderboard, team on stage) with admin override, and the timer in a corner
+- **Projector display:** a default screen per phase (rules, matchmaking animation, teams formed, investment leaderboard, finalist reveal, team on stage) with admin override, and the timer in a corner
 
 ## Status
 
-🟨 **Phases 1–5 built; not yet run against a live Supabase project.** Next: Phase 6 (qualification + rehearsal). See [PROGRESS.md](PROGRESS.md#next-session-start-here).
+🟨 **Phases 1–6 built; not yet run against a live Supabase project.** Next: run the [full rehearsal](#full-event-rehearsal), then Phase 7 (hardening + deployment). See [PROGRESS.md](PROGRESS.md#next-session-start-here).
 
 ## Stack
 
@@ -138,10 +138,40 @@ Run `npx supabase db push` first. `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SU
 
 Run `npx supabase db push` first. You need at least 3 approved teams with saved pitches (8+ to test the full "pick 7" rule).
 
-1. Advance into **Investment Marketplace**. The confirm dialog mentions the decision/confirmation split (and fewer than 8 startups, if so). The projector shows the leaderboard with "Decision time · 10:00 left".
+1. Advance into **Investment Marketplace**. The confirm dialog mentions decision time (and fewer than 8 startups, if so). The projector shows the leaderboard with "Decision time · 10:00".
 2. On a team page: cards for other teams with a pitch only (not its own). Pick, type amounts. Break each rule (₹150, ₹250, two equal amounts, total ≠ ₹5,000, too few picks): the list explains it and Save stays disabled. Fix and save; the other member sees the saved allocation.
 3. Admin → Marketplace shows that team as "Saved, not confirmed".
-4. Wait 10 minutes, or click **End now**, which jumps straight to confirmation time (the timer shows "Time's up", but confirmations stay open until you advance). The team page switches to Confirm buttons by itself; editing is gone; the projector says "Confirmation time · live".
+4. Click **Start confirmation time** (Event or Marketplace page). The team page switches to Confirm buttons by itself; editing is gone; the projector says "Confirmation time · live · 05:00". The timer reaching 0 changes nothing.
 5. Confirm 6 of 7: the leaderboard doesn't change. Confirm the 7th: totals appear on the projector and admin page within a second, and "1 of N teams fully confirmed".
 6. Admin → **Void** that team: totals drop; the team can redo and re-confirm.
 7. Advance past the marketplace: confirm buttons disappear; the team sees whether its investments counted. Participant pages never show totals.
+
+### Phase 6 manual check
+
+Continue from the Phase 5 check, with several teams fully confirmed.
+
+1. Admin → Qualification before the marketplace closes: the result is shown, but confirming is not possible yet.
+2. Advance to **Break & Top 7**. The projector switches to the finalist reveal with "?" slots ("Finalists will be announced soon…" until you confirm).
+3. Confirm the finalists. If a tie crosses the cut, tick the tied teams who go through. Teams with ₹0 never appear.
+4. Click **Reveal next finalist** repeatedly: the projector reveals from the lowest place up, one at a time.
+5. Advance to **Final Pitching**: the team picker lists only finalists. Starting a team shows it on stage with "Pitch · 07:00".
+
+## Full event rehearsal
+
+Run this once on the real Supabase project, with the projector machine and at least 4 phones (more is better). It walks through every phase in order.
+
+**Before:** setup done ([Setup](#setup)), rules typed for each phase (Event & projector → Phases), Google Form link saved (Teams & submissions), `/projector` open full-screen.
+
+1. **Participants:** add everyone (Participants page); hand out each `P<n>` + code. Everyone logs in at `/login`.
+2. **Introduction:** Advance. Projector: rules + corner timer. Phones: phase bar counting down. Try pause / +1 min / resume.
+3. **Skill Filling:** Advance. Everyone fills in their profile (phone, skills, preferences, summary). Leave one incomplete on purpose.
+4. **Matchmaking:** Advance (the dialog warns about the incomplete profile). Phones switch to swipe cards; the projector shows the animation. Make several pairs swipe ♥ on each other.
+5. **Rest:** Advance (swiping closes). Matching → Run matching → approve some proposals, reject one, create one manual team. The projector's "Teams formed" grows live; approved members' phones jump to `/team`.
+6. **Startup Development:** Advance. Each team saves a pitch and opens the Google Form. Leave one team without a pitch. As admin, edit one pitch.
+7. **Break:** Advance. Pitch editors disappear.
+8. **Investment Marketplace:** Advance. Teams pick and allocate (try breaking each rule). The team without a pitch can invest but isn't a target. Then **Start confirmation time**: confirm all for most teams, only some for one team, nothing for another. Watch the projector leaderboard update live; try a **Void** and a redo.
+9. **Break & Top 7:** Advance (the incomplete teams count as zero). Qualification → confirm → reveal one by one on the projector.
+10. **Final Pitching:** Advance. Start each finalist's pitch timer in turn; check Pitch → Q&A → Scoring rollover on the projector.
+11. **After:** in Supabase, look through `audit_log` for every admin action above, with no codes or hashes in it. Note anything odd for Phase 7.
+
+Also try, at any point: refresh a phone (state comes back), turn Wi-Fi off and on (it reconnects and catches up), log in as a participant and open `/admin` (refused), open `/team` without a team (sent back to `/me`).

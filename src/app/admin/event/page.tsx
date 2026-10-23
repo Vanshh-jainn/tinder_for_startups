@@ -5,7 +5,7 @@ import { requireAdmin } from '@/server/auth';
 import { getEventState } from '@/server/queries';
 import { db } from '@/server/supabase';
 import { AdminHeader } from '../AdminHeader';
-import { setProjectorScreen, startPitch, timerAction, updatePhase } from './actions';
+import { setProjectorScreen, startConfirmation, startPitch, timerAction, updatePhase } from './actions';
 
 type TimerProps = { action: string; label: string; confirm?: string; minutes?: number };
 
@@ -23,13 +23,14 @@ export default async function EventPage() {
   const [event, phasesRes, teamsRes, incompleteRes, pitchesRes] = await Promise.all([
     getEventState(),
     db().from('phases').select('idx, name, duration_seconds, rules').order('idx'),
-    db().from('teams').select('id, number').eq('approval_state', 'approved').order('number'),
+    db().from('finalists').select('team_id, teams(number)').order('position'),
     db().from('participants').select('id', { count: 'exact', head: true }).eq('profile_complete', false),
     db().from('teams').select('id, submissions!inner(team_id)', { count: 'exact', head: true }).eq('approval_state', 'approved'),
   ]);
   for (const res of [phasesRes, teamsRes, incompleteRes, pitchesRes]) if (res.error) throw res.error;
   const phases = phasesRes.data!;
-  const teams = teamsRes.data!;
+  // Only finalists pitch.
+  const teams = teamsRes.data!.map((f) => ({ id: f.team_id, number: (f.teams as unknown as { number: number }).number }));
   const incomplete = incompleteRes.count ?? 0;
   const startups = pitchesRes.count ?? 0; // marketplace targets
 
@@ -46,9 +47,11 @@ export default async function EventPage() {
     current === 2 && 'Swiping closes.',
     next?.idx === 4 && 'Pitch editing opens.',
     current === 4 && 'Pitch editing closes.',
-    next?.idx === 6 && 'Marketplace opens: 10 minutes of decision time, then confirmation time.',
+    next?.idx === 6 && 'Marketplace opens in decision time; start confirmation time yourself when ready.',
     next?.idx === 6 && startups < 8 && `Only ${startups} startup(s) have a pitch, so teams invest in all available instead of 7.`,
     current === 6 && "The marketplace closes. Teams that didn't confirm every investment count as zero.",
+    current === 6 && !event.market_confirmation && 'Confirmation time never started, so no investment can count.',
+    next?.idx === 8 && teams.length === 0 && 'No finalists are confirmed yet (Qualification page).',
   ]
     .filter(Boolean)
     .join(' ');
@@ -78,6 +81,13 @@ export default async function EventPage() {
               <Timer action="end" label="End now" confirm="Set this timer to 0 (time's up)? The phase stays the same." />
             </>
           )}
+          {current === 6 && !event.market_confirmation && (
+            <ActionForm
+              action={startConfirmation}
+              submitLabel="Start confirmation time"
+              confirmText="Start confirmation time? Allocations lock for everyone and a 5-minute timer starts."
+            />
+          )}
           {next && <Timer action="advance" label={`Advance → ${next.name}`} confirm={advanceWarning} />}
         </div>
       </section>
@@ -85,7 +95,11 @@ export default async function EventPage() {
       {current === 8 && (
         <section>
           <h2>Final pitching</h2>
-          <p className="muted">Starts a 10-minute timer: 7 min pitch → 2 min Q&amp;A → 1 min scoring rollover.</p>
+          <p className="muted">
+            Starts a 10-minute timer: 7 min pitch → 2 min Q&amp;A → 1 min scoring rollover. The labels only show time; you
+            start the next team whenever you&apos;re ready.
+          </p>
+          {teams.length === 0 && <p className="warn">No finalists confirmed yet. Confirm them on the Qualification page.</p>}
           <ActionForm
             action={startPitch}
             submitLabel="Start pitch timer"
@@ -93,11 +107,11 @@ export default async function EventPage() {
           >
             <select name="teamId" required defaultValue="">
               <option value="" disabled>
-                Choose the team on stage
+                Choose the finalist on stage
               </option>
-              {teams.map((t) => (
+              {teams.map((t, i) => (
                 <option key={t.id} value={t.id}>
-                  Team {t.number}
+                  #{i + 1} · Team {t.number}
                 </option>
               ))}
             </select>

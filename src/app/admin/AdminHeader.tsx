@@ -12,6 +12,7 @@ export function AdminHeader() {
         <Link href="/admin/matching">Matching</Link>
         <Link href="/admin/teams">Teams &amp; submissions</Link>
         <Link href="/admin/marketplace">Marketplace</Link>
+        <Link href="/admin/qualification">Qualification</Link>
       </nav>
       <form action={logout}>
         <button type="submit" className="secondary">

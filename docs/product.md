@@ -29,8 +29,8 @@ Judges do **not** use the platform.
 | 4 | Rest | 10 | Admin runs matching, reviews it, and approves teams. Each team gets a number and a random domain; members' own logins open the team workspace. |
 | 5 | Startup Development | 50 | Teams write the pitch in their workspace (editable only in this phase) and submit pitch + deck via the Google Form |
 | 6 | Break | 5 | Countdown |
-| 7 | Investment Marketplace | 15 | 10 min decision time (pick 7 startups, split ₹5,000), then 5 min confirmation time (confirm each, no edits) while the projector leaderboard updates live |
-| 8 | Break & Top 7 | 5 | Admin confirms the top 7; the projector reveals the finalists |
+| 7 | Investment Marketplace | 15 | Decision time (pick 7 startups, split ₹5,000; 10-min display timer), then the admin starts confirmation time (5 min: confirm each, no edits) while the projector leaderboard updates live |
+| 8 | Break & Top 7 | 5 | Admin confirms the top 7 (choosing only if a tie crosses the cut); the projector reveals the finalists one by one |
 | 9 | Final Pitching | 70 | 7 teams × (7 min pitch + 2 min Q&A + 1 min rollover); the admin starts each team's timer; the projector shows the team on stage |
 
 Total: 180 minutes.
@@ -41,7 +41,8 @@ Total: 180 minutes.
 - **Matching:** maximise the number of teams first, then minimise the total `Rank(A→B) × Rank(B→A)`. See [matching-algorithm.md](matching-algorithm.md).
 - **Domains:** Travel & Tourism, FinTech, EdTech, HealthTech, AI for Social Good, SaaS. Assigned randomly per team; repeats are allowed.
 - **Marketplace:** ₹5,000 per team. Exactly 7 other startups with a pitch (all of them if fewer), at least ₹200 each in multiples of ₹100, all amounts different, the full ₹5,000 used. **All must be confirmed or none count.** The admin can void a team's submission so it can redo it.
-- **Top 7:** ranked by total investment received. Ties above 7th keep their position and the lowest-ranked teams are removed; ties at 7th are all eliminated and the next teams are promoted. Some edge cases are open ([OQ-18](open-questions.md), [OQ-19](open-questions.md)).
+- **Top 7:** ranked by counted investment; ₹0 teams are out. Equal totals share a place; whole places fit into 7 seats from the top, so lower places drop. A tie at 7th place: all out, nobody promoted. A higher tie across the cut: the admin chooses.
+- **Timers** only display time. The admin moves every stage on.
 
 ## Out of scope
 
@@ -52,7 +53,7 @@ Do not build these unless the requirements change:
 - Pitch deck display on marketplace cards
 - Full startup document
 - Email or WhatsApp notifications ([OQ-28](open-questions.md))
-- Publishing final winners ([OQ-23](open-questions.md))
+- Publishing final winners (decided: finalists only, [OQ-23](open-questions.md))
 
 ## Success criteria
 

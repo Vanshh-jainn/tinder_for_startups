@@ -5,6 +5,7 @@ import { requireAdmin } from '@/server/auth';
 import { fetchAll, getEventState, getLeaderboard } from '@/server/queries';
 import { db } from '@/server/supabase';
 import { AdminHeader } from '../AdminHeader';
+import { startConfirmation } from '../event/actions';
 import { voidInvestments } from './actions';
 
 type Investment = {
@@ -54,12 +55,19 @@ export default async function MarketplacePage() {
 
       <section>
         <h2>
-          Investment marketplace · <MarketStage phaseIdx={event.phase_idx} timer={event} serverNow={event.serverNow} />
+          Investment marketplace · <MarketStage event={event} />
         </h2>
         <p className="muted">
-          First 10 minutes of the phase: teams pick and allocate. After that: confirmation time, no edits. Totals below
-          count only fully confirmed teams; participants never see them on their own pages.
+          Decision time: teams pick and allocate. When you start confirmation time, allocations lock and teams confirm
+          each investment. Totals below count only fully confirmed teams; participants never see them on their own pages.
         </p>
+        {event.phase_idx === 6 && !event.market_confirmation && (
+          <ActionForm
+            action={startConfirmation}
+            submitLabel="Start confirmation time"
+            confirmText="Start confirmation time? Allocations lock for everyone and a 5-minute timer starts."
+          />
+        )}
         <LeaderboardTable board={board} />
       </section>
 

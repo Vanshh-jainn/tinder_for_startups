@@ -6,26 +6,26 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 
 ## Next session: start here
 
-*Last updated 2026-10-28.*
+*Last updated 2026-10-29.*
 
 **Where things stand**
-- Phases 0–5 are built. Phase 5 (marketplace) is waiting for the user's commit; Phases 0–4 are committed and pushed to `origin/main`.
-- Checks: 60 tests pass (`npm test`: unit + PGlite DB tests); lint, type check, and build are clean.
-- **Nothing has run against a real Supabase project yet.** The user plans to do the setup later: create the project, `.env.local`, `npx supabase db push` (5 migrations), first admin. Then run the README manual checks for Phases 1–5.
+- Phases 0–6 are built. Phase 6 (qualification) is waiting for the user's commit; Phases 0–5 are committed and pushed to `origin/main`.
+- Checks: 72 tests pass (`npm test`: unit + PGlite DB tests); lint, type check, and build are clean.
+- **Nothing has run against a real Supabase project yet.** Setup: create the project, `.env.local`, `npx supabase db push` (6 migrations), first admin. Then the user runs the [full rehearsal checklist](README.md#full-event-rehearsal) by hand. They chose manual testing, with no automated simulation.
 
-**Next: Phase 6, qualification + rehearsal.** Before writing code, ask the user about:
-- **OQ-18:** when a tie *above* 7th creates more than 7 potential finalists, which tied team(s) are removed? The spec says remove the lowest-ranked teams but gives no tie-breaker.
-- **OQ-19:** what if fewer than 7 teams received counted investment, or several have ₹0?
-- **OQ-23:** does the platform only announce finalists, or should the admin also publish final winners after judging?
-- How the finalist reveal looks on the projector (all at once, or one by one), and whether the Final Pitching team picker should list only finalists.
-- How to run the rehearsal: a scripted simulation (seed N fake participants and run every phase automatically) or a manual run-through checklist.
-- Already decided: qualification ranks teams by counted investment received; the confirmed tie rules are in spec §10; there's no judge portal or rubric (OQ-24).
+**Next: Phase 7, hardening + deployment.** Before writing code, ask the user about:
+- **OQ-27:** where to deploy (default: Vercel Hobby + Supabase Free) and whether a custom domain is wanted.
+- **OQ-1 / OQ-26:** the real number of participants and teams, to check the free-tier limits (Supabase Realtime connections, etc.).
+- **OQ-25:** when to export, archive, or delete participant data, swipes, and investments after the event.
+- An event-day runbook: a backup before the event, what to do if the laptop or Wi-Fi fails, and a second admin device.
+- Whether to add the missing admin pages (Overview counts, Audit log viewer) and admin profile corrections.
 
 **Known gaps to remember**
-- Admin can't edit a participant's profile (spec §12 "authorised corrections"); add if needed.
+- Admin can't edit a participant's profile (spec §12 "authorised corrections").
 - No admin Overview or Audit log page yet (the audit log is readable in Supabase).
-- OQ-7 (human tie-break rule for matching) and OQ-36 (odd participant count) are still open.
-- If a team is dissolved during the marketplace, investments it already made still count. Unlikely; decide if it matters.
+- OQ-7 (human tie-break rule for matching) and OQ-36 (odd participant count) are still open; OQ-24 (judging rubric) stays out of scope.
+- If a team is dissolved during the marketplace, investments it already made still count.
+- Re-confirming finalists replaces the list and restarts the reveal.
 
 ## Phases
 
@@ -37,7 +37,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 | 3 | Team workspace & submissions | 🟨 Code done; waiting for the live Supabase check | |
 | 4 | Timers & projector | 🟨 Code done; waiting for the live Supabase check | |
 | 5 | Marketplace | 🟨 Code done; waiting for the live Supabase check | |
-| 6 | Qualification & rehearsal | ⬜ Not started | 18, 19 |
+| 6 | Qualification & rehearsal | 🟨 Code done; user runs the rehearsal checklist | |
 | 7 | Hardening & deployment | ⬜ Not started | 25, 26, 27 |
 
 "Blocked by" means the phase needs that answer to be complete. Work can usually start, with the open part built behind config or left as a marked `TODO(OQ-n)`.
@@ -114,11 +114,17 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - [x] Tests: 6 DB tests + 7 unit tests for every spec §17 marketplace rule (60 total)
 - [ ] **User:** push the migration and click through the [Phase 5 manual check](README.md#phase-5-manual-check)
 
-### Phase 6 — Qualification & rehearsal
+### Phase 6 — Qualification & rehearsal 🟨
 
-- [ ] `src/lib/qualification` with confirmed tie rules; surfaces unresolved ties
-- [ ] Admin confirm + projector finalist reveal
-- [ ] Full 3-hour simulated rehearsal
+- [x] `src/lib/qualification.ts`: ₹0 teams out, shared places, whole places while they fit 7 seats, tie at 7th → all out with no promotion, higher tie across the cut → admin chooses (8 unit tests)
+- [x] Admin Qualification page: result from current totals, tie choice, confirm (only from Break & Top 7 on), confirmed list, **Reveal next finalist**
+- [x] `finalists` table + `confirm_finalists` / `reveal_next_finalist` (audited); re-confirm resets the reveal
+- [x] Projector **Finalist reveal** screen (default in Break & Top 7): slots revealed from the lowest up with an animation
+- [x] Final Pitching: only finalists can be put on stage (picker + SQL check)
+- [x] **Timer is display-only:** marketplace confirmation time now starts with the admin's **Start confirmation time** button (5-minute display timer); the marketplace phase timer defaults to 10 minutes
+- [x] DB tests: confirmation start, qualification rules, reveal, permissions (72 tests total)
+- [x] Full-event rehearsal checklist in the README (the user tests manually)
+- [ ] **User:** run the [full rehearsal](README.md#full-event-rehearsal) on a real Supabase project
 
 ### Phase 7 — Hardening & deployment
 
@@ -165,4 +171,10 @@ Record each decision with a date. Answers to open questions also go in [docs/ope
 | 2026-10-28 | **Spec deviation (§9):** with fewer than 7 other startups, teams invest in all available | User decision (OQ-35) |
 | 2026-10-28 | OQ-13/14/15/16/17/34 answered (see open-questions.md): progress line on leaderboard, void + redo, pitch-holding targets only, multiples of ₹100 | User decision |
 | 2026-10-28 | Marketplace rules live in SQL functions (authority); `src/lib/marketplace.ts` mirrors them for live browser feedback and ranking | Can't be bypassed; users still get instant feedback |
-| 2026-10-28 | Confirmation time starts once the phase timer has run 10 min; extensions add to confirmation time; confirmations accepted until the admin advances | Consistent with how every other phase closes |
+| 2026-10-28 | Confirmation time starts once the phase timer has run 10 min; extensions add to confirmation time; confirmations accepted until the admin advances | Consistent with how every other phase closes (**superseded 2026-10-29**) |
+| 2026-10-29 | **Timers are display-only.** The admin moves every stage on; marketplace confirmation time starts with a button and gets a 5-minute display timer | User decision: "timer is there just to show time" |
+| 2026-10-29 | **Spec deviation (§10):** a tie at 7th place eliminates all tied teams and nobody is promoted (spec promoted the next teams) | User decision |
+| 2026-10-29 | **Spec deviation (§10):** a tie at a higher place that crosses the 7-seat cut is decided by the admin (audited) | User decision; the spec left it open (OQ-18) |
+| 2026-10-29 | OQ-19: ₹0 teams never qualify. OQ-23: finalists only, no winners. Finalists revealed one by one (7th → 1st); only finalists can pitch | User decision |
+| 2026-10-29 | The server recomputes qualification when confirming; the admin only picks among tied teams | The admin can't hand-pick arbitrary finalists by accident |
+| 2026-10-29 | Rehearsal = manual checklist, no automated simulation | User decision |

@@ -327,6 +327,8 @@ describe('event timer and projector', () => {
     await expect(call('select start_pitch($1, $2)', [team])).rejects.toThrow(/Final Pitching only/);
     for (let i = 0; i < 9; i++) await timer('advance');
     expect(await state()).toMatchObject({ phase_idx: 8, timer_status: 'idle' });
+    await expect(call('select start_pitch($1, $2)', [team])).rejects.toThrow(/Only finalists pitch/);
+    await call('select confirm_finalists($1, $2)', [JSON.stringify([{ team, place: 1, total: 500 }])]);
     await call('select start_pitch($1, $2)', [team]);
     expect(await state()).toMatchObject({ timer_status: 'running', duration_ms: 600000 });
     await expect(timer('advance')).rejects.toThrow(/last phase/);
@@ -384,7 +386,7 @@ describe('marketplace', () => {
   const toMarketplace = async () => {
     for (let i = 0; i < 7; i++) await call(`select timer_action($1, 'advance')`);
   };
-  const toConfirmation = () => db.query('update event_state set elapsed_ms = 600000');
+  const toConfirmation = () => call('select start_confirmation($1)');
   const items = (targets: string[], amounts = AMOUNTS) => targets.map((target, i) => ({ target, amount: amounts[i] }));
   const save = (team: string, list: object[]) =>
     db.query(`select save_allocation('participant:x', $1, $2)`, [team, JSON.stringify(list)]);
@@ -476,5 +478,78 @@ describe('marketplace', () => {
     await expect(db.query('select * from investments')).rejects.toThrow(/permission denied/);
     await expect(db.query('select * from counted_investments')).rejects.toThrow(/permission denied/);
     await expect(db.query(`select confirm_investment('x', $1, $1)`, [me])).rejects.toThrow(/permission denied/);
+  });
+});
+
+describe('admin-driven marketplace stages and qualification', () => {
+  const advance = (n: number) => Array.from({ length: n }).reduce<Promise<unknown>>(
+    (p) => p.then(() => call(`select timer_action($1, 'advance')`)),
+    Promise.resolve(),
+  );
+  const windowNow = async () => (await db.query<{ w: string }>('select marketplace_window() as w')).rows[0].w;
+  async function team(name: string): Promise<string> {
+    const { rows } = await call('select create_manual_team($1, $2, $3) as id', [await addParticipant(`${name}1`), await addParticipant(`${name}2`)]);
+    return (rows[0] as { id: string }).id;
+  }
+
+  it('starts confirmation time only when the admin says so, whatever the clock shows', async () => {
+    await expect(call('select start_confirmation($1)')).rejects.toThrow(/marketplace phase/);
+    await advance(7);
+    expect((await db.query<{ d: number }>('select duration_ms::int as d from event_state')).rows[0].d).toBe(600000);
+    await db.query('update event_state set elapsed_ms = 9999999');
+    expect(await windowNow()).toBe('decision'); // the timer no longer decides anything
+    await call('select start_confirmation($1)');
+    expect(await windowNow()).toBe('confirmation');
+    const s = (await db.query<{ d: number; t: string }>('select duration_ms::int as d, timer_status as t from event_state')).rows[0];
+    expect(s).toEqual({ d: 300000, t: 'running' });
+    await expect(call('select start_confirmation($1)')).rejects.toThrow(/already started/);
+    await advance(1);
+    expect(await windowNow()).toBe('closed');
+    expect((await db.query<{ m: boolean }>('select market_confirmation as m from event_state')).rows[0].m).toBe(false);
+  });
+
+  it('confirms finalists only after the marketplace, in order, replacing earlier results', async () => {
+    const [a, b] = [await team('a'), await team('b')];
+    const list = (ids: string[]) => JSON.stringify(ids.map((t, i) => ({ team: t, place: i + 1, total: 1000 - i })));
+    await advance(7); // in the marketplace
+    await expect(call('select confirm_finalists($1, $2)', [list([a, b])])).rejects.toThrow(/after the marketplace/);
+    await advance(1); // Break & Top 7
+    await call('select confirm_finalists($1, $2)', [list([a, b])]);
+    await call('select confirm_finalists($1, $2)', [list([b])]);
+    const { rows } = await db.query<{ team_id: string; position: number }>('select team_id, position from finalists');
+    expect(rows).toEqual([{ team_id: b, position: 1 }]);
+    const audit = await db.query(`select 1 from audit_log where action = 'qualification.confirm'`);
+    expect(audit.rows).toHaveLength(2);
+  });
+
+  it('refuses unapproved or zero-investment finalists', async () => {
+    const a = await team('a');
+    await advance(8);
+    await call('select dissolve_team($1, $2)', [a]);
+    await expect(call('select confirm_finalists($1, $2)', [JSON.stringify([{ team: a, place: 1, total: 100 }])])).rejects.toThrow(/approved/);
+    const b = await team('b');
+    await expect(call('select confirm_finalists($1, $2)', [JSON.stringify([{ team: b, place: 1, total: 0 }])])).rejects.toThrow(/check/);
+  });
+
+  it('reveals finalists one at a time and resets the reveal on re-confirm', async () => {
+    const [a, b] = [await team('a'), await team('b')];
+    await advance(8);
+    await expect(call('select reveal_next_finalist($1)')).rejects.toThrow(/Confirm the finalists/);
+    await call('select confirm_finalists($1, $2)', [JSON.stringify([{ team: a, place: 1, total: 900 }, { team: b, place: 2, total: 500 }])]);
+    await call('select reveal_next_finalist($1)');
+    await call('select reveal_next_finalist($1)');
+    await expect(call('select reveal_next_finalist($1)')).rejects.toThrow(/already revealed/);
+    expect((await db.query<{ r: number }>('select revealed_count as r from event_state')).rows[0].r).toBe(2);
+    await call('select confirm_finalists($1, $2)', [JSON.stringify([{ team: a, place: 1, total: 900 }])]);
+    expect((await db.query<{ r: number }>('select revealed_count as r from event_state')).rows[0].r).toBe(0);
+    await call('select set_projector_screen($1, $2)', ['finalists']);
+  });
+
+  it('blocks anon from finalists and the new functions', async () => {
+    await db.exec('reset role; set role anon');
+    await expect(db.query('select * from finalists')).rejects.toThrow(/permission denied/);
+    await expect(db.query('select start_confirmation($1)', [ADMIN])).rejects.toThrow(/permission denied/);
+    await expect(db.query(`select confirm_finalists($1, '[]')`, [ADMIN])).rejects.toThrow(/permission denied/);
+    await expect(db.query('select reveal_next_finalist($1)', [ADMIN])).rejects.toThrow(/permission denied/);
   });
 });

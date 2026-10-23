@@ -34,6 +34,7 @@ export default async function ProjectorPage() {
       {screen === 'matchmaking' && <Matchmaking />}
       {screen === 'teams' && <Teams />}
       {screen === 'leaderboard' && <LeaderboardScreen event={event} />}
+      {screen === 'finalists' && <Finalists revealed={event.revealed_count} />}
       {screen === 'pitching' && <Pitching event={event} />}
     </main>
   );
@@ -153,9 +154,59 @@ async function LeaderboardScreen({ event }: { event: EventState }) {
     <div>
       <h1>Investment leaderboard</h1>
       <p className="stage">
-        <MarketStage phaseIdx={event.phase_idx} timer={event} serverNow={event.serverNow} />
+        <MarketStage event={event} />
       </p>
       <LeaderboardTable board={board} />
+    </div>
+  );
+}
+
+type FinalistRow = TeamRow & { position: number; place: number };
+
+// Revealed from the lowest position up; unrevealed slots show "?".
+async function Finalists({ revealed }: { revealed: number }) {
+  const { data, error } = await db()
+    .from('finalists')
+    .select('position, place, teams(number, domain, team_members(status, participants(display_name)))')
+    .order('position');
+  if (error) throw error;
+  const finalists = data.map((f) => ({ ...(f.teams as unknown as TeamRow), position: f.position, place: f.place })) as FinalistRow[];
+  if (finalists.length === 0) {
+    return (
+      <div className="center">
+        <h1>Top 7</h1>
+        <p className="muted">Finalists will be announced soon…</p>
+      </div>
+    );
+  }
+  const firstShown = finalists.length - revealed + 1;
+
+  return (
+    <div>
+      <h1>Finalists</h1>
+      <div className="finalist-list">
+        {finalists.map((f) =>
+          f.position >= firstShown ? (
+            <div key={`${f.position}-shown`} className="card finalist revealed">
+              <span className="place">#{f.place}</span>
+              <div>
+                <h2>Team {f.number}</h2>
+                <p>
+                  {f.team_members
+                    .filter((m) => m.status === 'active')
+                    .map((m) => m.participants.display_name)
+                    .join(' & ')}{' '}
+                  · {f.domain}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div key={`${f.position}-hidden`} className="card finalist">
+              <span className="place">?</span>
+            </div>
+          ),
+        )}
+      </div>
     </div>
   );
 }

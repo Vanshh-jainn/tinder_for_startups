@@ -57,9 +57,9 @@ Each entry records the actor, action, affected record, time, and before/after va
 - matchmaking open/close, matching runs, proposal clears;
 - team approval, rejection, manual creation, dissolve (with number and domain);
 - Google Form link changes and admin pitch edits;
-- every timer action, pitch timer start, projector screen change, and phase setting edit;
+- every timer action, pitch timer start, marketplace confirmation start, projector screen change, and phase setting edit;
 - investment voids (with the voided allocation as the before value);
-- planned: qualification overrides (Phase 6).
+- finalist confirmations (before/after lists) and each reveal.
 
 Multi-step admin changes are SQL functions that write their audit row in the same transaction. `audit_log` is append-only: even the server role has no UPDATE or DELETE grant on it.
 

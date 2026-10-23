@@ -1,6 +1,6 @@
 import { ActionForm } from '@/components/ActionForm';
 import { PhaseBar } from '@/components/PhaseBar';
-import { MARKETPLACE_PHASE, requiredPicks } from '@/lib/marketplace';
+import { MARKETPLACE_PHASE, marketplaceWindow, requiredPicks } from '@/lib/marketplace';
 import { formatParticipantId } from '@/lib/security';
 import { requireTeamMember } from '@/server/auth';
 import { getEventState } from '@/server/queries';
@@ -114,9 +114,7 @@ async function Marketplace({ teamId, event }: { teamId: string; event: Awaited<R
 
   return (
     <MarketplacePanel
-      phaseIdx={event.phase_idx}
-      timer={event}
-      serverNow={event.serverNow}
+      stage={marketplaceWindow(event.phase_idx, event.market_confirmation)}
       targets={targets}
       saved={live.map((i) => ({ target: i.target_team_id, amount: i.amount, confirmed: !!i.confirmed_at }))}
       required={requiredPicks(targets.length)}
