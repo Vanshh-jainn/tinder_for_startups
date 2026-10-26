@@ -28,25 +28,36 @@ export default async function TeamPage() {
   const canEditPitch = event.phase_idx === 4; // Startup Development only (OQ-32)
 
   return (
-    <main className="narrow">
+    <main className="narrow app">
       <PhaseBar event={event} />
       <header className="row">
-        <h1>Team {team.number}</h1>
+        <div>
+          <p className="eyebrow">Your startup</p>
+          <h1>Team {team.number}</h1>
+        </div>
         <form action={logout}>
           <button type="submit" className="secondary">
             Log out
           </button>
         </form>
       </header>
-      <p className="domain">{team.domain}</p>
-      <p className="muted">
-        {members.map((m) => `${m.display_name} (${formatParticipantId(m.number)})`).join(' & ')}
-      </p>
+      <div className="panel">
+        <p className="eyebrow">Domain</p>
+        <p className="domain">{team.domain}</p>
+        <ul className="chips">
+          {members.map((m) => (
+            <li key={m.number}>
+              {m.display_name}
+              <span className="muted">{formatParticipantId(m.number)}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-      <section>
+      <section className="panel">
         <h2>Submission status</h2>
         <ul className="checklist">
-          <li>
+          <li className={submission ? 'done' : undefined}>
             {submission
               ? `✓ Marketplace pitch saved at ${time(submission.updated_at)}${submission.updated_by.startsWith('admin:') ? ' (edited by an organiser)' : ''}`
               : '✗ Marketplace pitch not saved yet'}
@@ -63,13 +74,13 @@ export default async function TeamPage() {
       </section>
 
       {(event.phase_idx ?? 0) >= MARKETPLACE_PHASE && (
-        <section>
+        <section className="panel">
           <h2>Investment marketplace</h2>
           <Marketplace teamId={teamId} event={event} />
         </section>
       )}
 
-      <section>
+      <section className="panel">
         <h2>Marketplace pitch</h2>
         <p className="muted">
           Your two-line startup pitch. Other teams see only this in the investment marketplace, not your deck.

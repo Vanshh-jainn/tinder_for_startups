@@ -10,7 +10,12 @@
   --ok: #2ecc71;
   --danger: #e74c3c;
   --radius: 16px;
-  --font: system-ui, sans-serif;
+  --font: var(--font-body), system-ui, sans-serif;
+  --display: var(--font-display), var(--font);
+  /* Tinder-style gradient; both ends keep white text at AA (4.5:1). */
+  --grad: linear-gradient(135deg, #e0115f, #d93a1c);
+  --grad-text: linear-gradient(90deg, #ff4f8b, #ff7a45);
+  --border: #2c2c38;
 }
 
 * {
@@ -184,13 +189,48 @@ section {
 
 .swipe {
   flex-direction: row;
-  margin-top: 16px;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 20px;
 }
 
-.swipe button {
-  flex: 1;
-  font-size: 1.2em;
-  padding: 16px;
+.app .swipe button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  min-height: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.swipe button span {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  font-size: 2rem;
+  transition: transform 0.15s;
+}
+
+.swipe .pass span {
+  border: 2px solid var(--reject);
+  background: var(--surface);
+  color: #ff8a8a;
+}
+
+.swipe .like span {
+  background: var(--grad);
+  color: #fff;
+  box-shadow: 0 10px 30px -8px rgb(224 17 95 / 0.7);
+}
+
+.swipe button:active span {
+  transform: scale(0.9);
 }
 
 .domain {
@@ -269,6 +309,11 @@ tr.current {
   font-size: 3.5vw;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  padding: 0.8vw 1.8vw;
+  border-radius: 1.6vw;
+  border: 0.15vw solid var(--border);
+  background: rgb(26 26 34 / 0.85);
+  z-index: 1;
 }
 
 .corner-timer small {
@@ -480,5 +525,1182 @@ fieldset {
 @media (prefers-reduced-motion: reduce) {
   .finalist.revealed {
     animation: none;
+  }
+}
+
+/* Participant app (/, /login, /me, /team): phone-first, 360 px up. */
+body:has(.app, .projector, .admin) {
+  min-height: 100dvh;
+  background:
+    radial-gradient(48rem 28rem at 50% -12rem, rgb(224 17 95 / 0.22), transparent 70%),
+    var(--bg);
+  background-repeat: no-repeat;
+}
+
+.app {
+  min-height: 100dvh;
+  padding: 12px max(16px, env(safe-area-inset-right)) max(32px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app h1,
+.app h2,
+.wordmark {
+  font-family: var(--display);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.app h1 {
+  font-size: 1.75rem;
+  margin: 0;
+}
+
+.app h2 {
+  font-size: 1.25rem;
+  margin: 0 0 8px;
+}
+
+.app header.row {
+  align-items: flex-start;
+  margin: 20px 0 16px;
+}
+
+.app header p {
+  margin: 2px 0 0;
+}
+
+.app button,
+.app .button {
+  min-height: 48px;
+  border-radius: 999px;
+  background: var(--grad);
+  box-shadow: 0 8px 24px -10px rgb(224 17 95 / 0.8);
+  transition: transform 0.1s;
+}
+
+.app button:active:not(:disabled),
+.app .button:active {
+  transform: scale(0.98);
+}
+
+.app .button {
+  display: block;
+  color: #fff;
+  padding: 12px 16px;
+}
+
+.app button.secondary {
+  min-height: 40px;
+  padding: 8px 14px;
+  font-size: 0.875rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  box-shadow: none;
+  color: var(--text);
+}
+
+.app label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* 16px stops iOS zooming into fields on focus. */
+.app input:not([type='checkbox']),
+.app textarea {
+  width: 100%;
+  font-size: 16px;
+  font-weight: 400;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #13131a;
+  color: var(--text);
+  resize: vertical;
+}
+
+.app input:focus,
+.app textarea:focus {
+  border-color: var(--accent);
+}
+
+.app input[type='checkbox'] {
+  width: 22px;
+  height: 22px;
+  accent-color: #e0115f;
+}
+
+.panel {
+  margin-top: 16px;
+  padding: 20px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.panel .card {
+  background: #13131a;
+}
+
+.panel > h2:first-child {
+  margin-top: 0;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.app .phasebar {
+  position: sticky;
+  top: max(8px, env(safe-area-inset-top));
+  z-index: 10;
+  align-items: center;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgb(26 26 34 / 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-size: 0.875rem;
+}
+
+.app .phasebar > span:first-child::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgb(255 79 109 / 0.25);
+  vertical-align: middle;
+}
+
+.logo {
+  width: 48px;
+  height: 56px;
+  filter: drop-shadow(0 8px 24px rgb(253 38 125 / 0.5));
+}
+
+/* Official Tinder logo + "for Startups". The h1 reads "Tinder for Startups" (svg aria-label + text). */
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  color: var(--text);
+}
+
+.brand-logo {
+  width: min(240px, 64vw);
+  height: auto;
+  filter: drop-shadow(0 10px 30px rgb(253 38 125 / 0.35));
+}
+
+.brand .wordmark {
+  font-size: 1.75rem;
+}
+
+.wordmark {
+  margin: 0;
+  font-weight: 800;
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Home + login: one centred column. */
+.app.auth {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.app.auth .logo {
+  align-self: center;
+}
+
+.center-text {
+  text-align: center;
+}
+
+.app.auth .wordmark {
+  font-size: 1.5rem;
+}
+
+.app.auth .panel {
+  text-align: left;
+}
+
+.app.auth nav {
+  margin-top: 24px;
+}
+
+.tagline {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 8px 0 0;
+}
+
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--grad);
+  color: #fff;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.meter {
+  height: 6px;
+  margin: 8px 0 16px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--grad);
+  transition: width 0.3s;
+}
+
+/* Discovery card: gradient band with the avatar sitting on its edge. */
+.profile-card {
+  padding: 0 20px 24px;
+  border: 1px solid var(--border);
+  background: var(--grad) top / 100% 88px no-repeat, var(--surface);
+  box-shadow: 0 24px 48px -24px rgb(0 0 0 / 0.8);
+}
+
+.profile-card .avatar {
+  width: 80px;
+  height: 80px;
+  margin-top: 48px;
+  border: 4px solid var(--surface);
+  background: #2a2a36;
+  font-size: 2rem;
+}
+
+.profile-card h2 {
+  margin: 8px 0;
+  font-size: 1.5rem;
+}
+
+.profile-card .summary {
+  font-size: 1.0625rem;
+}
+
+.empty {
+  text-align: center;
+  padding: 32px 20px;
+}
+
+.empty .glyph {
+  display: block;
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+}
+
+.empty p {
+  margin: 0;
+}
+
+.app .domain {
+  font-family: var(--display);
+  font-size: 1.75rem;
+  line-height: 1.2;
+  margin: 4px 0 12px;
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  overflow-wrap: anywhere;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chips li {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #13131a;
+  border: 1px solid var(--border);
+  font-size: 0.875rem;
+}
+
+.chips .muted {
+  margin-left: 4px;
+}
+
+.app .checklist li {
+  padding: 12px;
+  border-radius: 12px;
+  background: #13131a;
+}
+
+.checklist .done {
+  color: var(--ok);
+}
+
+.callout {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #13131a;
+  border: 1px solid currentColor;
+}
+
+/* Marketplace: picked count + budget stays in view while scrolling the cards. */
+.app .stat {
+  position: sticky;
+  top: calc(max(8px, env(safe-area-inset-top)) + 52px);
+  z-index: 5;
+  margin: 12px 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgb(19 19 26 / 0.92);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.app .target-grid .card {
+  padding: 16px;
+  background: #13131a;
+  border: 2px solid var(--border);
+  transition: border-color 0.15s;
+}
+
+.app .target-grid .card.picked {
+  border-color: transparent;
+  background: linear-gradient(#13131a, #13131a) padding-box, var(--grad) border-box;
+}
+
+.app .pick {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.confirm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.confirm-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #13131a;
+  border: 1px solid var(--border);
+}
+
+.confirm-list li.done {
+  border-color: var(--ok);
+}
+
+.confirm-list .amount {
+  display: block;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.confirm-list form {
+  flex: none;
+}
+
+/* Projector design: distance-first, AAA text, no cursor. */
+.projector {
+  --muted: #b4b4c3;
+  cursor: none;
+  overflow: hidden;
+}
+
+.projector h1,
+.projector h2,
+.projector .stage-timer,
+.corner-timer {
+  font-family: var(--display);
+  letter-spacing: -0.02em;
+}
+
+.projector h1 {
+  line-height: 1.1;
+}
+
+.projector .center h1:not(.brand),
+.projector .stage-timer {
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.projector .brand {
+  gap: 1vw;
+}
+
+.projector .brand-logo {
+  width: 42vw;
+}
+
+.projector .brand .wordmark {
+  font-size: 5.5vw;
+}
+
+.projector .eyebrow {
+  font-size: 1.4vw;
+  margin-bottom: 1vw;
+}
+
+.projector .card {
+  border-radius: 1.4vw;
+  border: 0.15vw solid transparent;
+  background: linear-gradient(var(--surface), var(--surface)) padding-box,
+    linear-gradient(160deg, #3a3a48, var(--surface)) border-box;
+}
+
+.projector .rules li::marker {
+  color: var(--accent);
+}
+
+.team-grid .card {
+  padding: 1.6vw;
+  background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--grad) border-box;
+  animation: pop-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.team-grid .eyebrow {
+  color: var(--accent);
+  margin-bottom: 0.4vw;
+}
+
+.team-grid h2 {
+  font-size: 1.4em;
+}
+
+.team-grid .domain {
+  margin: 0.6vw 0 0;
+  font-weight: 700;
+}
+
+.projector .leaderboard {
+  border-collapse: separate;
+  border-spacing: 0 0.6vw;
+}
+
+.projector .leaderboard th {
+  color: var(--muted);
+  font-size: 0.6em;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border: 0;
+}
+
+.projector .leaderboard td {
+  padding: 1vw 1.6vw;
+  background: var(--surface);
+  border: 0;
+  font-weight: 700;
+}
+
+.projector .leaderboard td:first-child {
+  border-radius: 1vw 0 0 1vw;
+  width: 8vw;
+  font-family: var(--display);
+  color: var(--muted);
+}
+
+.projector .leaderboard td:last-child {
+  border-radius: 0 1vw 1vw 0;
+  text-align: right;
+}
+
+.projector .leaderboard th:last-child {
+  text-align: right;
+}
+
+.projector .leaderboard tr.top td {
+  background: #23161d;
+}
+
+.projector .leaderboard tr.top td:first-child {
+  color: #ffc94d;
+}
+
+.projector .leaderboard tr.top-2 td:first-child {
+  color: #dcdce6;
+}
+
+.projector .leaderboard tr.top-3 td:first-child {
+  color: #f0a875;
+}
+
+.finalist.revealed {
+  border-color: transparent;
+  background: linear-gradient(#23161d, #23161d) padding-box, var(--grad) border-box;
+}
+
+.finalist .place {
+  font-family: var(--display);
+}
+
+
+
+@media (prefers-reduced-motion: reduce) {
+  .team-grid .card {
+    animation: none;
+  }
+
+  .app *,
+  .swipe button span {
+    transition: none;
+  }
+}
+
+/* Laptop: wider column, Tinder card stays card-sized. */
+@media (min-width: 768px) {
+  .app:not(.auth) {
+    max-width: 760px;
+    padding-top: 20px;
+  }
+
+  .app h1 {
+    font-size: 2.25rem;
+  }
+
+  .app header.row {
+    margin: 28px 0 20px;
+  }
+
+  .panel {
+    padding: 28px;
+  }
+
+  .discovery {
+    max-width: 440px;
+    margin: 24px auto 0;
+  }
+
+  .app .target-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (hover: hover) {
+  .app button:hover:not(:disabled),
+  .app .button:hover {
+    filter: brightness(1.12);
+  }
+
+  .app button.secondary:hover {
+    border-color: var(--muted);
+  }
+
+  .swipe button:hover span {
+    transform: scale(1.06);
+  }
+
+  .app .target-grid .card:hover {
+    border-color: #4a4a58;
+  }
+}
+
+/* Projector opened on a phone or portrait screen: vw sizes would be tiny. */
+@media (max-aspect-ratio: 1/1) {
+  .projector {
+    font-size: 4.5vw;
+    padding: 6vw 5vw;
+  }
+
+  .projector h1 {
+    font-size: 9vw;
+  }
+
+  .corner-timer {
+    position: static;
+    align-items: center;
+    margin-bottom: 6vw;
+    font-size: 7vw;
+  }
+
+  .corner-timer small {
+    font-size: 3.5vw;
+  }
+
+  .projector .center {
+    min-height: 70vh;
+  }
+
+  .rules {
+    font-size: 5vw;
+  }
+
+  .team-grid {
+    grid-template-columns: 1fr;
+    gap: 3vw;
+  }
+
+  .projector .leaderboard {
+    font-size: 4.5vw;
+  }
+
+  .projector .stage {
+    font-size: 4.5vw;
+    margin: 0 0 3vw;
+  }
+
+  .projector .brand-logo {
+    width: 80vw;
+  }
+
+  .projector .brand .wordmark {
+    font-size: 10vw;
+  }
+
+  .mm-stage {
+    zoom: 2;
+  }
+
+  .finalist {
+    min-height: 14vw;
+  }
+
+  .finalist .place {
+    font-size: 8vw;
+  }
+
+  .hearts span {
+    font-size: 8vw;
+  }
+}
+
+/* Admin: desktop-first and dense; tables scroll sideways on phones. */
+.admin {
+  max-width: 1200px;
+  padding: 12px max(16px, env(safe-area-inset-right)) 48px max(16px, env(safe-area-inset-left));
+}
+
+.admin h2 {
+  font-family: var(--display);
+  letter-spacing: -0.01em;
+  margin: 0 0 12px;
+}
+
+.admin-bar {
+  position: sticky;
+  top: max(8px, env(safe-area-inset-top));
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 8px 8px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgb(26 26 34 / 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.admin-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+
+.admin-flame {
+  width: 20px;
+  height: 24px;
+}
+
+.admin-bar .wordmark {
+  font-size: 1.25rem;
+}
+
+.admin-bar nav {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.admin-bar nav a {
+  flex: none;
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.admin-bar nav a:hover {
+  color: var(--text);
+  background: #13131a;
+}
+
+.admin-bar nav a[aria-current='page'] {
+  color: #fff;
+  background: var(--grad);
+}
+
+.admin-bar form {
+  flex: none;
+}
+
+.admin > section {
+  margin-top: 20px;
+  padding: 24px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+@media (min-width: 901px) {
+  .admin form > button {
+    align-self: flex-start;
+  }
+}
+
+.admin button,
+.admin .button {
+  background: var(--grad);
+  border-radius: 999px;
+  min-height: 40px;
+}
+
+.admin button.secondary,
+.admin .secondary-form button {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+@media (hover: hover) {
+  .admin button:hover:not(:disabled) {
+    filter: brightness(1.12);
+  }
+
+  .admin button.secondary:hover,
+  .admin .secondary-form button:hover {
+    border-color: var(--muted);
+  }
+}
+
+.admin input:not([type='checkbox']):not([type='radio']),
+.admin textarea,
+.admin select {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #13131a;
+}
+
+.admin input:focus,
+.admin textarea:focus,
+.admin select:focus {
+  border-color: var(--accent);
+}
+
+.admin input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: #e0115f;
+}
+
+.admin label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.admin table {
+  margin-top: 16px;
+  font-size: 0.9375rem;
+}
+
+.admin th {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.admin td {
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.admin tbody tr:hover {
+  background: rgb(255 255 255 / 0.02);
+}
+
+.admin td button {
+  min-height: 34px;
+  padding: 6px 14px;
+  font-size: 0.875rem;
+}
+
+.admin tr.current {
+  outline: 0;
+  background: #23161d;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.admin .big-timer {
+  font-family: var(--display);
+  font-size: 4rem;
+  line-height: 1.1;
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (max-width: 900px) {
+  .admin-bar {
+    flex-wrap: wrap;
+    border-radius: 20px;
+  }
+
+  .admin-bar form {
+    margin-left: auto;
+  }
+
+  .admin-bar nav {
+    order: 3;
+    flex-basis: 100%;
+  }
+
+  .admin > section {
+    padding: 16px;
+  }
+
+  .admin table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin th,
+  .admin td {
+    white-space: nowrap;
+  }
+
+  /* 16px stops iOS zooming into fields on focus. */
+  .admin input,
+  .admin textarea,
+  .admin select {
+    font-size: 16px;
+  }
+
+  .admin .big-timer {
+    font-size: 3rem;
+  }
+}
+
+/* Projector motion: Tinder-style ambience and one entrance per screen change.
+   Screens remount only when the screen changes, so live refreshes don't replay it. */
+.projector::before,
+.projector::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  width: 60vw;
+  height: 60vw;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: drift 22s ease-in-out infinite alternate;
+}
+
+.projector::before {
+  top: -25vw;
+  left: -15vw;
+  background: radial-gradient(circle, rgb(224 17 95 / 0.28), transparent 65%);
+}
+
+.projector::after {
+  bottom: -30vw;
+  right: -15vw;
+  background: radial-gradient(circle, rgb(217 58 28 / 0.22), transparent 65%);
+  animation-delay: -11s;
+}
+
+.projector > :not(.corner-timer) {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes drift {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(12vw, 8vw) scale(1.15); }
+}
+
+.screen {
+  animation: screen-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes screen-in {
+  from { opacity: 0; transform: translateY(3vw) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(2vw) scale(0.85); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Welcome */
+.projector .brand .flame {
+  transform-box: fill-box;
+  transform-origin: 50% 80%;
+  animation: heartbeat 1.6s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+  0%, 40%, 100% { transform: scale(1); }
+  10% { transform: scale(1.12); }
+  20% { transform: scale(1); }
+  30% { transform: scale(1.08); }
+}
+
+.projector .brand .wordmark {
+  background-image: linear-gradient(90deg, #ff4f8b, #ff7a45, #ff4f8b);
+  background-size: 200% auto;
+  animation: shimmer 6s linear infinite;
+}
+
+@keyframes shimmer {
+  to { background-position: -200% center; }
+}
+
+.hearts {
+  position: absolute;
+  inset: -4vw;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.hearts span {
+  position: absolute;
+  bottom: -5vw;
+  font-size: 3vw;
+  color: var(--accent);
+  opacity: 0;
+  animation: rise 9s linear infinite;
+}
+
+.hearts span:nth-child(1) { left: 6%; animation-delay: 0s; }
+.hearts span:nth-child(2) { left: 18%; animation-delay: 4.5s; font-size: 2vw; }
+.hearts span:nth-child(3) { left: 30%; animation-delay: 2s; }
+.hearts span:nth-child(4) { left: 44%; animation-delay: 6.5s; font-size: 1.6vw; }
+.hearts span:nth-child(5) { left: 58%; animation-delay: 1s; font-size: 2.4vw; }
+.hearts span:nth-child(6) { left: 70%; animation-delay: 5.5s; }
+.hearts span:nth-child(7) { left: 82%; animation-delay: 3s; font-size: 2vw; }
+.hearts span:nth-child(8) { left: 93%; animation-delay: 7.5s; }
+
+@keyframes rise {
+  0% { opacity: 0; transform: translateY(0) rotate(-10deg); }
+  15% { opacity: 0.5; }
+  85% { opacity: 0.25; }
+  100% { opacity: 0; transform: translateY(-110vh) rotate(15deg); }
+}
+
+/* Rules */
+.rules li {
+  animation: slide-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(-3vw); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Matchmaking: profile cards with LIKE / NOPE stamps. */
+.mm-card {
+  border: 0;
+  background:
+    linear-gradient(#3a3a48, #3a3a48) 2vw 14vw / 12vw 0.9vw no-repeat,
+    linear-gradient(#2e2e3a, #2e2e3a) 2vw 16vw / 9vw 0.7vw no-repeat,
+    linear-gradient(#2e2e3a, #2e2e3a) 2vw 17.6vw / 11vw 0.7vw no-repeat,
+    var(--grad) top / 100% 8vw no-repeat,
+    var(--surface);
+  box-shadow: 0 2vw 4vw -2vw rgb(0 0 0 / 0.9);
+}
+
+.mm-card::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 4vw;
+  width: 7.5vw;
+  height: 7.5vw;
+  margin-left: -3.75vw;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #4a4a58, #2a2a36);
+  border: 0.4vw solid var(--surface);
+}
+
+.mm-stamp {
+  position: absolute;
+  top: 1.6vw;
+  z-index: 1;
+  padding: 0.2vw 0.9vw;
+  border: 0.35vw solid;
+  border-radius: 0.6vw;
+  font-family: var(--display);
+  font-size: 2vw;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  background: rgb(15 15 20 / 0.85);
+  opacity: 0;
+  animation: mm-stamp 4s infinite;
+  animation-delay: inherit;
+}
+
+.mm-stamp.like {
+  left: 1.2vw;
+  color: var(--ok);
+  transform: rotate(-15deg);
+}
+
+.mm-stamp.nope {
+  right: 1.2vw;
+  color: #ff5a5f;
+  transform: rotate(15deg);
+}
+
+@keyframes mm-stamp {
+  0%, 35% { opacity: 0; }
+  48%, 100% { opacity: 1; }
+}
+
+.mm-stage + h1::after {
+  content: ' ♥';
+  display: inline-block;
+  color: var(--accent);
+  -webkit-text-fill-color: var(--accent);
+  animation: heartbeat 1.6s ease-in-out infinite;
+}
+
+/* Team on stage */
+.spotlight::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: 50%;
+  width: 70vw;
+  height: 40vw;
+  margin: -20vw 0 0 -35vw;
+  background: radial-gradient(ellipse, rgb(224 17 95 / 0.25), transparent 65%);
+  animation: glow 3s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from { opacity: 0.6; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1.05); }
+}
+
+/* Leaderboard */
+.projector .leaderboard tr.top-1 td:nth-child(2)::before {
+  content: '👑 ';
+}
+
+.projector .leaderboard tr.top-1 td {
+  background: #3a1622;
+}
+
+/* Finalists: hidden slots breathe, a reveal flips in with a glow. */
+.finalist:not(.revealed) .place {
+  animation: breathe 2s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  50% { opacity: 0.4; }
+}
+
+.finalist.revealed {
+  animation: flip-in 0.9s cubic-bezier(0.22, 1, 0.36, 1), reveal-glow 2.4s ease-out;
+}
+
+@keyframes flip-in {
+  from { opacity: 0; transform: perspective(60vw) rotateX(-80deg) scale(0.9); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes reveal-glow {
+  0%, 30% { box-shadow: 0 0 4vw 0.5vw rgb(224 17 95 / 0.7); }
+  100% { box-shadow: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .projector::before,
+  .projector::after,
+  .screen,
+  .projector .brand .flame,
+  .projector .brand .wordmark,
+  .rules li,
+  .mm-stage + h1::after,
+  .spotlight::before,
+  .finalist:not(.revealed) .place,
+  .finalist.revealed {
+    animation: none;
+  }
+
+  .hearts {
+    display: none;
+  }
+
+  .mm-stamp {
+    animation: none;
+    opacity: 1;
   }
 }

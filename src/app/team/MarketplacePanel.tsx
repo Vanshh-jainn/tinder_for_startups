@@ -28,7 +28,7 @@ export function MarketplacePanel({ stage, targets, saved, required, wasVoided }:
   if (stage === 'closed') {
     const counted = saved.length > 0 && confirmed === saved.length;
     return (
-      <p className={counted ? 'notice' : 'warn'}>
+      <p className={`callout ${counted ? 'notice' : 'warn'}`}>
         {counted
           ? `Marketplace closed. All ${saved.length} investments were confirmed, so they counted.`
           : 'Marketplace closed. Your team did not confirm every investment, so none of them counted.'}
@@ -110,35 +110,33 @@ export function MarketplacePanel({ stage, targets, saved, required, wasVoided }:
 
   // Confirmation time: no edits, confirm each investment.
   if (saved.length === 0) {
-    return <p className="warn">Your team didn&apos;t save an allocation during decision time, so it can&apos;t invest.</p>;
+    return <p className="callout warn">Your team didn&apos;t save an allocation during decision time, so it can&apos;t invest.</p>;
   }
   return (
     <section>
-      <p className="warn">
+      <p className="callout warn">
         <strong>Confirm all {saved.length}. If you don&apos;t confirm every one, none of your investments count.</strong>
       </p>
       <p className="stat">
         {confirmed}/{saved.length} confirmed
       </p>
-      <table>
-        <tbody>
-          {saved.map((s) => (
-            <tr key={s.target}>
-              <td>Team {byId.get(s.target)?.number ?? '?'}</td>
-              <td>₹{s.amount.toLocaleString('en-IN')}</td>
-              <td>
-                {s.confirmed ? (
-                  <span className="notice">Confirmed ✓</span>
-                ) : (
-                  <ActionForm action={confirmInvestment} submitLabel="Confirm">
-                    <input type="hidden" name="target" value={s.target} />
-                  </ActionForm>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <ul className="confirm-list">
+        {saved.map((s) => (
+          <li key={s.target} className={s.confirmed ? 'done' : undefined}>
+            <span>
+              <strong>Team {byId.get(s.target)?.number ?? '?'}</strong>
+              <span className="amount">₹{s.amount.toLocaleString('en-IN')}</span>
+            </span>
+            {s.confirmed ? (
+              <span className="notice">Confirmed ✓</span>
+            ) : (
+              <ActionForm action={confirmInvestment} submitLabel="Confirm">
+                <input type="hidden" name="target" value={s.target} />
+              </ActionForm>
+            )}
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

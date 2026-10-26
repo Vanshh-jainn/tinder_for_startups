@@ -3,6 +3,7 @@ import { Countdown } from '@/components/Countdown';
 import { LeaderboardTable } from '@/components/LeaderboardTable';
 import { LiveRefresh } from '@/components/LiveRefresh';
 import { MarketStage } from '@/components/MarketStage';
+import { TinderLogo } from '@/components/TinderLogo';
 import { screenFor } from '@/lib/timer';
 import { getEventState, getLeaderboard, type EventState } from '@/server/queries';
 import { db } from '@/server/supabase';
@@ -25,8 +26,12 @@ export default async function ProjectorPage() {
         </div>
       )}
       {screen === 'welcome' && (
-        <div className="center">
-          <h1>Tinder for Startups</h1>
+        <div className="center screen">
+          <Hearts />
+          <h1 className="brand">
+            <TinderLogo className="brand-logo" />
+            <span className="wordmark">for Startups</span>
+          </h1>
           <p className="muted">DAMRU · Rishihood University</p>
         </div>
       )}
@@ -43,12 +48,14 @@ export default async function ProjectorPage() {
 function Rules({ event }: { event: EventState }) {
   const rules = event.rules.split('\n').map((line) => line.trim()).filter(Boolean);
   return (
-    <div className="center">
+    <div className="center screen">
       <h1>{event.phase_name ?? 'Tinder for Startups'}</h1>
       {rules.length > 0 && (
         <ul className="rules">
           {rules.map((rule, i) => (
-            <li key={i}>{rule}</li>
+            <li key={i} style={{ animationDelay: `${0.3 + i * 0.15}s` }}>
+              {rule}
+            </li>
           ))}
         </ul>
       )}
@@ -56,12 +63,26 @@ function Rules({ event }: { event: EventState }) {
   );
 }
 
+// Floating hearts behind the welcome screen.
+function Hearts() {
+  return (
+    <div className="hearts" aria-hidden="true">
+      {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+        <span key={i}>♥</span>
+      ))}
+    </div>
+  );
+}
+
 function Matchmaking() {
   return (
-    <div className="center">
+    <div className="center screen">
       <div className="mm-stage" aria-hidden="true">
+        {/* Even cards swipe right (LIKE), odd ones left (NOPE): matches the nth-child keyframes. */}
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="mm-card" />
+          <div key={i} className="mm-card">
+            <span className={`mm-stamp ${i % 2 ? 'nope' : 'like'}`}>{i % 2 ? 'NOPE' : 'LIKE'}</span>
+          </div>
         ))}
         {[0, 1, 2, 3, 4, 5].map((i) => (
           <span key={i} className="mm-heart">
@@ -90,14 +111,15 @@ async function Teams() {
   const teams = data as unknown as TeamRow[];
 
   return (
-    <div>
+    <div className="screen">
       <h1>Teams formed</h1>
       {teams.length === 0 ? (
         <p className="muted">Teams will appear here as they are approved.</p>
       ) : (
         <div className="team-grid">
-          {teams.map((t) => (
-            <div key={t.number} className="card">
+          {teams.map((t, i) => (
+            <div key={t.number} className="card" style={{ animationDelay: `${Math.min(i, 12) * 0.07}s` }}>
+              <p className="eyebrow">♥ It&apos;s a match</p>
               <h2>Team {t.number}</h2>
               <p>
                 {t.team_members
@@ -117,7 +139,7 @@ async function Teams() {
 async function Pitching({ event }: { event: EventState }) {
   if (!event.pitching_team_id) {
     return (
-      <div className="center">
+      <div className="center screen">
         <h1>Final Pitching</h1>
         <p className="muted">Next team coming up…</p>
       </div>
@@ -132,7 +154,8 @@ async function Pitching({ event }: { event: EventState }) {
   const team = data as unknown as TeamRow;
 
   return (
-    <div className="center">
+    <div className="center screen spotlight">
+      <p className="eyebrow">Now pitching</p>
       <h1>Team {team.number}</h1>
       <p>
         {team.team_members
@@ -151,7 +174,7 @@ async function Pitching({ event }: { event: EventState }) {
 async function LeaderboardScreen({ event }: { event: EventState }) {
   const board = await getLeaderboard();
   return (
-    <div>
+    <div className="screen">
       <h1>Investment leaderboard</h1>
       <p className="stage">
         <MarketStage event={event} />
@@ -173,7 +196,7 @@ async function Finalists({ revealed }: { revealed: number }) {
   const finalists = data.map((f) => ({ ...(f.teams as unknown as TeamRow), position: f.position, place: f.place })) as FinalistRow[];
   if (finalists.length === 0) {
     return (
-      <div className="center">
+      <div className="center screen">
         <h1>Top 7</h1>
         <p className="muted">Finalists will be announced soon…</p>
       </div>
@@ -182,7 +205,7 @@ async function Finalists({ revealed }: { revealed: number }) {
   const firstShown = finalists.length - revealed + 1;
 
   return (
-    <div>
+    <div className="screen">
       <h1>Finalists</h1>
       <div className="finalist-list">
         {finalists.map((f) =>

@@ -21,9 +21,15 @@ No DAMRU or Rishihood brand assets have been supplied. Colours and fonts below a
   --reject: #6b6b78;    /* swipe left */
   --ok: #2ecc71;        --warn: #f5a623;      --danger: #e74c3c;
   --radius: 16px;
-  --font: system-ui, sans-serif;
+  --font: var(--font-body), system-ui, sans-serif;   /* Plus Jakarta Sans via next/font */
+  --display: var(--font-display), var(--font);        /* Bricolage Grotesque, headings + projector */
+  --grad: linear-gradient(135deg, #e0115f, #d93a1c);  /* buttons; white text stays AA */
+  --grad-text: linear-gradient(90deg, #ff4f8b, #ff7a45);
+  --border: #2c2c38;
 }
 ```
+
+Tinder-style theme (2026-10-26). Participant pages (`main.app`) are phone-first with a ≥768 px laptop layout; admin pages (`main.admin`) restyle tables, panels and a sticky nav bar, with tables scrolling sideways below 900 px; the projector (`main.projector`) adds ambient and per-screen entrance animations and a portrait fallback. Logo: the official Tinder 2017 flame + wordmark (`src/components/TinderLogo.tsx`, wordmark recoloured to `currentColor` for the dark theme) with "for Startups" beside it; the flame is also the favicon (`src/app/icon.svg`).
 
 Every text/background pair must meet WCAG AA contrast (4.5:1). The projector should aim for AAA (7:1).
 

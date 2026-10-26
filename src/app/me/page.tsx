@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
 import { ActionForm } from '@/components/ActionForm';
 import { PhaseBar } from '@/components/PhaseBar';
@@ -16,12 +17,17 @@ export default async function ParticipantHome() {
   const [status, event] = await Promise.all([getDiscoveryStatus(), getEventState()]);
 
   return (
-    <main className="narrow">
+    <main className="narrow app">
       <PhaseBar event={event} />
       <header className="row">
-        <div>
-          <h1>Hi, {me.display_name}</h1>
-          <p className="muted">{formatParticipantId(me.number)}</p>
+        <div className="who">
+          <span className="avatar" aria-hidden="true">
+            {initial(me.display_name)}
+          </span>
+          <div>
+            <h1>Hi, {me.display_name}</h1>
+            <p className="muted">{formatParticipantId(me.number)}</p>
+          </div>
         </div>
         <form action={logout}>
           <button type="submit" className="secondary">
@@ -31,8 +37,31 @@ export default async function ParticipantHome() {
       </header>
       {status === 'not_started' && <Profile me={me} />}
       {status === 'open' && <Discovery meId={me.id} />}
-      {status === 'closed' && <p>Matchmaking is closed. Wait for the organisers to announce teams. This page updates by itself.</p>}
+      {status === 'closed' && (
+        <Empty glyph="⏳">Matchmaking is closed. Wait for the organisers to announce teams. This page updates by itself.</Empty>
+      )}
     </main>
+  );
+}
+
+const initial = (name: string) => name.trim().charAt(0).toUpperCase();
+
+function Empty({ glyph, children }: { glyph: string; children: ReactNode }) {
+  return (
+    <div className="panel empty">
+      <span className="glyph" aria-hidden="true">
+        {glyph}
+      </span>
+      <p>{children}</p>
+    </div>
+  );
+}
+
+function Meter({ value, max }: { value: number; max: number }) {
+  return (
+    <div className="meter" aria-hidden="true">
+      <span style={{ width: `${(value / max) * 100}%` }} />
+    </div>
   );
 }
 
@@ -40,11 +69,12 @@ function Profile({ me }: { me: Me }) {
   const filled = [me.phone, me.skills, me.preferences, me.summary].filter(Boolean).length;
 
   return (
-    <section>
+    <section className="panel">
       <h2>Your profile</h2>
       <p className={filled === 4 ? 'notice' : 'muted'}>
         Profile {filled}/4 complete{filled === 4 ? '' : ' (fill in everything to take part in matchmaking)'}
       </p>
+      <Meter value={filled} max={4} />
       <ActionForm action={saveProfile} submitLabel="Save profile">
         <label>
           Phone (only organisers see this)
@@ -77,11 +107,17 @@ async function Discovery({ meId }: { meId: string }) {
   if (error) throw error;
 
   if (!deck.length) {
-    return <p>Matchmaking started before your profile was complete, so you can&apos;t swipe. Please talk to an organiser.</p>;
+    return (
+      <Empty glyph="🙋">
+        Matchmaking started before your profile was complete, so you can&apos;t swipe. Please talk to an organiser.
+      </Empty>
+    );
   }
   const next = deck.find((card) => !card.direction);
   const seen = deck.filter((card) => card.direction).length;
-  if (!next) return <p>You&apos;ve seen all {seen} profiles. Wait for the organisers to announce teams.</p>;
+  if (!next) {
+    return <Empty glyph="✨">You&apos;ve seen all {seen} profiles. Wait for the organisers to announce teams.</Empty>;
+  }
 
   const { data: person, error: personError } = await db()
     .from('participants')
@@ -91,13 +127,17 @@ async function Discovery({ meId }: { meId: string }) {
   if (personError) throw personError;
 
   return (
-    <section>
+    <section className="discovery">
       <p className="muted">
         Profile {seen + 1} of {deck.length}
       </p>
-      <article className="card">
+      <Meter value={seen} max={deck.length} />
+      <article className="card profile-card">
+        <span className="avatar" aria-hidden="true">
+          {initial(person.display_name)}
+        </span>
         <h2>{person.display_name}</h2>
-        <p>{person.summary}</p>
+        <p className="summary">{person.summary}</p>
         <h3>Skills</h3>
         <p>{person.skills}</p>
         <h3>Looking for</h3>
@@ -105,14 +145,16 @@ async function Discovery({ meId }: { meId: string }) {
       </article>
       <form action={swipe} className="swipe">
         <input type="hidden" name="viewedId" value={next.viewed_id} />
-        <button type="submit" name="direction" value="left" className="secondary">
-          ✕ Pass
+        <button type="submit" name="direction" value="left" className="pass">
+          <span aria-hidden="true">✕</span>
+          Pass
         </button>
-        <button type="submit" name="direction" value="right">
-          ♥ Interested
+        <button type="submit" name="direction" value="right" className="like">
+          <span aria-hidden="true">♥</span>
+          Interested
         </button>
       </form>
-      <p className="muted">Choices are final.</p>
+      <p className="muted center-text">Choices are final.</p>
     </section>
   );
 }
