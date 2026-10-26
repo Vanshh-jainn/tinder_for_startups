@@ -10,7 +10,7 @@ Three interfaces:
 
 ## Status
 
-🟨 **Phases 1–6 built; not yet run against a live Supabase project.** Next: run the [full rehearsal](#full-event-rehearsal), then Phase 7 (hardening + deployment). See [PROGRESS.md](PROGRESS.md#next-session-start-here).
+🟨 **Phases 1–6 built; live Supabase project set up and admin login works.** Next: run the [full rehearsal](#full-event-rehearsal), then Phase 7 (hardening + deployment). See [PROGRESS.md](PROGRESS.md#next-session-start-here).
 
 ## Stack
 
@@ -51,6 +51,7 @@ Needs Node.js 20+ and a free [Supabase](https://supabase.com) account. Docker is
    npx supabase link --project-ref <your-project-ref>
    npx supabase db push
    ```
+   If you ran the migration files by hand in the SQL Editor instead, record them so a later `db push` doesn't re-run them: after `link`, run `npx supabase migration repair --status applied <version> ...` with each file's timestamp prefix, then check `npx supabase migration list`.
 5. **Create the first admin.** There is no default password.
    - Dashboard → Authentication → Users → **Add user**: enter an email and a strong password, and tick auto-confirm.
    - Dashboard → SQL Editor, run:
@@ -59,6 +60,7 @@ Needs Node.js 20+ and a free [Supabase](https://supabase.com) account. Docker is
      select id from auth.users where email = 'you@example.com';
      ```
    - Repeat for each additional admin.
+   - Admin login says "Wrong email or password" both for a wrong password **and** for a user missing from `admins`. Check this insert first. Five failures lock the email for 15 minutes; to clear them: `delete from public.login_attempts where key = 'admin:<email>';`
 6. **Run the app**
    ```bash
    npm run dev
