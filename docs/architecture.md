@@ -14,7 +14,7 @@ Status: **Phases 1–6 built** (foundation, profiles + matching, team workspace,
 | Participant/team auth | Custom server sessions (httpOnly cookie, `sessions` table) | Participants log in with an admin-issued ID + code ([OQ-4](open-questions.md)). Team members reach the team workspace through their own login (`requireTeamMember()`); there is no shared team code. |
 | Live updates | Supabase Realtime (Postgres Changes) on the single public `event_state` row, used as a "something changed" signal | `LiveRefresh` re-renders the page from the server when it fires. Data never travels over Realtime, so private fields can't leak through it. |
 | Validation | `zod` at every server entry point | One schema per request body. |
-| Tests | Vitest: unit tests for pure modules + `supabase/db.test.ts`, which runs every migration in PGlite (in-memory Postgres) with stand-in Supabase roles. Playwright for the Phase 6 rehearsal (planned) | No live database needed to test constraints, permissions, and SQL functions |
+| Tests | Vitest: unit tests for pure modules + `supabase/db.test.ts`, which runs every migration in PGlite (in-memory Postgres) with stand-in Supabase roles. End to end: the manual [rehearsal](rehearsal.md) (no automated simulation) | No live database needed to test constraints, permissions, and SQL functions |
 | Hosting | Vercel Hobby + Supabase Free | $0. See [limits](#free-tier-limits-and-costs). Default unless [OQ-27](open-questions.md) says otherwise. |
 
 ## Core principle: the server is the only writer

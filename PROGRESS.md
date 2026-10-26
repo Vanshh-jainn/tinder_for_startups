@@ -16,7 +16,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - Not yet confirmed: "Allow new users to sign up" is off in Supabase Auth.
 - **Live bug fixed in code, not yet applied:** Supabase rejects UPDATE/DELETE without WHERE (`UPDATE requires a WHERE clause`), so every event control, the projector picker, the form link, and the team-change refresh failed. Migration `20261030000000_safeupdate_where.sql` adds `where id`; the user must apply it to Supabase.
 
-**Next: the user runs the [manual check](README.md#manual-check), then the [full rehearsal checklist](README.md#full-event-rehearsal)** by hand (they chose manual testing, no automated simulation). Fix whatever it turns up.
+**Next: the user runs the [event rehearsal](docs/rehearsal.md) (login checks first, then every phase)** by hand (they chose manual testing, no automated simulation). Fix whatever it turns up.
 
 **Then Phase 7, hardening + deployment.** Before writing code, ask the user about:
 - **OQ-27:** where to deploy (default: Vercel Hobby + Supabase Free) and whether a custom domain is wanted.
@@ -68,7 +68,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - [x] Vitest wired up (`npm test`, 7 passing); lint, typecheck, and build pass; no secrets in the client bundle
 - [x] README setup section
 - [x] **User:** create the Supabase project, apply the migrations, create the first admin, log in as admin (2026-10-26)
-- [ ] **User:** click through the rest of the [manual check](README.md#manual-check) (participant login, lockout, code reset, audit rows)
+- [ ] **User:** click through the rest of the [login and security checks](docs/rehearsal.md#4-login-and-security-checks) (participant login, lockout, code reset, audit rows)
 
 ### Phase 2 — Profiles & matching 🟨
 
@@ -81,7 +81,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - [x] Admin participant table: phone, profile status, swipe progress, team status
 - [x] Atomic, audited SQL functions; DB tests (`supabase/db.test.ts`, PGlite) for constraints, permissions, decks, teams
 - [ ] Not built: admin editing a participant's profile (spec §12 "authorised corrections"). Add when needed.
-- [ ] **User:** push the migration and click through the [Phase 2 manual check](README.md#phase-2-manual-check)
+- [ ] **User:** check it in the [event rehearsal](docs/rehearsal.md)
 
 ### Phase 3 — Team workspace & submissions 🟨
 
@@ -92,7 +92,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - [x] New admin page "Teams & submissions": form link, approved teams with domain/source/pitch, dissolve, manual team
 - [x] DB tests for numbers/domains, pitch audit, https check, permissions (32 tests total)
 - [x] Locking pitch edits: done in Phase 4 (editable only during Startup Development, [OQ-32](docs/open-questions.md))
-- [ ] **User:** push the migration and click through the [Phase 3 manual check](README.md#phase-3-manual-check)
+- [ ] **User:** check it in the [event rehearsal](docs/rehearsal.md)
 
 ### Phase 4 — Timers & projector 🟨
 
@@ -104,7 +104,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - [x] `/projector`: corner timer, default screen per phase + admin override, matchmaking animation, teams formed, rules, team on stage
 - [x] Admin "Event & projector" page: controls, pitch timer, projector picker, phase durations + rules
 - [x] Tests: 8 DB tests (phases, discovery coupling, reset, pitch timers, override, audit, triggers, anon access) + 7 timer unit tests (47 total)
-- [ ] **User:** push the migration and click through the [Phase 4 manual check](README.md#phase-4-manual-check)
+- [ ] **User:** check it in the [event rehearsal](docs/rehearsal.md)
 
 ### Phase 5 — Marketplace 🟨
 
@@ -118,7 +118,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - [x] Projector **Investment leaderboard** screen (default for the marketplace phase), live, with "X of N teams fully confirmed"
 - [x] Event page warnings when advancing into/out of the marketplace (incl. fewer than 8 startups)
 - [x] Tests: 6 DB tests + 7 unit tests for every spec §17 marketplace rule (60 total)
-- [ ] **User:** push the migration and click through the [Phase 5 manual check](README.md#phase-5-manual-check)
+- [ ] **User:** check it in the [event rehearsal](docs/rehearsal.md)
 
 ### Phase 6 — Qualification & rehearsal 🟨
 
@@ -129,8 +129,8 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - [x] Final Pitching: only finalists can be put on stage (picker + SQL check)
 - [x] **Timer is display-only:** marketplace confirmation time now starts with the admin's **Start confirmation time** button (5-minute display timer); the marketplace phase timer defaults to 10 minutes
 - [x] DB tests: confirmation start, qualification rules, reveal, permissions (72 tests total)
-- [x] Full-event rehearsal checklist in the README (the user tests manually)
-- [ ] **User:** run the [full rehearsal](README.md#full-event-rehearsal) on a real Supabase project
+- [x] Full-event rehearsal checklist ([docs/rehearsal.md](docs/rehearsal.md)) (the user tests manually)
+- [ ] **User:** run the [event rehearsal](docs/rehearsal.md) on a real Supabase project
 
 ### Phase 7 — Hardening & deployment
 
