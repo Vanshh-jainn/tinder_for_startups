@@ -570,3 +570,74 @@ describe('admin-driven marketplace stages and qualification', () => {
     await expect(db.query('select reveal_next_finalist($1)', [ADMIN])).rejects.toThrow(/permission denied/);
   });
 });
+
+describe('dry-run cleanup', () => {
+  const advance = async (n: number) => {
+    for (let i = 0; i < n; i++) await call(`select timer_action($1, 'advance')`);
+  };
+  const count = async (table: string) =>
+    Number((await db.query<{ n: number }>(`select count(*) as n from ${table}`)).rows[0].n);
+
+  it('deletes a participant before matchmaking only, with sessions, lockouts and an audit row', async () => {
+    const p = await addParticipant('p');
+    await addParticipant('q');
+    await db.query(`insert into sessions (token_hash, subject_type, subject_id, expires_at) values ('t', 'participant', $1, now() + interval '1 hour')`, [p]);
+    await db.query(`insert into login_attempts (key) values ('participant:1')`);
+
+    await call('select delete_participant($1, $2)', [p]);
+    expect(await count('participants')).toBe(1);
+    expect(await count('sessions')).toBe(0);
+    expect(await count('login_attempts')).toBe(0);
+    const { rows } = await db.query<{ before: object }>(`select before from audit_log where action = 'participant.delete'`);
+    expect(rows[0].before).toEqual({ number: 1, display_name: 'p' });
+    await expect(call('select delete_participant($1, $2)', [p])).rejects.toThrow(/not found/);
+
+    const [a, b] = [await addParticipant('a'), await addParticipant('b')];
+    await call('select create_manual_team($1, $2, $3)', [a, b]);
+    await expect(call('select delete_participant($1, $2)', [a])).rejects.toThrow(/team/);
+
+    await advance(3); // Matchmaking opens
+    const c = await addParticipant('c');
+    await expect(call('select delete_participant($1, $2)', [c])).rejects.toThrow(/before Matchmaking/);
+  });
+
+  it('resets a whole run: data gone, numbering restarts, settings and audit log kept', async () => {
+    const [a, b, c, d] = await Promise.all(['a', 'b', 'c', 'd'].map((n) => addParticipant(n)));
+    await call(`select set_form_url($1, 'https://forms.example/x')`);
+    await advance(3);
+    await swipeRight(a, b);
+    const { rows } = await call('select create_manual_team($1, $2, $3) as id', [a, b]);
+    const team = (rows[0] as { id: string }).id;
+    await call('select create_manual_team($1, $2, $3)', [c, d]);
+    await db.query(`insert into submissions (team_id, pitch, updated_by) values ($1, 'p', 'x')`, [team]);
+    await advance(5); // Break & Top 7
+    await call('select confirm_finalists($1, $2)', [JSON.stringify([{ team, place: 1, total: 500 }])]);
+    await db.query(`insert into sessions (token_hash, subject_type, subject_id, expires_at) values ('admin', 'admin', $1, now() + interval '1 hour')`, [ADMIN]);
+    const auditBefore = await count('audit_log');
+
+    await call(`select reset_event($1)`);
+
+    for (const t of ['participants', 'swipes', 'teams', 'team_members', 'matching_runs', 'submissions', 'investments', 'finalists'])
+      expect(await count(t), t).toBe(0);
+    const { rows: [s] } = await db.query<Record<string, unknown>>(
+      'select phase_idx, timer_status, pitching_team_id, projector_screen, market_confirmation, revealed_count from event_state',
+    );
+    expect(s).toEqual({ phase_idx: null, timer_status: 'idle', pitching_team_id: null, projector_screen: null, market_confirmation: false, revealed_count: 0 });
+    expect((await db.query<{ status: string }>('select status from discovery')).rows[0].status).toBe('not_started');
+    expect(await count(`sessions where subject_type = 'admin'`)).toBe(1);
+    expect(await count(`config where google_form_url is not null`)).toBe(1);
+    expect(await count('audit_log')).toBe(auditBefore + 1);
+
+    const { rows: [p] } = await db.query<{ number: number }>(`insert into participants (display_name, code_hash) values ('new', 'h') returning number`);
+    expect(p.number).toBe(1);
+    const [e, f] = [await addParticipant('e'), await addParticipant('f')];
+    await call('select create_manual_team($1, $2, $3)', [e, f]);
+    expect((await db.query<{ number: number }>('select number from teams')).rows[0].number).toBe(1);
+  });
+
+  it('blocks anon from the cleanup functions', async () => {
+    await db.exec('reset role; set role anon');
+    await expect(db.query('select reset_event($1)', [ADMIN])).rejects.toThrow(/permission denied/);
+    await expect(db.query('select delete_participant($1, $1)', [ADMIN])).rejects.toThrow(/permission denied/);
+  });
+});

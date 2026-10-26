@@ -59,8 +59,8 @@ src/
     team/               team workspace: number, domain, pitch, Google Form link, marketplace panel
     admin/
       login/            admin login
-      event/            Event & projector: timer controls, pitch timer, projector screen, phase durations + rules
-      page.tsx          Participants: add, reset code, profile/swipe/team status
+      event/            Event & projector: timer controls, pitch timer, projector screen, phase durations + rules, reset event
+      page.tsx          Participants: add, reset code, delete (before Matchmaking), profile/swipe/team status
       matching/         run matching, proposals, eligible pairs
       teams/            Teams & submissions: form link, pitches, dissolve, manual team
       marketplace/      stage, start confirmation time, counted leaderboard, per-team submission status, void

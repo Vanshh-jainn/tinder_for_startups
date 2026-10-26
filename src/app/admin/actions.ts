@@ -8,6 +8,7 @@ import type { FormState } from '@/components/ActionForm';
 import { formatParticipantId, generateLoginCode } from '@/lib/security';
 import { audit } from '@/server/audit';
 import { requireAdmin } from '@/server/auth';
+import { adminResult, rpc } from '@/server/queries';
 import { clearFailures, isLockedOut, recordFailure } from '@/server/rateLimit';
 import { createSession, revokeSessions } from '@/server/session';
 import { authClient, db } from '@/server/supabase';
@@ -80,4 +81,11 @@ export async function resetParticipantCode(_prev: FormState, formData: FormData)
   await clearFailures(`participant:${data.number}`);
   await audit(`admin:${adminId}`, 'participant.code_reset', 'participants', id, null, null);
   return { notice: `New code ${code}. Shown only once.` };
+}
+
+export async function deleteParticipant(_prev: FormState, formData: FormData): Promise<FormState> {
+  const adminId = await requireAdmin();
+  const parsed = resetSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: 'Invalid participant.' };
+  return adminResult(await rpc('delete_participant', { p_admin: adminId, p_participant: parsed.data.id }), 'Deleted.');
 }

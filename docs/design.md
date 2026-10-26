@@ -65,8 +65,8 @@ A top nav (`AdminHeader`) on every admin page; all admin pages update live.
 
 | Page | Status | Key widgets |
 |---|---|---|
-| Event & projector (`/admin/event`) | Built | Phase + big timer (display only); start/pause/resume, +1/+5 min, reset clock, end now, advance (confirm names side effects); **Start confirmation time** in the marketplace; Final Pitching picker (finalists only); projector screen picker (follow phase / override) + link to `/projector`; phase durations and rules |
-| Participants (`/admin`) | Built | Matchmaking status + incomplete-profile warning; add participant (code shown once); table: ID, name, phone, profile, swipe progress, team, reset code |
+| Event & projector (`/admin/event`) | Built | Phase + big timer (display only); start/pause/resume, +1/+5 min, reset clock, end now, advance (confirm names side effects); **Start confirmation time** in the marketplace; Final Pitching picker (finalists only); projector screen picker (follow phase / override) + link to `/projector`; phase durations and rules; **Reset event** for dry runs (type RESET) |
+| Participants (`/admin`) | Built | Matchmaking status + incomplete-profile warning; add participant (code shown once); table: ID, name, phone, profile, swipe progress, team, reset code, delete (only before Matchmaking) |
 | Matching (`/admin/matching`) | Built | Run matching, clear proposals, last-run summary + unassigned; proposed teams with ranks/score, approve/reject; eligible pairs table |
 | Teams & submissions (`/admin/teams`) | Built | Google Form link; approved teams with number, members, domain, source badge, editable pitch, dissolve; manual team builder (**Manual override**) |
 | Marketplace (`/admin/marketplace`) | Built | Stage + countdown; Start confirmation time; counted leaderboard with "X of N teams fully confirmed"; per-team status (no allocation / saved / confirming m/k / complete), allocation summary, void (audited) |

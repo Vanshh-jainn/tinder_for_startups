@@ -10,11 +10,12 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 
 **Where things stand**
 - Phases 0–6 are built and committed (Phase 6 in `e19e32e`).
-- Checks: 73 tests pass (`npm test`: unit + PGlite DB tests); lint, type check, and build are clean.
+- Checks: 76 tests pass (`npm test`: unit + PGlite DB tests); lint, type check, and build are clean.
 - **Live Supabase project is set up** (2026-10-26): the first 6 migrations applied (all tables present, `event_state` + 9 `phases` seeded), `.env.local` keys verified, anon access to `participants` refused, first admin created, admin login on localhost works.
 - The migrations were applied without a linked CLI here, so the remote migration history may be empty. Before the next `db push`, link and run `migration repair --status applied` for the 6 existing versions (see [README](README.md#setup), step 4).
 - Not yet confirmed: "Allow new users to sign up" is off in Supabase Auth.
-- **Live bug fixed in code, not yet applied:** Supabase rejects UPDATE/DELETE without WHERE (`UPDATE requires a WHERE clause`), so every event control, the projector picker, the form link, and the team-change refresh failed. Migration `20261030000000_safeupdate_where.sql` adds `where id`; the user must apply it to Supabase.
+- Live bug fixed and applied (2026-10-26): Supabase rejects UPDATE/DELETE without WHERE (`UPDATE requires a WHERE clause`); migration `20261030000000_safeupdate_where.sql` adds `where id`.
+- **Dry-run cleanup built, not yet applied:** migration `20261031000000_dry_run_cleanup.sql` (admin **Delete** participant before Matchmaking; **Reset event** on Event & projector). The user must run it in the Supabase SQL Editor.
 
 **Next: the user runs the [event rehearsal](docs/rehearsal.md) (login checks first, then every phase)** by hand (they chose manual testing, no automated simulation). Fix whatever it turns up.
 
@@ -63,6 +64,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - [x] Admin login (Supabase Auth password check → server session) + first-admin setup with no default password (README)
 - [x] Session mechanism (`src/server/session.ts`): hashed tokens, httpOnly cookie, 12 h expiry, revocable
 - [x] Participant login with admin-issued ID + code; admin can add participants and reset codes
+- [x] Dry runs: admin deletes a participant (before Matchmaking only) and resets the whole event (2026-10-26)
 - [x] Per-account login lockout (5 failures / 15 min)
 - [x] Audit log helper with secret redaction
 - [x] Vitest wired up (`npm test`, 7 passing); lint, typecheck, and build pass; no secrets in the client bundle
@@ -184,4 +186,5 @@ Record each decision with a date. Answers to open questions also go in [docs/ope
 | 2026-10-29 | OQ-19: ₹0 teams never qualify. OQ-23: finalists only, no winners. Finalists revealed one by one (7th → 1st); only finalists can pitch | User decision |
 | 2026-10-29 | The server recomputes qualification when confirming; the admin only picks among tied teams | The admin can't hand-pick arbitrary finalists by accident |
 | 2026-10-29 | Rehearsal = manual checklist, no automated simulation | User decision |
+| 2026-10-26 | Dry runs: **Delete** participant only before Matchmaking opens (and never in a team); **Reset event** hard-deletes participants, swipes, teams, pitches, investments, finalists, participant sessions/lockouts, restarts P1/Team 1, returns to before Introduction. Keeps admins, phase settings, form link, audit log (+ an `event.reset` row) | User decision: the event is rehearsed repeatedly with volunteers |
 | 2026-10-26 | Every UPDATE/DELETE in a SQL function has a WHERE (single-row tables use `where id`); a DB test scans all functions for it | Supabase's safeupdate rejects them and PGlite doesn't, so tests passed while the live project failed |

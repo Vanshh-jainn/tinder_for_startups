@@ -5,7 +5,7 @@ import { getActiveMemberships, getDiscoveryStatus, getSwipes } from '@/server/qu
 import { db } from '@/server/supabase';
 import { AdminHeader } from './AdminHeader';
 import Link from 'next/link';
-import { createParticipant, resetParticipantCode } from './actions';
+import { createParticipant, deleteParticipant, resetParticipantCode } from './actions';
 
 export default async function AdminPage() {
   await requireAdmin();
@@ -34,7 +34,7 @@ export default async function AdminPage() {
         <h2>Matchmaking: {status.replace('_', ' ')}</h2>
         <p className="muted">
           Matchmaking opens and closes with its phase on <Link href="/admin/event">Event &amp; projector</Link>. Profiles
-          lock when it opens.
+          lock when it opens, and participants can no longer be deleted (use Reset event there to start over).
         </p>
         {status === 'not_started' && incomplete.length > 0 && (
           <p className="warn">
@@ -63,6 +63,7 @@ export default async function AdminPage() {
               <th>Swiped</th>
               <th>Team</th>
               <th>Login code</th>
+              {status === 'not_started' && <th>Remove</th>}
             </tr>
           </thead>
           <tbody>
@@ -85,6 +86,17 @@ export default async function AdminPage() {
                       <input type="hidden" name="id" value={p.id} />
                     </ActionForm>
                   </td>
+                  {status === 'not_started' && (
+                    <td>
+                      <ActionForm
+                        action={deleteParticipant}
+                        submitLabel="Delete"
+                        confirmText={`Delete ${formatParticipantId(p.number)} (${p.display_name})? This can't be undone.`}
+                      >
+                        <input type="hidden" name="id" value={p.id} />
+                      </ActionForm>
+                    </td>
+                  )}
                 </tr>
               );
             })}

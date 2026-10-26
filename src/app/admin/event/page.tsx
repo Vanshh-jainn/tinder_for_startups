@@ -5,7 +5,7 @@ import { requireAdmin } from '@/server/auth';
 import { getEventState } from '@/server/queries';
 import { db } from '@/server/supabase';
 import { AdminHeader } from '../AdminHeader';
-import { setProjectorScreen, startConfirmation, startPitch, timerAction, updatePhase } from './actions';
+import { resetEvent, setProjectorScreen, startConfirmation, startPitch, timerAction, updatePhase } from './actions';
 
 type TimerProps = { action: string; label: string; confirm?: string; minutes?: number };
 
@@ -170,6 +170,25 @@ export default async function EventPage() {
             ))}
           </tbody>
         </table>
+      </section>
+
+      <section>
+        <h2>Reset event (dry runs)</h2>
+        <p className="warn">
+          Deletes every participant, swipe, team, pitch, investment and finalist, logs participants out, and returns to
+          before Introduction. Numbering restarts at P1 and Team 1. Phase durations, rules, the Google Form link, admins
+          and the audit log are kept. Can&apos;t be undone.
+        </p>
+        <ActionForm
+          action={resetEvent}
+          submitLabel="Reset event"
+          confirmText="Reset the whole event? All participants and their data are deleted."
+        >
+          <label>
+            Type RESET to confirm
+            <input name="confirm" required autoComplete="off" />
+          </label>
+        </ActionForm>
       </section>
     </main>
   );

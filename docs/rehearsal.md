@@ -15,6 +15,8 @@ A full practice run of the event on the real Supabase project, start to finish, 
 7. [After the rehearsal](#7-after-the-rehearsal)
 8. [If something breaks](#8-if-something-breaks)
 
+After a run: [Running it again](#running-it-again).
+
 ## 1. Before you start
 
 - [ ] Setup is done ([README → Setup](../README.md#setup)): Supabase project, all migrations applied, `.env.local` filled in, first admin created, admin login works.
@@ -58,6 +60,7 @@ The first time each page opens in dev mode, it can take a while to load (it is b
 - [ ] **Rules:** Admin → Event & projector → Phases table: type rules for each phase (one per line) and Save. Change durations here if you want a shorter rehearsal.
 - [ ] **Google Form:** Admin → Teams & submissions: paste an `http://` link (should be refused), then your `https://` form link (saved).
 - [ ] **Projector:** open `/projector` full-screen. It shows "Tinder for Startups".
+- [ ] **Delete:** add a test participant with a typo, then Admin → Participants → **Delete** it. (Delete is only offered before Matchmaking opens.)
 
 The 9 phases and their default timers:
 
@@ -183,7 +186,17 @@ Qualification rules, for checking the result: top 7 by counted total; ₹0 teams
 - [ ] Supabase → Table Editor → `audit_log`: there is a row for every admin action above (participant create/reset, phase changes, matching, approvals, pitch edit, void, finalists, reveals), and **no codes or hashes** anywhere in it.
 - [ ] Write down anything that was slow, confusing, or broken, for fixing before Phase 7.
 
-**Running it again:** the rehearsal leaves data behind (participants, teams, investments), and Final Pitching is the last phase. There is no reset button yet; the clean-slate step for event day is part of Phase 7. Until then, ask for a reset before a second run.
+## Running it again
+
+After a run, Admin → Event & projector → **Reset event** (at the bottom). Type `RESET` and confirm.
+
+- [ ] Participants, swipes, teams, pitches, investments and finalists are gone; participants' phones are logged out.
+- [ ] The event is back to before Introduction; the projector shows "Tinder for Startups".
+- [ ] New participants start at P1 again; new teams start at Team 1.
+- [ ] Phase durations, rules, the Google Form link and your admin login are unchanged.
+- [ ] `audit_log` has an `event.reset` row.
+
+Then start again from [section 3](#3-prepare-the-event). Before the real event, reset once more so it starts clean.
 
 ## 8. If something breaks
 
