@@ -71,6 +71,23 @@ describe('access', () => {
     await expect(db.query(`update audit_log set action = 'x'`)).rejects.toThrow(/permission denied/);
     await expect(db.query('delete from audit_log')).rejects.toThrow(/permission denied/);
   });
+
+  // Supabase's safeupdate rejects these with "UPDATE requires a WHERE clause"; PGlite doesn't.
+  it('puts a WHERE on every UPDATE and DELETE inside functions', async () => {
+    const { rows } = await db.query<{ proname: string; prosrc: string }>(
+      `select proname, prosrc from pg_proc where pronamespace = 'public'::regnamespace`,
+    );
+    const topLevel = (sql: string) => {
+      while (/\([^()]*\)/.test(sql)) sql = sql.replace(/\([^()]*\)/g, '');
+      return sql;
+    };
+    const missing = rows.flatMap(({ proname, prosrc }) =>
+      [...prosrc.matchAll(/\b(update\s+[\w.]+\s+set|delete\s+from)\b[^;]*/gi)]
+        .filter(([stmt]) => !/\bwhere\b/i.test(topLevel(stmt)))
+        .map(([stmt]) => `${proname}: ${stmt.split('\n')[0]}`),
+    );
+    expect(missing).toEqual([]);
+  });
 });
 
 describe('profiles', () => {

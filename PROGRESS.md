@@ -6,14 +6,19 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 
 ## Next session: start here
 
-*Last updated 2026-10-29.*
+*Last updated 2026-10-26.*
 
 **Where things stand**
-- Phases 0–6 are built. Phase 6 (qualification) is waiting for the user's commit; Phases 0–5 are committed and pushed to `origin/main`.
-- Checks: 72 tests pass (`npm test`: unit + PGlite DB tests); lint, type check, and build are clean.
-- **Nothing has run against a real Supabase project yet.** Setup: create the project, `.env.local`, `npx supabase db push` (6 migrations), first admin. Then the user runs the [full rehearsal checklist](README.md#full-event-rehearsal) by hand. They chose manual testing, with no automated simulation.
+- Phases 0–6 are built and committed (Phase 6 in `e19e32e`).
+- Checks: 73 tests pass (`npm test`: unit + PGlite DB tests); lint, type check, and build are clean.
+- **Live Supabase project is set up** (2026-10-26): the first 6 migrations applied (all tables present, `event_state` + 9 `phases` seeded), `.env.local` keys verified, anon access to `participants` refused, first admin created, admin login on localhost works.
+- The migrations were applied without a linked CLI here, so the remote migration history may be empty. Before the next `db push`, link and run `migration repair --status applied` for the 6 existing versions (see [README](README.md#setup), step 4).
+- Not yet confirmed: "Allow new users to sign up" is off in Supabase Auth.
+- **Live bug fixed in code, not yet applied:** Supabase rejects UPDATE/DELETE without WHERE (`UPDATE requires a WHERE clause`), so every event control, the projector picker, the form link, and the team-change refresh failed. Migration `20261030000000_safeupdate_where.sql` adds `where id`; the user must apply it to Supabase.
 
-**Next: Phase 7, hardening + deployment.** Before writing code, ask the user about:
+**Next: the user runs the [manual check](README.md#manual-check), then the [full rehearsal checklist](README.md#full-event-rehearsal)** by hand (they chose manual testing, no automated simulation). Fix whatever it turns up.
+
+**Then Phase 7, hardening + deployment.** Before writing code, ask the user about:
 - **OQ-27:** where to deploy (default: Vercel Hobby + Supabase Free) and whether a custom domain is wanted.
 - **OQ-1 / OQ-26:** the real number of participants and teams, to check the free-tier limits (Supabase Realtime connections, etc.).
 - **OQ-25:** when to export, archive, or delete participant data, swipes, and investments after the event.
@@ -32,11 +37,11 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 | # | Phase | Status | Blocked by [open questions](docs/open-questions.md) |
 |---:|---|---|---|
 | 0 | Documentation & planning | ✅ Done | |
-| 1 | Foundation | 🟨 Code done; waiting for the live Supabase check | 1 |
-| 2 | Profiles & matching | 🟨 Code done; waiting for the live Supabase check | 7 (tie rule), 36 |
-| 3 | Team workspace & submissions | 🟨 Code done; waiting for the live Supabase check | |
-| 4 | Timers & projector | 🟨 Code done; waiting for the live Supabase check | |
-| 5 | Marketplace | 🟨 Code done; waiting for the live Supabase check | |
+| 1 | Foundation | 🟨 Live setup + admin login done; participant manual check left | 1 |
+| 2 | Profiles & matching | 🟨 Code done; waiting for the rehearsal | 7 (tie rule), 36 |
+| 3 | Team workspace & submissions | 🟨 Code done; waiting for the rehearsal | |
+| 4 | Timers & projector | 🟨 Code done; waiting for the rehearsal | |
+| 5 | Marketplace | 🟨 Code done; waiting for the rehearsal | |
 | 6 | Qualification & rehearsal | 🟨 Code done; user runs the rehearsal checklist | |
 | 7 | Hardening & deployment | ⬜ Not started | 25, 26, 27 |
 
@@ -62,7 +67,8 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - [x] Audit log helper with secret redaction
 - [x] Vitest wired up (`npm test`, 7 passing); lint, typecheck, and build pass; no secrets in the client bundle
 - [x] README setup section
-- [ ] **User:** create the Supabase project, push the migration, create the first admin, and click through the [manual check](README.md#manual-check)
+- [x] **User:** create the Supabase project, apply the migrations, create the first admin, log in as admin (2026-10-26)
+- [ ] **User:** click through the rest of the [manual check](README.md#manual-check) (participant login, lockout, code reset, audit rows)
 
 ### Phase 2 — Profiles & matching 🟨
 
@@ -178,3 +184,4 @@ Record each decision with a date. Answers to open questions also go in [docs/ope
 | 2026-10-29 | OQ-19: ₹0 teams never qualify. OQ-23: finalists only, no winners. Finalists revealed one by one (7th → 1st); only finalists can pitch | User decision |
 | 2026-10-29 | The server recomputes qualification when confirming; the admin only picks among tied teams | The admin can't hand-pick arbitrary finalists by accident |
 | 2026-10-29 | Rehearsal = manual checklist, no automated simulation | User decision |
+| 2026-10-26 | Every UPDATE/DELETE in a SQL function has a WHERE (single-row tables use `where id`); a DB test scans all functions for it | Supabase's safeupdate rejects them and PGlite doesn't, so tests passed while the live project failed |
