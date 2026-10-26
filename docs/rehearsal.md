@@ -216,4 +216,5 @@ Then start again from [section 3](#3-prepare-the-event). Before the real event, 
 | Error `21000` / "UPDATE requires a WHERE clause" | A SQL function updates without `WHERE`; Supabase refuses it | Fixed in migration `20261030000000_safeupdate_where.sql`; make sure it is applied |
 | Every database call fails with "Unregistered API key" | `SUPABASE_SECRET_KEY` is from another project or cut short | Copy it again from Project Settings → API Keys, then restart `npm run dev` |
 | A page keeps loading the first time | Dev mode builds each page on first open | Reload the page |
+| On another device, Login just clears the fields | Dev server blocks its JS for hosts other than `localhost` (`Blocked cross-origin request` in the terminal) | `allowedDevOrigins` in `next.config.ts` allows `10.*.*.*` and `192.168.*.*`; restart `npm run dev`. Other IP range? Add it there |
 | A phone can't open the app | Not on the same Wi-Fi, or the app was started without `-H 0.0.0.0` | Check both; use the laptop's IP, not `localhost` |

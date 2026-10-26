@@ -17,7 +17,7 @@ export function LeaderboardTable({ board }: { board: Leaderboard }) {
         </thead>
         <tbody>
           {board.rows.map((r) => (
-            <tr key={r.teamId}>
+            <tr key={r.teamId} className={r.total > 0 && r.rank <= 3 ? `top top-${r.rank}` : undefined}>
               <td>{r.rank}</td>
               <td>Team {r.number}</td>
               <td>₹{r.total.toLocaleString('en-IN')}</td>
