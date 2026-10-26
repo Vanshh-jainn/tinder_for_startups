@@ -1497,12 +1497,6 @@ body:has(.app, .projector, .admin) {
 }
 
 /* Welcome */
-.projector .brand .flame {
-  transform-box: fill-box;
-  transform-origin: 50% 80%;
-  animation: heartbeat 1.6s ease-in-out infinite;
-}
-
 @keyframes heartbeat {
   0%, 40%, 100% { transform: scale(1); }
   10% { transform: scale(1.12); }
@@ -1685,7 +1679,6 @@ body:has(.app, .projector, .admin) {
   .projector::before,
   .projector::after,
   .screen,
-  .projector .brand .flame,
   .projector .brand .wordmark,
   .rules li,
   .mm-stage + h1::after,
