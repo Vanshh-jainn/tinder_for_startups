@@ -32,6 +32,7 @@ How to put the app online on the free tiers (Vercel Hobby + Supabase Free, no cu
 Use phones on mobile data, not the dev laptop.
 
 - [ ] `/` and `/login` load fast and show the theme.
+- [ ] Paste the live URL into a WhatsApp chat: the preview shows the pink flame card. (Link previews are cached; a URL shared before deploying may show the old preview.)
 - [ ] `/admin/login` works for each admin.
 - [ ] Add a test participant, log in on a phone, log out, log back in.
 - [ ] `/projector` on the projector laptop, full screen (F11 / Ctrl+Cmd+F). Advance a phase on the admin page: the projector follows within about a second.

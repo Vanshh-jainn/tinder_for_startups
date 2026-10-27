@@ -132,6 +132,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - [x] Concurrency / free-tier check for 70–90 participants (~95 devices, about half the Realtime cap): [deployment.md §4](docs/deployment.md#4-free-tier-check-for-7090-participants)
 - [x] Backup/export plan: keep all data (OQ-25); CSV export after the marketplace and after finalists
 - [x] Deployment guide + event-day runbook: [docs/deployment.md](docs/deployment.md)
+- [x] Link-preview (OG) image generated at build time (`src/app/opengraph-image.tsx`) + Open Graph / Twitter metadata
 - [ ] **User:** deploy, smoke test, rehearse on the live URL
 
 ### Phase 8 — Rehearsal fixes 🟨

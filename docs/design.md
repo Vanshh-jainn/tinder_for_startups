@@ -37,6 +37,8 @@ Tinder-style theme (2026-10-26). Participant pages (`main.app`) are phone-first 
 - "It's a Match!" overlay the first time each phone opens its new team (once per phone, `localStorage`). It celebrates the team being formed; individual mutual likes are never revealed.
 - Live leaderboard animations (fix D).
 
+**Link preview (OG image, 2026-10-27):** `src/app/opengraph-image.tsx` renders a 1200×630 card at build time: wine background, Tinder flame, "Tinder for Startups", the tagline and "DAMRU · Rishihood University", a few hearts. `layout.tsx` sets the Open Graph title/description and a large Twitter/X card. On Vercel the image URL uses the deployment's domain automatically.
+
 Every text/background pair must meet WCAG AA contrast (4.5:1). The projector should aim for AAA (7:1).
 
 ## Participant portal (phone)
