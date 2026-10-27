@@ -133,6 +133,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - [x] Backup/export plan: keep all data (OQ-25); CSV export after the marketplace and after finalists
 - [x] Deployment guide + event-day runbook: [docs/deployment.md](docs/deployment.md)
 - [x] Link-preview (OG) image generated at build time (`src/app/opengraph-image.tsx`) + Open Graph / Twitter metadata
+- [x] Projector fits one 16:9 screen with no scrolling: height-aware unit, fixed frame, leaderboard top 10 (two columns), "Teams formed" pages of 12 every 8 s, compact long rules, finalists in 7 rows, timer inside the title band. Checked with 42 fake teams in headless Chrome at 1920×~860
 - [ ] **User:** deploy, smoke test, rehearse on the live URL
 
 ### Phase 8 — Rehearsal fixes 🟨
@@ -209,3 +210,4 @@ Record each decision with a date. Answers to open questions also go in [docs/ope
 | 2026-10-27 | Admin profile corrections allowed at any time (participants stay locked after Matchmaking opens); decks are not rebuilt, so a profile completed later only joins random pairing | Spec §12 authorised corrections; rebuilding decks mid-swipe would change ranks |
 | 2026-10-27 | Security §17 checks as a DB-wide permission test plus source-scan tests (`guards.test.ts`) | Catch future actions/functions that forget a guard or revoke, without an HTTP test harness |
 | 2026-10-27 | Backups: CSV export from the Table Editor (Supabase Free has no downloadable backups) | User keeps all data (OQ-25) |
+| 2026-10-27 | Projector never scrolls: leaderboard shows the top 10 only (ties at the cut are cut by order); "Teams formed" rotates pages of 12 every 8 s; projector is 16:9 | User decision |

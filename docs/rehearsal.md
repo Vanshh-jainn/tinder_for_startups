@@ -59,7 +59,7 @@ The first time each page opens in dev mode, it can take a while to load (it is b
 - [ ] **Participants:** Admin → Participants → **Add participant** for each person. Note each `P<n>` ID and code: **the code is shown only once.** Hand them out.
 - [ ] **Rules:** Admin → Event & projector → Phases table: type rules for each phase (one per line) and Save. Change durations here if you want a shorter rehearsal.
 - [ ] **Google Form:** Admin → Teams & submissions: paste an `http://` link (should be refused), then your `https://` form link (saved).
-- [ ] **Projector:** open `/projector` full-screen. It shows "Tinder for Startups".
+- [ ] **Projector:** open `/projector` full-screen. It shows "Tinder for Startups". On every screen below, nothing needs scrolling: "Teams formed" pages through 12 teams at a time, the leaderboard shows the top 10, and long rules switch to two columns.
 - [ ] **Delete:** add a test participant with a typo, then Admin → Participants → **Delete** it. (Delete is only offered before Matchmaking opens.)
 
 The 9 phases and their default timers:

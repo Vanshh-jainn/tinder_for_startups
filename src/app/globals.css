@@ -16,6 +16,9 @@
   --grad: linear-gradient(135deg, #e0115f, #b5124f);
   --grad-text: linear-gradient(90deg, #ff6fa5, #ff3d6e);
   --border: #3d1c2e;
+  /* Projector unit: calc(1 * var(--u)) on a 16:9 screen, smaller when the window is shorter (browser bars,
+     4:3), so a 16:9 design always fits the height. Equals calc(1 * var(--u)) on phones / portrait. */
+  --u: min(1vw, 1.7778vh);
 }
 
 * {
@@ -278,20 +281,30 @@ tr.current {
 
 /* Projector: readable from the back of a hall. */
 .projector {
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   max-width: none;
-  padding: 4vw;
-  font-size: 2.4vw;
+  padding: calc(3 * var(--u)) calc(4 * var(--u));
+  font-size: calc(2.4 * var(--u));
   position: relative;
 }
 
 .projector h1 {
-  font-size: 5vw;
-  margin: 0 0 3vw;
+  font-size: calc(4.2 * var(--u));
+  margin: 0 0 calc(1.6 * var(--u));
+}
+
+.projector .screen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .projector .center {
-  min-height: 80vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -301,36 +314,36 @@ tr.current {
 
 .corner-timer {
   position: absolute;
-  top: 2vw;
-  right: 2vw;
+  top: calc(2 * var(--u));
+  right: calc(2 * var(--u));
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  font-size: 3.5vw;
+  font-size: calc(3.5 * var(--u));
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  padding: 0.8vw 1.8vw;
-  border-radius: 1.6vw;
-  border: 0.15vw solid var(--border);
+  padding: calc(0.8 * var(--u)) calc(1.8 * var(--u));
+  border-radius: calc(1.6 * var(--u));
+  border: calc(0.15 * var(--u)) solid var(--border);
   background: rgb(34 16 25 / 0.85);
   z-index: 1;
 }
 
 .corner-timer small {
-  font-size: 1.4vw;
+  font-size: calc(1.4 * var(--u));
   color: var(--muted);
 }
 
 .rules {
   text-align: left;
-  font-size: 3vw;
+  font-size: calc(3 * var(--u));
   line-height: 1.6;
 }
 
 .team-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(22vw, 1fr));
-  gap: 1.5vw;
+  grid-template-columns: repeat(auto-fill, minmax(calc(22 * var(--u)), 1fr));
+  gap: calc(1.5 * var(--u));
 }
 
 .team-grid h2 {
@@ -342,25 +355,25 @@ tr.current {
 }
 
 .stage-timer {
-  font-size: 12vw;
+  font-size: calc(12 * var(--u));
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  margin: 2vw 0 0;
+  margin: calc(2 * var(--u)) 0 0;
 }
 
 .mm-stage {
   position: relative;
-  width: 40vw;
-  height: 30vw;
+  width: calc(40 * var(--u));
+  height: calc(30 * var(--u));
 }
 
 .mm-card {
   position: absolute;
   left: 50%;
   top: 10%;
-  width: 16vw;
-  height: 22vw;
-  margin-left: -8vw;
+  width: calc(16 * var(--u));
+  height: calc(22 * var(--u));
+  margin-left: -calc(8 * var(--u));
   border-radius: var(--radius);
   background: linear-gradient(160deg, var(--surface), #33182a);
   border: 2px solid var(--muted);
@@ -385,20 +398,20 @@ tr.current {
 @keyframes mm-swipe-right {
   0% { opacity: 0; transform: scale(0.9); }
   15%, 55% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: translateX(22vw) rotate(18deg); }
+  100% { opacity: 0; transform: translateX(calc(22 * var(--u))) rotate(18deg); }
 }
 
 @keyframes mm-swipe-left {
   0% { opacity: 0; transform: scale(0.9); }
   15%, 55% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: translateX(-22vw) rotate(-18deg); }
+  100% { opacity: 0; transform: translateX(-calc(22 * var(--u))) rotate(-18deg); }
 }
 
 .mm-heart {
   position: absolute;
   bottom: 0;
   color: var(--accent);
-  font-size: 3vw;
+  font-size: calc(3 * var(--u));
   opacity: 0;
   animation: mm-float 4s infinite;
 }
@@ -413,7 +426,7 @@ tr.current {
 @keyframes mm-float {
   0% { opacity: 0; transform: translateY(0); }
   20% { opacity: 1; }
-  100% { opacity: 0; transform: translateY(-28vw); }
+  100% { opacity: 0; transform: translateY(-calc(28 * var(--u))); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -452,9 +465,9 @@ ul.error {
 }
 
 .projector .stage {
-  font-size: 2.4vw;
+  font-size: calc(2.4 * var(--u));
   color: var(--warn);
-  margin: -2vw 0 1vw;
+  margin: -calc(2 * var(--u)) 0 calc(1 * var(--u));
 }
 
 fieldset {
@@ -468,15 +481,15 @@ fieldset {
 .finalist-list {
   display: flex;
   flex-direction: column;
-  gap: 1vw;
+  gap: calc(1 * var(--u));
 }
 
 .finalist {
   display: flex;
   align-items: center;
-  gap: 2vw;
-  min-height: 7vw;
-  padding: 1vw 2vw;
+  gap: calc(2 * var(--u));
+  min-height: calc(7 * var(--u));
+  padding: calc(1 * var(--u)) calc(2 * var(--u));
 }
 
 .finalist h2 {
@@ -488,9 +501,9 @@ fieldset {
 }
 
 .finalist .place {
-  font-size: 4vw;
+  font-size: calc(4 * var(--u));
   font-weight: 700;
-  min-width: 6vw;
+  min-width: calc(6 * var(--u));
   color: var(--muted);
 }
 
@@ -684,7 +697,7 @@ body:has(.app, .projector, .admin) {
 }
 
 .brand-logo {
-  width: min(240px, 64vw);
+  width: min(240px, calc(64 * var(--u)));
   height: auto;
   filter: drop-shadow(0 10px 30px rgb(253 38 125 / 0.35));
 }
@@ -925,25 +938,25 @@ body:has(.app, .projector, .admin) {
 }
 
 .projector .brand {
-  gap: 1vw;
+  gap: calc(1 * var(--u));
 }
 
 .projector .brand-logo {
-  width: 42vw;
+  width: calc(42 * var(--u));
 }
 
 .projector .brand .wordmark {
-  font-size: 5.5vw;
+  font-size: calc(5.5 * var(--u));
 }
 
 .projector .eyebrow {
-  font-size: 1.4vw;
-  margin-bottom: 1vw;
+  font-size: calc(1.4 * var(--u));
+  margin-bottom: calc(1 * var(--u));
 }
 
 .projector .card {
-  border-radius: 1.4vw;
-  border: 0.15vw solid transparent;
+  border-radius: calc(1.4 * var(--u));
+  border: calc(0.15 * var(--u)) solid transparent;
   background: linear-gradient(var(--surface), var(--surface)) padding-box,
     linear-gradient(160deg, #46203a, var(--surface)) border-box;
 }
@@ -953,14 +966,14 @@ body:has(.app, .projector, .admin) {
 }
 
 .team-grid .card {
-  padding: 1.6vw;
+  padding: calc(1.6 * var(--u));
   background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--grad) border-box;
   animation: pop-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 .team-grid .eyebrow {
   color: var(--accent);
-  margin-bottom: 0.4vw;
+  margin-bottom: calc(0.4 * var(--u));
 }
 
 .team-grid h2 {
@@ -968,7 +981,7 @@ body:has(.app, .projector, .admin) {
 }
 
 .team-grid .domain {
-  margin: 0.6vw 0 0;
+  margin: calc(0.6 * var(--u)) 0 0;
   font-weight: 700;
 }
 
@@ -1043,23 +1056,23 @@ body:has(.app, .projector, .admin) {
 /* Projector opened on a phone or portrait screen: vw sizes would be tiny. */
 @media (max-aspect-ratio: 1/1) {
   .projector {
-    font-size: 4.5vw;
-    padding: 6vw 5vw;
+    font-size: calc(4.5 * var(--u));
+    padding: calc(6 * var(--u)) calc(5 * var(--u));
   }
 
   .projector h1 {
-    font-size: 9vw;
+    font-size: calc(9 * var(--u));
   }
 
   .corner-timer {
     position: static;
     align-items: center;
-    margin-bottom: 6vw;
-    font-size: 7vw;
+    margin-bottom: calc(6 * var(--u));
+    font-size: calc(7 * var(--u));
   }
 
   .corner-timer small {
-    font-size: 3.5vw;
+    font-size: calc(3.5 * var(--u));
   }
 
   .projector .center {
@@ -1067,25 +1080,25 @@ body:has(.app, .projector, .admin) {
   }
 
   .rules {
-    font-size: 5vw;
+    font-size: calc(5 * var(--u));
   }
 
   .team-grid {
     grid-template-columns: 1fr;
-    gap: 3vw;
+    gap: calc(3 * var(--u));
   }
 
   .projector .stage {
-    font-size: 4.5vw;
-    margin: 0 0 3vw;
+    font-size: calc(4.5 * var(--u));
+    margin: 0 0 calc(3 * var(--u));
   }
 
   .projector .brand-logo {
-    width: 80vw;
+    width: calc(80 * var(--u));
   }
 
   .projector .brand .wordmark {
-    font-size: 10vw;
+    font-size: calc(10 * var(--u));
   }
 
   .mm-stage {
@@ -1093,15 +1106,15 @@ body:has(.app, .projector, .admin) {
   }
 
   .finalist {
-    min-height: 14vw;
+    min-height: calc(14 * var(--u));
   }
 
   .finalist .place {
-    font-size: 8vw;
+    font-size: calc(8 * var(--u));
   }
 
   .hearts span {
-    font-size: 8vw;
+    font-size: calc(8 * var(--u));
   }
 }
 
@@ -1339,22 +1352,22 @@ body:has(.app, .projector, .admin) {
   content: '';
   position: absolute;
   z-index: 0;
-  width: 60vw;
-  height: 60vw;
+  width: calc(60 * var(--u));
+  height: calc(60 * var(--u));
   border-radius: 50%;
   pointer-events: none;
   animation: drift 22s ease-in-out infinite alternate;
 }
 
 .projector::before {
-  top: -25vw;
-  left: -15vw;
+  top: -calc(25 * var(--u));
+  left: -calc(15 * var(--u));
   background: radial-gradient(circle, rgb(224 17 95 / 0.28), transparent 65%);
 }
 
 .projector::after {
-  bottom: -30vw;
-  right: -15vw;
+  bottom: -calc(30 * var(--u));
+  right: -calc(15 * var(--u));
   background: radial-gradient(circle, rgb(181 18 79 / 0.22), transparent 65%);
   animation-delay: -11s;
 }
@@ -1366,7 +1379,7 @@ body:has(.app, .projector, .admin) {
 
 @keyframes drift {
   from { transform: translate(0, 0) scale(1); }
-  to { transform: translate(12vw, 8vw) scale(1.15); }
+  to { transform: translate(calc(12 * var(--u)), calc(8 * var(--u))) scale(1.15); }
 }
 
 .screen {
@@ -1374,12 +1387,12 @@ body:has(.app, .projector, .admin) {
 }
 
 @keyframes screen-in {
-  from { opacity: 0; transform: translateY(3vw) scale(0.98); }
+  from { opacity: 0; transform: translateY(calc(3 * var(--u))) scale(0.98); }
   to { opacity: 1; transform: none; }
 }
 
 @keyframes pop-in {
-  from { opacity: 0; transform: translateY(2vw) scale(0.85); }
+  from { opacity: 0; transform: translateY(calc(2 * var(--u))) scale(0.85); }
   to { opacity: 1; transform: none; }
 }
 
@@ -1403,7 +1416,7 @@ body:has(.app, .projector, .admin) {
 
 .hearts {
   position: absolute;
-  inset: -4vw;
+  inset: -calc(4 * var(--u));
   overflow: hidden;
   pointer-events: none;
   z-index: -1;
@@ -1411,20 +1424,20 @@ body:has(.app, .projector, .admin) {
 
 .hearts span {
   position: absolute;
-  bottom: -5vw;
-  font-size: 3vw;
+  bottom: -calc(5 * var(--u));
+  font-size: calc(3 * var(--u));
   color: var(--accent);
   opacity: 0;
   animation: rise 9s linear infinite;
 }
 
 .hearts span:nth-child(1) { left: 6%; animation-delay: 0s; }
-.hearts span:nth-child(2) { left: 18%; animation-delay: 4.5s; font-size: 2vw; }
+.hearts span:nth-child(2) { left: 18%; animation-delay: 4.5s; font-size: calc(2 * var(--u)); }
 .hearts span:nth-child(3) { left: 30%; animation-delay: 2s; }
-.hearts span:nth-child(4) { left: 44%; animation-delay: 6.5s; font-size: 1.6vw; }
-.hearts span:nth-child(5) { left: 58%; animation-delay: 1s; font-size: 2.4vw; }
+.hearts span:nth-child(4) { left: 44%; animation-delay: 6.5s; font-size: calc(1.6 * var(--u)); }
+.hearts span:nth-child(5) { left: 58%; animation-delay: 1s; font-size: calc(2.4 * var(--u)); }
 .hearts span:nth-child(6) { left: 70%; animation-delay: 5.5s; }
-.hearts span:nth-child(7) { left: 82%; animation-delay: 3s; font-size: 2vw; }
+.hearts span:nth-child(7) { left: 82%; animation-delay: 3s; font-size: calc(2 * var(--u)); }
 .hearts span:nth-child(8) { left: 93%; animation-delay: 7.5s; }
 
 @keyframes rise {
@@ -1440,7 +1453,7 @@ body:has(.app, .projector, .admin) {
 }
 
 @keyframes slide-in {
-  from { opacity: 0; transform: translateX(-3vw); }
+  from { opacity: 0; transform: translateX(-calc(3 * var(--u))); }
   to { opacity: 1; transform: none; }
 }
 
@@ -1448,36 +1461,36 @@ body:has(.app, .projector, .admin) {
 .mm-card {
   border: 0;
   background:
-    linear-gradient(#46203a, #46203a) 2vw 14vw / 12vw 0.9vw no-repeat,
-    linear-gradient(#3a1a2e, #3a1a2e) 2vw 16vw / 9vw 0.7vw no-repeat,
-    linear-gradient(#3a1a2e, #3a1a2e) 2vw 17.6vw / 11vw 0.7vw no-repeat,
-    var(--grad) top / 100% 8vw no-repeat,
+    linear-gradient(#46203a, #46203a) calc(2 * var(--u)) calc(14 * var(--u)) / calc(12 * var(--u)) calc(0.9 * var(--u)) no-repeat,
+    linear-gradient(#3a1a2e, #3a1a2e) calc(2 * var(--u)) calc(16 * var(--u)) / calc(9 * var(--u)) calc(0.7 * var(--u)) no-repeat,
+    linear-gradient(#3a1a2e, #3a1a2e) calc(2 * var(--u)) calc(17.6 * var(--u)) / calc(11 * var(--u)) calc(0.7 * var(--u)) no-repeat,
+    var(--grad) top / 100% calc(8 * var(--u)) no-repeat,
     var(--surface);
-  box-shadow: 0 2vw 4vw -2vw rgb(0 0 0 / 0.9);
+  box-shadow: 0 calc(2 * var(--u)) calc(4 * var(--u)) -calc(2 * var(--u)) rgb(0 0 0 / 0.9);
 }
 
 .mm-card::after {
   content: '';
   position: absolute;
   left: 50%;
-  top: 4vw;
-  width: 7.5vw;
-  height: 7.5vw;
-  margin-left: -3.75vw;
+  top: calc(4 * var(--u));
+  width: calc(7.5 * var(--u));
+  height: calc(7.5 * var(--u));
+  margin-left: -calc(3.75 * var(--u));
   border-radius: 50%;
   background: linear-gradient(160deg, #5a2a48, #33182a);
-  border: 0.4vw solid var(--surface);
+  border: calc(0.4 * var(--u)) solid var(--surface);
 }
 
 .mm-stamp {
   position: absolute;
-  top: 1.6vw;
+  top: calc(1.6 * var(--u));
   z-index: 1;
-  padding: 0.2vw 0.9vw;
-  border: 0.35vw solid;
-  border-radius: 0.6vw;
+  padding: calc(0.2 * var(--u)) calc(0.9 * var(--u));
+  border: calc(0.35 * var(--u)) solid;
+  border-radius: calc(0.6 * var(--u));
   font-family: var(--display);
-  font-size: 2vw;
+  font-size: calc(2 * var(--u));
   font-weight: 800;
   letter-spacing: 0.1em;
   background: rgb(20 8 14 / 0.85);
@@ -1487,13 +1500,13 @@ body:has(.app, .projector, .admin) {
 }
 
 .mm-stamp.like {
-  left: 1.2vw;
+  left: calc(1.2 * var(--u));
   color: var(--ok);
   transform: rotate(-15deg);
 }
 
 .mm-stamp.nope {
-  right: 1.2vw;
+  right: calc(1.2 * var(--u));
   color: #ff5a5f;
   transform: rotate(15deg);
 }
@@ -1518,9 +1531,9 @@ body:has(.app, .projector, .admin) {
   z-index: -1;
   left: 50%;
   top: 50%;
-  width: 70vw;
-  height: 40vw;
-  margin: -20vw 0 0 -35vw;
+  width: calc(70 * var(--u));
+  height: calc(40 * var(--u));
+  margin: -calc(20 * var(--u)) 0 0 -calc(35 * var(--u));
   background: radial-gradient(ellipse, rgb(224 17 95 / 0.25), transparent 65%);
   animation: glow 3s ease-in-out infinite alternate;
 }
@@ -1544,12 +1557,12 @@ body:has(.app, .projector, .admin) {
 }
 
 @keyframes flip-in {
-  from { opacity: 0; transform: perspective(60vw) rotateX(-80deg) scale(0.9); }
+  from { opacity: 0; transform: perspective(calc(60 * var(--u))) rotateX(-80deg) scale(0.9); }
   to { opacity: 1; transform: none; }
 }
 
 @keyframes reveal-glow {
-  0%, 30% { box-shadow: 0 0 4vw 0.5vw rgb(224 17 95 / 0.7); }
+  0%, 30% { box-shadow: 0 0 calc(4 * var(--u)) calc(0.5 * var(--u)) rgb(224 17 95 / 0.7); }
   100% { box-shadow: none; }
 }
 
@@ -1698,22 +1711,22 @@ fieldset.bare:disabled {
 }
 
 .projector .board {
-  font-size: 2.6vw;
-  gap: 0.6vw;
+  font-size: calc(2.6 * var(--u));
+  gap: calc(0.6 * var(--u));
 }
 
 .projector .board li {
-  padding: 1vw 1.6vw;
-  border-radius: 1vw;
-  grid-template-columns: 5vw 16vw 1fr auto;
-  gap: 2vw;
+  padding: calc(1 * var(--u)) calc(1.6 * var(--u));
+  border-radius: calc(1 * var(--u));
+  grid-template-columns: calc(5 * var(--u)) calc(16 * var(--u)) 1fr auto;
+  gap: calc(2 * var(--u));
 }
 
 .projector .board .top-1 { background: #3a1622; }
 
 @media (orientation: portrait) {
-  .projector .board { font-size: 4.5vw; }
-  .projector .board li { grid-template-columns: 7vw 24vw 1fr auto; }
+  .projector .board { font-size: calc(4.5 * var(--u)); }
+  .projector .board li { grid-template-columns: calc(7 * var(--u)) calc(24 * var(--u)) 1fr auto; }
 }
 
 /* Team marketplace portfolio */
@@ -1936,4 +1949,152 @@ fieldset.bare:disabled {
 
 .edit-profile[open] {
   min-width: 260px;
+}
+
+/* Projector fits one 16:9 screen, no scrolling (2026-10-27). The frame is 100dvh tall; each screen
+   fills what's left under its title, and lists divide that space instead of growing. */
+@media (min-aspect-ratio: 1/1) {
+  .projector .screen > * {
+    flex-shrink: 0;
+  }
+
+  .projector .screen > .team-grid,
+  .projector .screen > .board-wrap,
+  .projector .screen > .finalist-list {
+    flex: 1 1 0;
+    min-height: 0;
+  }
+
+  /* Leaderboard: top 10 in two columns of five. */
+  .projector .board-wrap {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .projector .board-wrap > p {
+    margin: 0 0 calc(1 * var(--u));
+    font-size: 0.75em;
+  }
+
+  .projector .board {
+    flex: 1 1 0;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(5, 1fr);
+    grid-auto-flow: column;
+    gap: calc(0.8 * var(--u)) calc(2 * var(--u));
+    margin: 0;
+    font-size: calc(2.3 * var(--u));
+  }
+
+  .projector .board li {
+    grid-template-columns: calc(3.5 * var(--u)) calc(11 * var(--u)) 1fr auto;
+    gap: calc(1.2 * var(--u));
+    padding: 0 calc(1.4 * var(--u));
+    min-height: 0;
+  }
+
+  .projector .stage {
+    margin: 0 0 calc(0.8 * var(--u));
+  }
+
+  /* The corner timer stays inside the title band, so it never covers content. */
+  .corner-timer {
+    top: calc(1.6 * var(--u));
+    padding: calc(0.5 * var(--u)) calc(1.4 * var(--u));
+    font-size: calc(2.8 * var(--u));
+    line-height: 1.15;
+  }
+
+  .corner-timer small {
+    font-size: calc(1.1 * var(--u));
+  }
+
+  .projector .screen > h1 {
+    padding-right: calc(24 * var(--u));
+  }
+
+  /* Teams formed: 4 × 3 cards per page (TeamPages flips pages). */
+  .projector .team-grid {
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: calc(1.2 * var(--u));
+    font-size: calc(1.9 * var(--u));
+  }
+
+  .projector .team-grid .card {
+    padding: calc(1 * var(--u)) calc(1.4 * var(--u));
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .projector .team-grid p {
+    margin: 0;
+    line-height: 1.25;
+  }
+
+  .projector .team-grid .match-heart {
+    color: var(--accent);
+    font-size: 0.7em;
+  }
+
+  .projector .page-dots {
+    margin: calc(0.8 * var(--u)) 0 0;
+    font-size: 0.8em;
+    text-align: center;
+  }
+
+  /* Rules: long lists get smaller text and two columns. */
+  .projector .rules.compact {
+    font-size: calc(2.1 * var(--u));
+    line-height: 1.4;
+    columns: 2;
+    column-gap: calc(4 * var(--u));
+  }
+
+  .projector .rules.compact li {
+    break-inside: avoid;
+  }
+
+  /* Finalists: 7 equal rows, one line each. */
+  .projector .finalist-list {
+    display: grid;
+    grid-template-rows: repeat(7, 1fr);
+    gap: calc(0.8 * var(--u));
+  }
+
+  .projector .finalist {
+    min-height: 0;
+    padding: 0 calc(2 * var(--u));
+    overflow: hidden;
+  }
+
+  .projector .finalist > div {
+    display: flex;
+    align-items: baseline;
+    gap: calc(1.6 * var(--u));
+    min-width: 0;
+  }
+
+  .projector .finalist h2 {
+    font-size: 1.15em;
+    white-space: nowrap;
+  }
+
+  .projector .finalist p {
+    font-size: 0.85em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .projector .finalist .place {
+    font-size: calc(3 * var(--u));
+  }
+}
+
+/* Last resort: a screen never scrolls; anything that still doesn't fit is clipped, not scrolled. */
+.projector .screen {
+  overflow: hidden;
 }

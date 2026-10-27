@@ -29,7 +29,7 @@ No DAMRU or Rishihood brand assets have been supplied. Colours and fonts below a
 }
 ```
 
-Tinder-style theme (2026-10-26). Participant pages (`main.app`) are phone-first with a ≥768 px laptop layout; admin pages (`main.admin`) restyle tables, panels and a sticky nav bar, with tables scrolling sideways below 900 px; the projector (`main.projector`) adds ambient and per-screen entrance animations and a portrait fallback. Logo: the official Tinder 2017 flame + wordmark (`src/components/TinderLogo.tsx`, wordmark recoloured to `currentColor` for the dark theme) with "for Startups" beside it; the flame is also the favicon (`src/app/icon.svg`). The logo keeps Tinder's own pink-orange flame colours.
+Tinder-style theme (2026-10-26). Participant pages (`main.app`) are phone-first with a ≥768 px laptop layout; admin pages (`main.admin`) restyle tables, panels and a sticky nav bar, with tables scrolling sideways below 900 px; the projector (`main.projector`) adds ambient and per-screen entrance animations and a portrait fallback. **The projector never scrolls (2026-10-27):** it is exactly one screen tall; sizes use `--u = min(1vw, 1.7778vh)` (1vw on a full-screen 16:9 projector, smaller when browser bars or a 4:3 screen make it shorter); each screen's list fills the space under its title; the corner timer stays inside the title band; anything that still doesn't fit is clipped, never scrolled. Logo: the official Tinder 2017 flame + wordmark (`src/components/TinderLogo.tsx`, wordmark recoloured to `currentColor` for the dark theme) with "for Startups" beside it; the flame is also the favicon (`src/app/icon.svg`). The logo keeps Tinder's own pink-orange flame colours.
 
 **Love theme (2026-10-27, rehearsal fix E):** dark wine background with rose, red and hot-pink accents (tokens above; the neutral greys became wine-tinted). Love touches, all transform/opacity only and off under `prefers-reduced-motion`:
 - Floating hearts behind participant pages and the projector welcome (`src/components/Hearts.tsx`, 8 CSS-animated spans).
@@ -99,12 +99,12 @@ Rules for the admin UI:
 - **Phase timer in the top-right corner on every screen** ([OQ-20](open-questions.md)); 0 shows "Time's up".
 - Screens. Each phase has a default; the admin can override at any time (cleared on advance):
   - **Welcome** (before the event): title.
-  - **Round rules** (default for Introduction, Skill Filling, Startup Development, Break): phase name + the admin's rules, one bullet per line.
+  - **Round rules** (default for Introduction, Skill Filling, Startup Development, Break): phase name + the admin's rules, one bullet per line. Long rules (more than 6 lines or ~320 characters) switch to smaller text in two columns.
   - **Matchmaking animation** (default for Matchmaking): cards swiping left/right, hearts floating, "Matchmaking in progress…". Static under `prefers-reduced-motion`.
-  - **Teams formed** (default for Rest): grid of "Team 7 · names · domain", growing live as the admin approves.
+  - **Teams formed** (default for Rest): 4 × 3 cards of "Team 7 ♥ · names · domain". With more than 12 teams it flips to the next page every 8 s ("42 teams · page 1 of 4"; `src/app/projector/TeamPages.tsx`).
   - **Team on stage** (default for Final Pitching): team number, names, domain, huge "Pitch · 06:12" segment timer.
-  - **Investment leaderboard** (default for the marketplace): stage ("● Market open · 08:12", blinking live dot), "X of N teams have locked", rank · team · bar · counted total. Live like a stock ticker: when a team locks, rows slide to their new rank, totals count up, bars grow, and a green "+₹X" pops on teams that gained ([OQ-31](open-questions.md)). Motion off under `prefers-reduced-motion`.
-  - **Finalist reveal** (default for Break & Top 7): one slot per finalist showing "?", revealed from the lowest up each time the admin clicks *Reveal next*: place, team, names, domain, with a short scale-in animation.
+  - **Investment leaderboard** (default for the marketplace): stage ("● Market open · 08:12", blinking live dot), "X of N teams have locked", rank · team · bar · counted total, **top 10 only** in two columns of five ("Top 10 shown"; the admin page shows all). Live like a stock ticker: when a team locks, rows slide to their new rank, totals count up, bars grow, and a green "+₹X" pops on teams that gained ([OQ-31](open-questions.md)). Motion off under `prefers-reduced-motion`.
+  - **Finalist reveal** (default for Break & Top 7): seven equal one-line rows, one slot per finalist showing "?", revealed from the lowest up each time the admin clicks *Reveal next*: place, team, names, domain, with a short scale-in animation.
 - Never show login codes, private profile data, or admin UI.
 
 ## Accessibility basics

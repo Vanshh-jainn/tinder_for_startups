@@ -8,6 +8,7 @@ import { TinderLogo } from '@/components/TinderLogo';
 import { screenFor } from '@/lib/timer';
 import { getEventState, getLeaderboard, type EventState } from '@/server/queries';
 import { db } from '@/server/supabase';
+import { TeamPages } from './TeamPages';
 
 export const metadata: Metadata = { title: 'Projector · Tinder for Startups' };
 
@@ -52,7 +53,7 @@ function Rules({ event }: { event: EventState }) {
     <div className="center screen">
       <h1>{event.phase_name ?? 'Tinder for Startups'}</h1>
       {rules.length > 0 && (
-        <ul className="rules">
+        <ul className={`rules ${rules.length > 6 || event.rules.length > 320 ? 'compact' : ''}`}>
           {rules.map((rule, i) => (
             <li key={i} style={{ animationDelay: `${0.3 + i * 0.15}s` }}>
               {rule}
@@ -105,23 +106,15 @@ async function Teams() {
     <div className="screen">
       <h1>Teams formed</h1>
       {teams.length === 0 ? (
-        <p className="muted">Teams will appear here as they are approved.</p>
+        <p className="muted">Teams will appear here as they are formed.</p>
       ) : (
-        <div className="team-grid">
-          {teams.map((t, i) => (
-            <div key={t.number} className="card" style={{ animationDelay: `${Math.min(i, 12) * 0.07}s` }}>
-              <p className="eyebrow">♥ It&apos;s a match</p>
-              <h2>Team {t.number}</h2>
-              <p>
-                {t.team_members
-                  .filter((m) => m.status === 'active')
-                  .map((m) => m.participants.display_name)
-                  .join(' & ')}
-              </p>
-              <p className="domain">{t.domain}</p>
-            </div>
-          ))}
-        </div>
+        <TeamPages
+          teams={teams.map((t) => ({
+            number: t.number,
+            domain: t.domain,
+            members: t.team_members.filter((m) => m.status === 'active').map((m) => m.participants.display_name),
+          }))}
+        />
       )}
     </div>
   );
@@ -170,7 +163,7 @@ async function LeaderboardScreen({ event }: { event: EventState }) {
       <p className="stage">
         <MarketStage event={event} />
       </p>
-      <LeaderboardTable board={board} />
+      <LeaderboardTable board={board} limit={10} />
     </div>
   );
 }

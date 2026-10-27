@@ -34,7 +34,8 @@ function CountUp({ value }: { value: number }) {
 // Counted totals only (locked allocations). Shared by the admin marketplace page and the projector.
 // Live: the page re-renders on every lock; rows slide to their new place (FLIP, transform only),
 // totals count up, and a "+₹X" chip pops on teams that just gained money.
-export function LeaderboardTable({ board }: { board: Leaderboard }) {
+// limit: the projector shows only the top N (user decision 2026-10-27); the admin page shows all.
+export function LeaderboardTable({ board, limit }: { board: Leaderboard; limit?: number }) {
   const [prev, setPrev] = useState(board);
   const [gains, setGains] = useState<Record<string, number>>({});
   if (board !== prev) {
@@ -44,22 +45,23 @@ export function LeaderboardTable({ board }: { board: Leaderboard }) {
   }
 
   const rowEls = useRef(new Map<string, HTMLLIElement>());
-  const tops = useRef(new Map<string, number>());
+  const places = useRef(new Map<string, { x: number; y: number }>());
   useLayoutEffect(() => {
     const animate = !reducedMotion();
     for (const [id, el] of rowEls.current) {
-      const top = el.offsetTop;
-      const before = tops.current.get(id);
-      if (animate && before !== undefined && before !== top) {
-        el.animate([{ transform: `translateY(${before - top}px)` }, { transform: 'none' }], {
+      const now = { x: el.offsetLeft, y: el.offsetTop }; // rows may also move between columns
+      const before = places.current.get(id);
+      if (animate && before && (before.x !== now.x || before.y !== now.y)) {
+        el.animate([{ transform: `translate(${before.x - now.x}px, ${before.y - now.y}px)` }, { transform: 'none' }], {
           duration: 700,
           easing: 'cubic-bezier(.2,.8,.2,1)',
         });
       }
-      tops.current.set(id, top);
+      places.current.set(id, now);
     }
   }, [board]);
 
+  const rows = limit ? board.rows.slice(0, limit) : board.rows;
   const max = Math.max(1, ...board.rows.map((r) => r.total));
   return (
     <div className="board-wrap">
@@ -67,10 +69,10 @@ export function LeaderboardTable({ board }: { board: Leaderboard }) {
         <strong>
           {board.complete} of {board.teams}
         </strong>{' '}
-        teams have locked their investments. Only locked money counts.
+        teams have locked their investments. Only locked money counts.{limit && board.rows.length > limit ? ` Top ${limit} shown.` : ''}
       </p>
       <ol className="board">
-        {board.rows.map((r) => {
+        {rows.map((r) => {
           const gain = gains[r.teamId] ?? 0;
           return (
             <li
