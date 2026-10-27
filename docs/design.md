@@ -55,11 +55,11 @@ Members land here automatically (`/me` → `/team`) once their team is approved.
 
 - **Header:** phase bar with countdown, "Team 7", assigned domain (prominent), member names.
 - **Startup Development:**
-  - A marketplace pitch editor, **only during Startup Development** (either member can edit; no product length limit; read-only text before and after), with save state ("saved at 14:02", flagged if an organiser edited it).
+  - A marketplace pitch editor, **only during Startup Development** (only the team's driver phone can edit; no product length limit; read-only text before and after), with save state ("saved at 14:02", flagged if an organiser edited it).
   - A Google Form button that opens the admin-configured URL in a new tab.
   - Submission status checklist: pitch saved ✓/✗; deck goes through the form (not tracked in the app).
 - **Investment Marketplace (built):** shown once the marketplace phase starts.
-  1. **Decision time (until the admin starts confirmation time):** a card per startup (only teams with a pitch; "Team N" + pitch; not your own). Tick a card to pick it and type an amount. Live: "4/7 picked · ₹1,200 left to allocate", a list of broken rules (count, ≥ ₹200, multiples of ₹100, all different, total ₹5,000). Save is disabled until every rule passes; either member can save; the server re-checks everything.
+  1. **Decision time (until the admin starts confirmation time):** a card per startup (only teams with a pitch; "Team N" + pitch; not your own). Tick a card to pick it and type an amount. Live: "4/7 picked · ₹1,200 left to allocate", a list of broken rules (count, ≥ ₹200, multiples of ₹100, all different, total ₹5,000). Save is disabled until every rule passes; only the driver phone can save; the server re-checks everything.
   2. **Confirmation time (started by the admin, 5-minute display timer):** no edits. A row per investment with a **Confirm** button, "5/7 confirmed", and the warning **"Confirm all 7. If you don't confirm every one, none of your investments count."** A team that saved nothing is told it can't invest.
   3. **After the marketplace:** "All 7 confirmed, so they counted" or "none of them counted".
   - Investment totals and rankings are **never** shown on participant pages (the projector shows them in the hall, per [OQ-31](open-questions.md)).
@@ -106,3 +106,9 @@ Rules for the admin UI:
 - Colour is never the only signal (pair it with an icon or text).
 - Countdowns use `role="timer"`. Minute-boundary `aria-live` announcements are not built yet.
 - Respect `prefers-reduced-motion` for swipe animations.
+
+### Driver phone (rehearsal fix C, 2026-10-27)
+
+- One phone per team makes changes. Until one is chosen, `/team` shows a pop-up: "Which phone drives your team?" with one button per member. Any member can make this first pick; the first one wins.
+- The driver phone shows "This phone drives your team" (green edge) and a **Hand over to …** button for each teammate.
+- Other phones show "Read-only" (amber edge) with the driver's name; pitch and marketplace controls are greyed out (`<fieldset disabled>`). They cannot take over; only the driver or an organiser can change the driver.

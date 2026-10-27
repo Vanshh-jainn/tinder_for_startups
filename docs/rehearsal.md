@@ -122,11 +122,14 @@ Every step starts with Admin → Event & projector → **Advance**. Watch three 
 - [ ] The projector's "Teams formed" grows as teams are formed. Members' phones jump to `/team` by themselves.
 - [ ] Admin → Teams & submissions: each team has "Team N", one of the six domains, and its source (Algorithm, Random, or Manual override).
 - [ ] Optional: **dissolve** a team. Its members land on `/me` again and can be put in a new manual team (new number and domain).
+- [ ] **Driver phone:** each new team's phones show "Which phone drives your team?". One member picks: both phones close the pop-up by themselves. The driver phone says "This phone drives your team"; the other says "Read-only" and its pitch/marketplace controls are greyed out.
+- [ ] On the read-only phone there is no way to take over. On the driver phone, **Hand over** to the teammate: the roles swap on both phones.
+- [ ] Admin → Teams & submissions → **Driver phone**: switch a team's driver, then set "Not chosen": the pop-up comes back on that team's phones.
 
 ### Phase 4: Field Assignment & Startup Development
 
 - [ ] Advance. Each team page shows the team number, domain, both member names, and the Google Form button.
-- [ ] Each team saves a pitch; the other member sees it after it saves. The admin Teams page shows it.
+- [ ] Each team's driver phone saves a pitch; the read-only phone sees it after it saves. The admin Teams page shows it.
 - [ ] **Leave one team without a pitch on purpose.**
 - [ ] As admin, edit one team's pitch: that team's page says "(edited by an organiser)".
 - [ ] Teams open the Google Form from their button.

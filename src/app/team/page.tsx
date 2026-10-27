@@ -6,23 +6,25 @@ import { formatParticipantId } from '@/lib/security';
 import { requireTeamMember } from '@/server/auth';
 import { getEventState } from '@/server/queries';
 import { db } from '@/server/supabase';
-import { savePitch } from './actions';
+import { chooseDriver, savePitch } from './actions';
 import { MarketplacePanel } from './MarketplacePanel';
 
 const time = (iso: string) => new Date(iso).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', timeStyle: 'short' });
 
 export default async function TeamPage() {
-  const { teamId } = await requireTeamMember();
+  const { me, teamId, driverId } = await requireTeamMember();
   const [teamRes, membersRes, submissionRes, configRes, event] = await Promise.all([
     db().from('teams').select('number, domain').eq('id', teamId).single(),
-    db().from('team_members').select('participants(number, display_name)').eq('team_id', teamId).eq('status', 'active'),
+    db().from('team_members').select('participants(id, number, display_name)').eq('team_id', teamId).eq('status', 'active'),
     db().from('submissions').select('pitch, updated_by, updated_at').eq('team_id', teamId).maybeSingle(),
     db().from('config').select('google_form_url').single(),
     getEventState(),
   ]);
   for (const res of [teamRes, membersRes, submissionRes, configRes]) if (res.error) throw res.error;
   const team = teamRes.data!;
-  const members = membersRes.data!.map((m) => m.participants as unknown as { number: number; display_name: string });
+  const members = membersRes.data!.map((m) => m.participants as unknown as { id: string; number: number; display_name: string });
+  const isDriver = driverId === me.id;
+  const driver = members.find((m) => m.id === driverId);
   const submission = submissionRes.data;
   const formUrl = configRes.data!.google_form_url as string | null;
   const canEditPitch = event.phase_idx === 4; // Startup Development only (OQ-32)
@@ -37,6 +39,51 @@ export default async function TeamPage() {
         </div>
         <LogoutButton />
       </header>
+      {!driverId && (
+        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="driver-title">
+          <div className="panel modal">
+            <h2 id="driver-title">Which phone drives your team?</h2>
+            <p className="muted">
+              Only one phone per team can make changes (pitch, investments). The others see everything read-only. Only
+              the driver or an organiser can change it later.
+            </p>
+            {members.map((m) => (
+              <ActionForm key={m.id} action={chooseDriver} submitLabel={m.id === me.id ? 'This phone (mine)' : `${m.display_name}'s phone`}>
+                <input type="hidden" name="driver" value={m.id} />
+              </ActionForm>
+            ))}
+          </div>
+        </div>
+      )}
+      {driver && (
+        <div className={`panel driver ${isDriver ? 'is-driver' : 'read-only'}`}>
+          {isDriver ? (
+            <>
+              <p>
+                <strong>This phone drives your team.</strong> Your teammates see your changes live.
+              </p>
+              {members
+                .filter((m) => m.id !== me.id)
+                .map((m) => (
+                  <ActionForm
+                    key={m.id}
+                    action={chooseDriver}
+                    submitLabel={`Hand over to ${m.display_name}`}
+                    confirmText={`Hand over to ${m.display_name}? This phone becomes read-only.`}
+                    className="secondary-form"
+                  >
+                    <input type="hidden" name="driver" value={m.id} />
+                  </ActionForm>
+                ))}
+            </>
+          ) : (
+            <p>
+              <strong>Read-only.</strong> {driver.display_name}&apos;s phone makes your team&apos;s changes. To switch, they
+              can hand over, or ask an organiser.
+            </p>
+          )}
+        </div>
+      )}
       <div className="panel">
         <p className="eyebrow">Domain</p>
         <p className="domain">{team.domain}</p>
@@ -72,7 +119,9 @@ export default async function TeamPage() {
       {(event.phase_idx ?? 0) >= MARKETPLACE_PHASE && (
         <section className="panel">
           <h2>Investment marketplace</h2>
-          <Marketplace teamId={teamId} event={event} />
+          <fieldset className="bare" disabled={!isDriver}>
+            <Marketplace teamId={teamId} event={event} />
+          </fieldset>
         </section>
       )}
 
@@ -80,12 +129,14 @@ export default async function TeamPage() {
         <h2>Marketplace pitch</h2>
         <p className="muted">
           Your two-line startup pitch. Other teams see only this in the investment marketplace, not your deck.
-          Either team member can edit it during Startup Development.
+          The driver phone can edit it during Startup Development.
         </p>
         {canEditPitch ? (
-          <ActionForm action={savePitch} submitLabel="Save pitch">
-            <textarea name="pitch" defaultValue={submission?.pitch ?? ''} maxLength={2000} rows={3} required />
-          </ActionForm>
+          <fieldset className="bare" disabled={!isDriver}>
+            <ActionForm action={savePitch} submitLabel="Save pitch">
+              <textarea name="pitch" defaultValue={submission?.pitch ?? ''} maxLength={2000} rows={3} required />
+            </ActionForm>
+          </fieldset>
         ) : (
           <>
             {submission && <p className="card">{submission.pitch}</p>}

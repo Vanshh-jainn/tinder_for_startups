@@ -692,3 +692,50 @@ describe('dry-run cleanup', () => {
     await expect(db.query('select delete_participant($1, $1)', [ADMIN])).rejects.toThrow(/permission denied/);
   });
 });
+
+describe('team driver device', () => {
+  async function team() {
+    const [a, b] = [await addParticipant('A'), await addParticipant('B')];
+    const { rows } = await call('select create_manual_team($1, $2, $3) as id', [a, b]);
+    return { id: (rows[0] as { id: string }).id, a, b };
+  }
+  const setDriver = (actor: string, teamId: string, driver: string | null) =>
+    db.query('select set_driver($1, $2, $3)', [actor, teamId, driver]);
+  const driver = async (teamId: string) =>
+    (await db.query<{ driver_id: string | null }>('select driver_id from teams where id = $1', [teamId])).rows[0].driver_id;
+
+  it('lets any member make the first pick; then only the driver can hand over', async () => {
+    const t = await team();
+    expect(await driver(t.id)).toBeNull();
+    await setDriver(`participant:${t.b}`, t.id, t.a); // B picks A's phone
+    expect(await driver(t.id)).toBe(t.a);
+
+    await expect(setDriver(`participant:${t.b}`, t.id, t.b)).rejects.toThrow(/Only the current driver or an organiser/);
+    await setDriver(`participant:${t.a}`, t.id, t.b); // A hands over
+    expect(await driver(t.id)).toBe(t.b);
+    expect((await db.query(`select 1 from audit_log where action = 'team.set_driver'`)).rows).toHaveLength(2);
+  });
+
+  it('lets an admin switch or clear the driver; members cannot clear it', async () => {
+    const t = await team();
+    await setDriver(`participant:${t.a}`, t.id, t.a);
+    await setDriver(`admin:${ADMIN}`, t.id, t.b);
+    expect(await driver(t.id)).toBe(t.b);
+    await expect(setDriver(`participant:${t.b}`, t.id, null)).rejects.toThrow(/Choose a team member/);
+    await setDriver(`admin:${ADMIN}`, t.id, null);
+    expect(await driver(t.id)).toBeNull();
+  });
+
+  it('refuses outsiders and non-member drivers', async () => {
+    const t = await team();
+    const other = await addParticipant('C');
+    await expect(setDriver(`participant:${other}`, t.id, other)).rejects.toThrow(/not in this team/);
+    await expect(setDriver(`participant:${t.a}`, t.id, other)).rejects.toThrow(/must be a member/);
+    await expect(setDriver(`admin:${ADMIN}`, t.id, other)).rejects.toThrow(/must be a member/);
+  });
+
+  it('is not callable by anon', async () => {
+    await db.exec('reset role; set role anon');
+    await expect(db.query('select set_driver($1, $2, null)', ['admin:x', ADMIN])).rejects.toThrow(/permission denied/);
+  });
+});

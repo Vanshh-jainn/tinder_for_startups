@@ -30,3 +30,16 @@ export async function adminSetPitch(_prev: FormState, formData: FormData): Promi
     'Pitch updated.',
   );
 }
+
+const driverSchema = z.object({ teamId: z.uuid(), driver: z.union([z.literal(''), z.uuid()]) });
+
+// Empty driver clears it, so the team gets the choice pop-up again.
+export async function adminSetDriver(_prev: FormState, formData: FormData): Promise<FormState> {
+  const adminId = await requireAdmin();
+  const parsed = driverSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: 'Invalid driver.' };
+  return adminResult(
+    await rpc('set_driver', { p_actor: `admin:${adminId}`, p_team: parsed.data.teamId, p_driver: parsed.data.driver || null }),
+    parsed.data.driver ? 'Driver changed.' : 'Driver cleared.',
+  );
+}

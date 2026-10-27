@@ -5,14 +5,15 @@ import { getActiveMemberships } from '@/server/queries';
 import { db } from '@/server/supabase';
 import { AdminHeader } from '../AdminHeader';
 import { createManualTeam, dissolveTeam } from '../matching/actions';
-import { adminSetPitch, setFormUrl } from './actions';
+import { adminSetDriver, adminSetPitch, setFormUrl } from './actions';
 
 type Team = {
   id: string;
   number: number;
   domain: string;
   formation_source: 'algorithm' | 'manual' | 'random';
-  team_members: { participant_id: string }[];
+  driver_id: string | null;
+  team_members: { participant_id: string; status: string }[];
   submissions: { pitch: string } | null;
 };
 
@@ -22,8 +23,9 @@ export default async function TeamsPage() {
     db().from('participants').select('id, number, display_name').order('number'),
     db()
       .from('teams')
-      .select('id, number, domain, formation_source, team_members(participant_id), submissions(pitch)')
+      .select('id, number, domain, formation_source, driver_id, team_members(participant_id, status), submissions(pitch)')
       .eq('approval_state', 'approved')
+      .eq('team_members.status', 'active')
       .order('number'),
     db().from('config').select('google_form_url').single(),
     getActiveMemberships(),
@@ -66,6 +68,7 @@ export default async function TeamsPage() {
               <th>Members</th>
               <th>Domain</th>
               <th>Source</th>
+              <th>Driver phone</th>
               <th>Marketplace pitch</th>
               <th></th>
             </tr>
@@ -77,6 +80,19 @@ export default async function TeamsPage() {
                 <td>{t.team_members.map((m) => label(m.participant_id)).join(' + ')}</td>
                 <td>{t.domain}</td>
                 <td>{t.formation_source === 'manual' ? <span className="badge">Manual override</span> : t.formation_source === 'random' ? 'Random' : 'Algorithm'}</td>
+                <td>
+                  <ActionForm action={adminSetDriver} submitLabel="Set driver">
+                    <input type="hidden" name="teamId" value={t.id} />
+                    <select name="driver" defaultValue={t.driver_id ?? ''}>
+                      <option value="">Not chosen (team picks)</option>
+                      {t.team_members.map((m) => (
+                        <option key={m.participant_id} value={m.participant_id}>
+                          {label(m.participant_id)}
+                        </option>
+                      ))}
+                    </select>
+                  </ActionForm>
+                </td>
                 <td>
                   <ActionForm action={adminSetPitch} submitLabel="Save pitch">
                     <input type="hidden" name="teamId" value={t.id} />

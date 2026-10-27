@@ -30,15 +30,17 @@ export async function requireParticipant() {
 }
 
 // Team access goes through the member's own login; the team id always comes from the DB, never the request.
+// driverId: the one member whose device may change team data (null until the team picks one).
 export async function requireTeamMember() {
   const me = await requireParticipant();
   const { data, error } = await db()
     .from('team_members')
-    .select('team_id')
+    .select('team_id, teams(driver_id)')
     .eq('participant_id', me.id)
     .eq('status', 'active')
     .maybeSingle();
   if (error) throw error;
   if (!data) redirect('/me');
-  return { me, teamId: data.team_id as string };
+  const driverId = (data.teams as unknown as { driver_id: string | null }).driver_id;
+  return { me, teamId: data.team_id as string, driverId };
 }
