@@ -14,7 +14,7 @@ This platform runs the event: profiles, swiping, matching, team workspaces, time
 |---|---|---|
 | Participant (individual) | Phone | Build a profile, swipe, get matched |
 | Team (2 members, each using their own login) | Phone / laptop | See the domain, submit the pitch, invest ₹5,000 across 7 startups |
-| Admin (organiser) | Laptop | Run the event: phases, timers, matching approval, marketplace, qualification, projector |
+| Admin (organiser) | Laptop | Run the event: phases, timers, matching and random pairing, marketplace, qualification, projector |
 | Audience | Projector screen | Follow the phase, the countdown, teams, the leaderboard, and the finalists |
 
 Judges do **not** use the platform.
@@ -26,7 +26,7 @@ Judges do **not** use the platform.
 | 1 | Introduction | 10 | Shows the countdown; the projector shows the rules |
 | 2 | Skill Filling | 5 | Participants fill in phone, skills, preferences, and a short summary (editable until Matchmaking starts) |
 | 3 | Matchmaking | 10 | Advancing into this phase builds random swipe decks; participants swipe; mutual right-swipes become eligible pairs. The projector shows the matchmaking animation |
-| 4 | Rest | 10 | Admin runs matching, reviews it, and approves teams. Each team gets a number and a random domain; members' own logins open the team workspace. |
+| 4 | Rest | 10 | Admin runs matching (matched pairs become teams at once), then **Random pairing** pairs everyone left. Each team gets a number and a random domain; members' own logins open the team workspace. |
 | 5 | Startup Development | 50 | Teams write the pitch in their workspace (editable only in this phase) and submit pitch + deck via the Google Form |
 | 6 | Break | 5 | Countdown |
 | 7 | Investment Marketplace | 15 | Decision time (pick 7 startups, split ₹5,000; 10-min display timer), then the admin starts confirmation time (5 min: confirm each, no edits) while the projector leaderboard updates live |
@@ -37,7 +37,7 @@ Total: 180 minutes.
 
 ## Core rules (summary)
 
-- **Teams:** exactly 2 people. Only mutual right-swipes can be matched by the algorithm. The admin approves every team and can build teams manually; manual teams are marked as overrides.
+- **Teams:** 2 people (3 only for the odd one out after random pairing, OQ-36). Only mutual right-swipes can be matched by the algorithm; those pairs become teams at once. Leftover participants with complete profiles are paired at random. The admin can build teams manually; manual teams are marked as overrides.
 - **Matching:** maximise the number of teams first, then minimise the total `Rank(A→B) × Rank(B→A)`. See [matching-algorithm.md](matching-algorithm.md).
 - **Domains:** Travel & Tourism, FinTech, EdTech, HealthTech, AI for Social Good, SaaS. Assigned randomly per team; repeats are allowed.
 - **Marketplace:** ₹5,000 per team. Exactly 7 other startups with a pitch (all of them if fewer), at least ₹200 each in multiples of ₹100, all amounts different, the full ₹5,000 used. **All must be confirmed or none count.** The admin can void a team's submission so it can redo it.

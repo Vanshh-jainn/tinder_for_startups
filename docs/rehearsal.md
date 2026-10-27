@@ -28,7 +28,7 @@ After a run: [Running it again](#running-it-again).
 | People | What you can test |
 |---|---|
 | 4 | Everything once: 2 teams, matching, marketplace, top 7 (with only 2 teams) |
-| 8+ | Several teams, a rejected proposal, a manual team, a team with no pitch |
+| 8+ | Several teams, random pairing with an odd one out, a manual team, a team with no pitch |
 | 16+ (8+ teams) | The full marketplace rule "pick exactly 7 startups" |
 
 With fewer than 8 teams, each team invests in all the other teams that have a pitch (approved deviation, OQ-35).
@@ -116,11 +116,11 @@ Every step starts with Admin → Event & projector → **Advance**. Watch three 
 ### Phase 3: Rest (matching)
 
 - [ ] Advance. Swiping closes on the phones.
-- [ ] Admin → Matching → **Run matching**. Mutual ♥ pairs appear as proposals with ranks and scores; everyone else is listed as unassigned.
-- [ ] Approve some proposals and **reject one**.
-- [ ] Create a **manual team** from two unassigned participants: it shows the "Manual override" badge.
-- [ ] The projector's "Teams formed" grows as you approve. Approved members' phones jump to `/team` by themselves.
-- [ ] Admin → Teams & submissions: each approved team has "Team N", one of the six domains, and its source (algorithm or manual).
+- [ ] Admin → Matching → **Run matching**. Mutual ♥ pairs become teams at once (no approval step); the rest are listed under "Left over".
+- [ ] **Random pairing**: everyone left over with a complete profile is paired at random. With an odd number, the last person joins a random team as its 3rd member. Participants with an incomplete profile stay out.
+- [ ] Optional: dissolve a team and create a **manual team** from its members: it shows the "Manual override" badge.
+- [ ] The projector's "Teams formed" grows as teams are formed. Members' phones jump to `/team` by themselves.
+- [ ] Admin → Teams & submissions: each team has "Team N", one of the six domains, and its source (Algorithm, Random, or Manual override).
 - [ ] Optional: **dissolve** a team. Its members land on `/me` again and can be put in a new manual team (new number and domain).
 
 ### Phase 4: Field Assignment & Startup Development
@@ -184,7 +184,7 @@ Qualification rules, for checking the result: top 7 by counted total; ₹0 teams
 
 ## 7. After the rehearsal
 
-- [ ] Supabase → Table Editor → `audit_log`: there is a row for every admin action above (participant create/reset, phase changes, matching, approvals, pitch edit, void, finalists, reveals), and **no codes or hashes** anywhere in it.
+- [ ] Supabase → Table Editor → `audit_log`: there is a row for every admin action above (participant create/reset, phase changes, matching, random pairing, pitch edit, void, finalists, reveals), and **no codes or hashes** anywhere in it.
 - [ ] Write down anything that was slow, confusing, or broken, for fixing before Phase 7.
 
 ## Running it again

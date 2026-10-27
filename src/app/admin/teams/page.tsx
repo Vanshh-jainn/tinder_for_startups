@@ -11,7 +11,7 @@ type Team = {
   id: string;
   number: number;
   domain: string;
-  formation_source: 'algorithm' | 'manual';
+  formation_source: 'algorithm' | 'manual' | 'random';
   team_members: { participant_id: string }[];
   submissions: { pitch: string } | null;
 };
@@ -76,7 +76,7 @@ export default async function TeamsPage() {
                 <td>Team {t.number}</td>
                 <td>{t.team_members.map((m) => label(m.participant_id)).join(' + ')}</td>
                 <td>{t.domain}</td>
-                <td>{t.formation_source === 'manual' ? <span className="badge">Manual override</span> : 'Algorithm'}</td>
+                <td>{t.formation_source === 'manual' ? <span className="badge">Manual override</span> : t.formation_source === 'random' ? 'Random' : 'Algorithm'}</td>
                 <td>
                   <ActionForm action={adminSetPitch} submitLabel="Save pitch">
                     <input type="hidden" name="teamId" value={t.id} />

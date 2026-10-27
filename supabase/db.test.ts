@@ -163,13 +163,15 @@ describe('teams', () => {
       JSON.stringify(teams),
     ]);
 
-  it('stores a run with proposed teams and ranks', async () => {
+  it('turns each matched pair straight into an approved team with active members', async () => {
     const team = await mutualPair();
     await saveRun([team]);
-    const { rows } = await db.query<{ approval_state: string; pair_score: number; formation_source: string }>(
-      'select approval_state, pair_score, formation_source from teams',
+    const { rows } = await db.query<{ approval_state: string; pair_score: number; formation_source: string; number: number }>(
+      'select approval_state, pair_score, formation_source, number from teams',
     );
-    expect(rows).toEqual([{ approval_state: 'proposed', pair_score: team.score, formation_source: 'algorithm' }]);
+    expect(rows).toEqual([{ approval_state: 'approved', pair_score: team.score, formation_source: 'algorithm', number: 1 }]);
+    const members = await db.query<{ status: string }>('select status from team_members');
+    expect(members.rows.map((m) => m.status)).toEqual(['active', 'active']);
   });
 
   it('rejects an algorithm team that is not a mutual right-swipe', async () => {
@@ -180,21 +182,12 @@ describe('teams', () => {
     expect(rows).toHaveLength(0); // whole call rolled back
   });
 
-  it('supersedes old proposals on rerun', async () => {
+  it('rolls back a whole run that would put someone in a second team', async () => {
     const team = await mutualPair();
     await saveRun([team]);
-    await saveRun([team]);
-    const { rows } = await db.query<{ approval_state: string }>('select approval_state from teams order by created_at');
-    expect(rows.map((r) => r.approval_state).sort()).toEqual(['proposed', 'superseded']);
-  });
-
-  it('approves once and blocks a second active team for the same person', async () => {
-    const team = await mutualPair();
-    const run = await saveRun([team]);
-    expect(run.rows).toHaveLength(1);
-    const { rows } = await db.query<{ id: string }>('select id from teams');
-    await call('select decide_team($1, $2, true)', [rows[0].id]);
-    await expect(call('select decide_team($1, $2, true)', [rows[0].id])).rejects.toThrow(/not a pending proposal/);
+    await expect(saveRun([team])).rejects.toThrow(/duplicate key/);
+    expect((await db.query('select 1 from teams')).rows).toHaveLength(1);
+    expect((await db.query('select 1 from matching_runs')).rows).toHaveLength(1);
 
     const c = await addParticipant('C');
     await expect(call('select create_manual_team($1, $2, $3)', [team.a, c])).rejects.toThrow(/duplicate key/);
@@ -216,6 +209,67 @@ describe('teams', () => {
     await call('select dissolve_team($1, $2)', [manualId]);
     await call('select create_manual_team($1, $2, $3)', [d, c]); // both free again
     await expect(call('select create_manual_team($1, $2, $2)', [c])).rejects.toThrow(/two different/);
+  });
+
+  describe('random pairing', () => {
+    const closeMatchmaking = async () => {
+      await call(`select set_discovery($1, 'open')`);
+      await call(`select set_discovery($1, 'closed')`);
+    };
+    const activeTeams = async () =>
+      (
+        await db.query<{ formation_source: string; n: number }>(
+          `select t.formation_source, count(*)::int as n from teams t join team_members m on m.team_id = t.id
+           where m.status = 'active' group by t.id, t.formation_source order by n, t.formation_source`,
+        )
+      ).rows;
+
+    it('only runs after Matchmaking has closed', async () => {
+      await addParticipant('A');
+      await addParticipant('B');
+      await expect(call('select random_pairing($1)')).rejects.toThrow(/after Matchmaking has closed/);
+      await call(`select set_discovery($1, 'open')`);
+      await expect(call('select random_pairing($1)')).rejects.toThrow(/after Matchmaking has closed/);
+    });
+
+    it('pairs only free participants with complete profiles, and audits it', async () => {
+      const team = await mutualPair();
+      await saveRun([team]);
+      for (const name of ['C', 'D', 'E', 'F']) await addParticipant(name);
+      const incomplete = await addParticipant('X', false);
+      await call(`select set_discovery($1, 'closed')`);
+
+      const { rows } = await call('select random_pairing($1) as n');
+      expect(rows[0]).toEqual({ n: 4 });
+      expect(await activeTeams()).toEqual([
+        { formation_source: 'algorithm', n: 2 },
+        { formation_source: 'random', n: 2 },
+        { formation_source: 'random', n: 2 },
+      ]);
+      expect((await db.query('select 1 from team_members where participant_id = $1', [incomplete])).rows).toHaveLength(0);
+      const numbers = await db.query<{ number: number }>('select number from teams order by number');
+      expect(numbers.rows.map((r) => r.number)).toEqual([1, 2, 3]);
+      expect((await db.query(`select 1 from audit_log where action = 'team.random_pairing'`)).rows).toHaveLength(1);
+      await expect(call('select random_pairing($1)')).rejects.toThrow(/already in a team/);
+    });
+
+    it('puts the odd one out into a 2-person team as its 3rd member', async () => {
+      for (const name of ['A', 'B', 'C']) await addParticipant(name);
+      await closeMatchmaking();
+      await call('select random_pairing($1)');
+      expect(await activeTeams()).toEqual([{ formation_source: 'random', n: 3 }]);
+    });
+
+    it('refuses a single leftover when there is no team to join', async () => {
+      await addParticipant('A');
+      await closeMatchmaking();
+      await expect(call('select random_pairing($1)')).rejects.toThrow(/no team for them to join/);
+    });
+
+    it('is not callable by anon', async () => {
+      await db.exec('reset role; set role anon');
+      await expect(db.query('select random_pairing($1)', [ADMIN])).rejects.toThrow(/permission denied/);
+    });
   });
 
   it('refuses a manual team marked as algorithmic without a run', async () => {
@@ -245,14 +299,11 @@ describe('team workspace data', () => {
       team.rankAB * team.rankBA,
       JSON.stringify([{ ...team, score: team.rankAB * team.rankBA }]),
     ]);
-    const proposal = await db.query<{ id: string; number: number | null; domain: string | null }>('select id, number, domain from teams');
-    expect(proposal.rows[0]).toMatchObject({ number: null, domain: null });
-
-    await call('select decide_team($1, $2, true)', [proposal.rows[0].id]);
+    const algorithmId = (await db.query<{ id: string }>('select id from teams')).rows[0].id;
     const manualId = await manualTeam();
     const { rows } = await db.query<{ id: string; number: number; domain: string }>('select id, number, domain from teams order by number');
     expect(rows.map((r) => r.number)).toEqual([1, 2]);
-    expect(rows.map((r) => r.id)).toEqual([proposal.rows[0].id, manualId]);
+    expect(rows.map((r) => r.id)).toEqual([algorithmId, manualId]);
     for (const r of rows) expect(DOMAINS).toContain(r.domain);
   });
 

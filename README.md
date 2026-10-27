@@ -5,7 +5,7 @@ Event platform for **Tinder for Startups** at **DAMRU, Rishihood University**. P
 Three interfaces:
 
 - **Participant portal / team workspace:** profile, swiping, team pitch, investment marketplace
-- **Admin control panel:** phases, timers, matching, team approval, marketplace, qualification, audit log
+- **Admin control panel:** phases, timers, matching, random pairing, marketplace, qualification, audit log
 - **Projector display:** a default screen per phase (rules, matchmaking animation, teams formed, investment leaderboard, finalist reveal, team on stage) with admin override, and the timer in a corner
 
 ## Status

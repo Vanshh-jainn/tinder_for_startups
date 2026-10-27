@@ -6,27 +6,13 @@ import { getActiveMemberships, getDiscoveryStatus, getSwipes } from '@/server/qu
 import { db } from '@/server/supabase';
 import { AdminHeader } from '../AdminHeader';
 import Link from 'next/link';
-import { approveTeam, rejectTeam, resetMatchingAction, runMatchingAction } from './actions';
-
-type Team = {
-  id: string;
-  formation_source: 'algorithm' | 'manual';
-  approval_state: 'proposed' | 'approved';
-  rank_ab: number | null;
-  rank_ba: number | null;
-  pair_score: number | null;
-  team_members: { participant_id: string }[];
-};
+import { randomPairingAction, runMatchingAction } from './actions';
 
 export default async function MatchingPage() {
   await requireAdmin();
   const [participantsRes, teamsRes, runRes, status, swipes, active] = await Promise.all([
-    db().from('participants').select('id, number, display_name').order('number'),
-    db()
-      .from('teams')
-      .select('id, formation_source, approval_state, rank_ab, rank_ba, pair_score, team_members(participant_id)')
-      .in('approval_state', ['proposed', 'approved'])
-      .order('created_at'),
+    db().from('participants').select('id, number, display_name, profile_complete').order('number'),
+    db().from('teams').select('id', { count: 'exact', head: true }).eq('approval_state', 'approved'),
     db().from('matching_runs').select('created_at, team_count, total_score, unassigned').order('created_at', { ascending: false }).limit(1).maybeSingle(),
     getDiscoveryStatus(),
     getSwipes(),
@@ -34,7 +20,7 @@ export default async function MatchingPage() {
   ]);
   for (const res of [participantsRes, teamsRes, runRes]) if (res.error) throw res.error;
   const participants = participantsRes.data!;
-  const teams = teamsRes.data as Team[];
+  const teamCount = teamsRes.count ?? 0;
   const run = runRes.data;
 
   const byId = new Map(participants.map((p) => [p.id, p]));
@@ -42,13 +28,8 @@ export default async function MatchingPage() {
     const p = byId.get(id);
     return p ? `${formatParticipantId(p.number)} ${p.display_name}` : id;
   };
-  // Algorithm ranks are stored for the member with the smaller id first.
-  const members = (t: Team) => t.team_members.map((m) => m.participant_id).sort();
-
-  const proposed = teams.filter((t) => t.approval_state === 'proposed');
-  const approved = teams.filter((t) => t.approval_state === 'approved');
-  const proposedKeys = new Set(proposed.map((t) => members(t).join('|')));
   const eligible = participants.filter((p) => !active.has(p.id));
+  const leftover = eligible.filter((p) => p.profile_complete);
   const pairs = mutualPairs(eligible.map((p) => p.id), swipes);
 
   return (
@@ -56,59 +37,41 @@ export default async function MatchingPage() {
       <AdminHeader />
 
       <section>
-        <h2>Global matching</h2>
+        <h2>1. Global matching</h2>
+        <p className="muted">Each matched pair becomes a team straight away, with a number and a domain.</p>
         {status === 'open' && <p className="warn">Matchmaking is still open; swipes may change the result.</p>}
-        <div className="row start">
-          <ActionForm
-            action={runMatchingAction}
-            submitLabel="Run matching"
-            confirmText={`Run matching for ${eligible.length} participant(s) not yet in a team? Pending proposals are replaced.`}
-          />
-          <ActionForm action={resetMatchingAction} submitLabel="Clear proposals" confirmText="Clear all pending proposals?" />
-        </div>
+        <ActionForm
+          action={runMatchingAction}
+          submitLabel="Run matching"
+          confirmText={`Run matching for ${eligible.length} participant(s) not yet in a team? Matched pairs become teams immediately.`}
+        />
         {run && (
           <p className="muted">
             Last run {new Date(run.created_at).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })}: {run.team_count} team(s), total score{' '}
-            {run.total_score}. Unassigned: {run.unassigned.length ? run.unassigned.map(label).join(', ') : 'none'}.
+            {run.total_score}. Not matched: {run.unassigned.length ? run.unassigned.map(label).join(', ') : 'none'}.
           </p>
         )}
       </section>
 
       <section>
-        <h2>Proposed teams ({proposed.length})</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Members</th>
-              <th>Ranks</th>
-              <th>Score</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {proposed.map((t) => (
-              <tr key={t.id}>
-                <td>{members(t).map(label).join(' + ')}</td>
-                <td>
-                  {t.rank_ab} × {t.rank_ba}
-                </td>
-                <td>{t.pair_score}</td>
-                <td className="row start">
-                  <ActionForm action={approveTeam} submitLabel="Approve">
-                    <input type="hidden" name="teamId" value={t.id} />
-                  </ActionForm>
-                  <ActionForm action={rejectTeam} submitLabel="Reject" className="secondary-form">
-                    <input type="hidden" name="teamId" value={t.id} />
-                  </ActionForm>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <h2>2. Random pairing</h2>
+        <p className="muted">
+          Pairs everyone with a complete profile who is still not in a team, at random. With an odd number, the last
+          person joins a random 2-person team as its 3rd member. Works once Matchmaking has closed.
+        </p>
+        <p>
+          Left over ({leftover.length}): {leftover.length ? leftover.map((p) => label(p.id)).join(', ') : 'nobody'}
+        </p>
+        <ActionForm
+          action={randomPairingAction}
+          submitLabel="Random pairing"
+          disabled={leftover.length === 0 || status !== 'closed'}
+          confirmText={`Pair ${leftover.length} participant(s) at random? This can't be undone (dissolve teams on Teams & submissions if needed).`}
+        />
       </section>
 
       <p className="muted">
-        {approved.length} approved team(s). Manage them on <Link href="/admin/teams">Teams &amp; submissions</Link>.
+        {teamCount} team(s) formed. Manage them on <Link href="/admin/teams">Teams &amp; submissions</Link>.
       </p>
 
       <section>
@@ -121,7 +84,6 @@ export default async function MatchingPage() {
               <th>Rank A→B</th>
               <th>Rank B→A</th>
               <th>Score</th>
-              <th>Proposed</th>
             </tr>
           </thead>
           <tbody>
@@ -133,7 +95,6 @@ export default async function MatchingPage() {
                 <td>{p.rankAB}</td>
                 <td>{p.rankBA}</td>
                 <td>{p.score}</td>
-                <td>{proposedKeys.has(`${p.a}|${p.b}`) ? '✓' : ''}</td>
               </tr>
             ))}
           </tbody>

@@ -75,11 +75,13 @@ Steps:
 
 The caller (admin server action `runMatchingAction`) loads the data, calls `runMatching`, and passes the result to the SQL function `save_matching_run`, which in one transaction:
 
-- marks any still-pending proposals `superseded`;
+- marks any proposals left from before 2026-10-27 `superseded`;
 - re-checks every pair against `swipes` (mutual right, same ranks, same score) and aborts otherwise;
 - stores a `matching_runs` row (admin, time, algorithm version, team count, total score, unassigned list);
-- stores one team per pair: both ranks, pair score, run ID, `formation_source = 'algorithm'`, `approval_state = 'proposed'`;
+- stores one team per pair, **approved at once** (user decision 2026-10-27, no approval step): both ranks, pair score, run ID, `formation_source = 'algorithm'`, a team number and a random domain, both members `active`. If anyone is already in an active team the whole run rolls back;
 - writes the audit row.
+
+After matching, the admin's **Random pairing** button (`random_pairing()` in SQL) pairs every participant with a complete profile who is still not in a team, in random order (`formation_source = 'random'`). With an odd count the last one joins a random 2-person team as its 3rd member (OQ-36). It only runs once Matchmaking has closed.
 
 ## Worked example (from spec)
 
@@ -109,7 +111,7 @@ Two different needs:
 
 - No mutual swipes: zero teams, and everyone is unassigned.
 - Disconnected groups: handled naturally; the solver works across components.
-- Odd number of eligible participants: at least one is always unassigned. See [OQ-36](open-questions.md).
+- Odd number of eligible participants: at least one is always unassigned by the algorithm; random pairing then places them (see [OQ-36](open-questions.md)).
 - Participants already in an active team (approved or manual) are excluded from the input.
 - Rerun with unchanged data: identical output.
 - Manual admin teams are never written into `matching_runs` results and never relabelled as algorithmic.

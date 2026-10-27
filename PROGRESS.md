@@ -10,10 +10,8 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 
 **Where things stand**
 - Phases 0–6 are built and committed. The user ran the first rehearsal (~15 participants) on 2026-10-26 and reported 5 issues. They are planned as **Phase 8, rehearsal fixes**, steps A–E below (one reviewable change each).
-- Step A (login) is done; the user commits it, then step B starts.
+- Step A (login) is committed (`67b31de`). Step B (auto teams + random pairing) is built; the user applies migration `20261101000000_auto_teams.sql` in the Supabase SQL Editor and commits, then step C starts.
 - Live Supabase notes: before the next `db push`, link and run `migration repair --status applied` for the migrations already applied by hand (see [README](README.md#setup), step 4). "Allow new users to sign up" in Supabase Auth is not yet confirmed off.
-
-**Before step C, ask the user:** who may change the team's driver device: the admin only, the current driver handing over, or either member? (They answered "it can be changed" but not by whom.)
 
 **Then Phase 7, hardening + deployment.** Before writing code, ask the user about:
 - **OQ-27:** where to deploy (default: Vercel Hobby + Supabase Free) and whether a custom domain is wanted.
@@ -41,7 +39,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 | 5 | Marketplace | 🟨 Code done; waiting for the rehearsal | |
 | 6 | Qualification & rehearsal | 🟨 Code done; user runs the rehearsal checklist | |
 | 7 | Hardening & deployment | ⬜ Not started | 25, 26, 27 |
-| 8 | Rehearsal fixes (A–E) | 🟨 A done | |
+| 8 | Rehearsal fixes (A–E) | 🟨 A, B done | |
 
 "Blocked by" means the phase needs that answer to be complete. Work can usually start, with the open part built behind config or left as a marked `TODO(OQ-n)`.
 
@@ -144,8 +142,8 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 Issues from the 2026-10-26 rehearsal. One reviewable change per step.
 
 - [x] **A. Login after logout:** specific errors (unknown ID / wrong code / locked with minutes left / server unreachable instead of a crash page); IDs like `P-12` and `p 12` accepted; participant **Log out** asks for confirmation. Admin **Reset code** already clears the lockout. Tests: 77 pass
-- [ ] **B. Team allotment:** matched pairs become teams immediately (no approval step); **Random pairing** button pairs the remaining complete-profile participants; an odd one out joins a random team as its 3rd member (OQ-36)
-- [ ] **C. One device per team:** pop-up asks which member's device drives; the other member's team page is read-only, enforced on the server; the driver can be changed (who: ask first)
+- [x] **B. Team allotment:** matched pairs become teams immediately (no approval step); **Random pairing** button pairs the remaining complete-profile participants after Matchmaking closes; an odd one out joins a random 2-person team as its 3rd member (OQ-36). Migration `20261101000000_auto_teams.sql`. Tests: 81 pass
+- [ ] **C. One device per team:** pop-up asks which member's device drives; the other member's team page is read-only, enforced on the server; either team member (or an admin) can change the driver
 - [ ] **D. Marketplace:** no confirmation-time stage; a team locks its whole allocation at the end with one button and it counts at once; live animated leaderboard on the projector; team portfolio panel (₹ left to invest, split bar, rule checks). Participants still never see other teams' totals
 - [ ] **E. Love theme:** dark background with rose/red/hot-pink palette, hearts and "It's a Match!" moments, light animations (transform/opacity only, off under `prefers-reduced-motion`); swipe gestures on discovery cards, buttons kept
 
@@ -201,5 +199,6 @@ Record each decision with a date. Answers to open questions also go in [docs/ope
 | 2026-10-27 | **Spec deviation (§6):** pairs from the matching algorithm become teams at once, no admin approval. A **Random pairing** button pairs the leftover participants with complete profiles | User decision |
 | 2026-10-27 | **Spec deviation (§4, teams of 2):** OQ-36: with an odd count, the last participant joins a random team as its 3rd member | User decision |
 | 2026-10-27 | **Spec deviation (§9), supersedes 2026-10-28/29 marketplace rows:** no confirmation time. Each team locks its whole allocation at once at the end; it counts immediately. Leaderboard updates live with animations | User decision |
-| 2026-10-27 | Only one device per team acts (the "driver"); the other member's view is read-only; the driver can be changed | User decision |
+| 2026-10-27 | Only one device per team acts (the "driver"); the other member's view is read-only; either member or an admin can change the driver | User decision |
+| 2026-10-27 | Random pairing runs only after Matchmaking has closed; a single leftover with no 2-person team to join is refused with a message | Nobody is pulled out of swiping; avoids a team of 4 |
 | 2026-10-27 | Theme: dark with rose/red/hot pink + love motifs; swipe gestures on discovery cards alongside the buttons (supersedes "buttons only" from 2026-10-26) | User decision |

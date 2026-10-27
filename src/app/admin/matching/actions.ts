@@ -7,7 +7,7 @@ import { requireAdmin } from '@/server/auth';
 import { adminResult, getActiveMemberships, getSwipes, rpc } from '@/server/queries';
 import { db } from '@/server/supabase';
 
-// Matches everyone not already in an approved team. Replaces any pending proposals.
+// Matches everyone not already in a team. Each matched pair becomes a team at once.
 export async function runMatchingAction(): Promise<FormState> {
   const adminId = await requireAdmin();
   const [{ data: participants, error }, swipes, active] = await Promise.all([
@@ -27,30 +27,17 @@ export async function runMatchingAction(): Promise<FormState> {
       p_unassigned: result.unassigned,
       p_teams: result.teams,
     }),
-    `${result.teams.length} team(s) proposed, total score ${result.totalScore}, ${result.unassigned.length} unassigned.`,
+    `${result.teams.length} team(s) formed, total score ${result.totalScore}, ${result.unassigned.length} not matched.`,
   );
 }
 
-export async function resetMatchingAction(): Promise<FormState> {
+// Pairs every free participant with a complete profile at random; an odd one out joins a team of 2.
+export async function randomPairingAction(): Promise<FormState> {
   const adminId = await requireAdmin();
-  return adminResult(await rpc('reset_matching', { p_admin: adminId }), 'Pending proposals cleared.');
+  return adminResult(await rpc('random_pairing', { p_admin: adminId }), 'Random teams formed.');
 }
 
 const teamSchema = z.object({ teamId: z.uuid() });
-
-export async function approveTeam(_prev: FormState, formData: FormData): Promise<FormState> {
-  const adminId = await requireAdmin();
-  const parsed = teamSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: 'Invalid team.' };
-  return adminResult(await rpc('decide_team', { p_admin: adminId, p_team: parsed.data.teamId, p_approve: true }), 'Approved.');
-}
-
-export async function rejectTeam(_prev: FormState, formData: FormData): Promise<FormState> {
-  const adminId = await requireAdmin();
-  const parsed = teamSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: 'Invalid team.' };
-  return adminResult(await rpc('decide_team', { p_admin: adminId, p_team: parsed.data.teamId, p_approve: false }), 'Rejected.');
-}
 
 export async function dissolveTeam(_prev: FormState, formData: FormData): Promise<FormState> {
   const adminId = await requireAdmin();
