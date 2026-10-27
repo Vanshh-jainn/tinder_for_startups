@@ -38,37 +38,33 @@ const allocationSchema = z
   .min(1)
   .max(7);
 
-// Rules are enforced in save_allocation (SQL); team id always comes from the member's session.
-export async function saveAllocation(_prev: FormState, formData: FormData): Promise<FormState> {
-  const { me, teamId, driverId } = await requireTeamMember();
-  if (driverId !== me.id) return READ_ONLY;
-  let items: unknown;
+function parseItems(formData: FormData) {
   try {
-    items = JSON.parse(String(formData.get('items') ?? ''));
+    return allocationSchema.safeParse(JSON.parse(String(formData.get('items') ?? '')));
   } catch {
-    return { error: 'Invalid allocation.' };
+    return allocationSchema.safeParse(null);
   }
-  const parsed = allocationSchema.safeParse(items);
-  if (!parsed.success) return { error: 'Pick your startups and enter whole-rupee amounts.' };
-
-  const result = await rpc('save_allocation', { p_actor: `participant:${me.id}`, p_team: teamId, p_items: parsed.data });
-  if (result.error) return result;
-  revalidatePath('/team');
-  return { notice: 'Allocation saved. Confirm each investment when confirmation time starts.' };
 }
 
-const confirmSchema = z.object({ target: z.uuid() });
-
-export async function confirmInvestment(_prev: FormState, formData: FormData): Promise<FormState> {
+// Rules are enforced in SQL (save_allocation / lock_allocation); team id always comes from the session.
+async function allocate(formData: FormData, fn: 'save_allocation' | 'lock_allocation', notice: string): Promise<FormState> {
   const { me, teamId, driverId } = await requireTeamMember();
   if (driverId !== me.id) return READ_ONLY;
-  const parsed = confirmSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: 'Invalid investment.' };
+  const parsed = parseItems(formData);
+  if (!parsed.success) return { error: 'Pick your startups and enter whole-rupee amounts.' };
 
-  const result = await rpc('confirm_investment', { p_actor: `participant:${me.id}`, p_team: teamId, p_target: parsed.data.target });
+  const result = await rpc(fn, { p_actor: `participant:${me.id}`, p_team: teamId, p_items: parsed.data });
   if (result.error) return result;
   revalidatePath('/team');
-  return { notice: 'Confirmed.' };
+  return { notice };
+}
+
+export async function saveAllocation(_prev: FormState, formData: FormData): Promise<FormState> {
+  return allocate(formData, 'save_allocation', 'Draft saved. Lock it when your team is sure; only locked money counts.');
+}
+
+export async function lockAllocation(_prev: FormState, formData: FormData): Promise<FormState> {
+  return allocate(formData, 'lock_allocation', 'Locked! Your investments now count on the leaderboard.');
 }
 
 const driverSchema = z.object({ driver: z.uuid() });

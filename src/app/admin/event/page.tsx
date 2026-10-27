@@ -5,7 +5,7 @@ import { requireAdmin } from '@/server/auth';
 import { getEventState } from '@/server/queries';
 import { db } from '@/server/supabase';
 import { AdminHeader } from '../AdminHeader';
-import { resetEvent, setProjectorScreen, startConfirmation, startPitch, timerAction, updatePhase } from './actions';
+import { resetEvent, setProjectorScreen, startPitch, timerAction, updatePhase } from './actions';
 
 type TimerProps = { action: string; label: string; confirm?: string; minutes?: number };
 
@@ -47,10 +47,9 @@ export default async function EventPage() {
     current === 2 && 'Swiping closes.',
     next?.idx === 4 && 'Pitch editing opens.',
     current === 4 && 'Pitch editing closes.',
-    next?.idx === 6 && 'Marketplace opens in decision time; start confirmation time yourself when ready.',
+    next?.idx === 6 && 'The marketplace opens: teams invest and lock their allocations.',
     next?.idx === 6 && startups < 8 && `Only ${startups} startup(s) have a pitch, so teams invest in all available instead of 7.`,
-    current === 6 && "The marketplace closes. Teams that didn't confirm every investment count as zero.",
-    current === 6 && !event.market_confirmation && 'Confirmation time never started, so no investment can count.',
+    current === 6 && "The marketplace closes. Teams that haven't locked their investments count as zero.",
     next?.idx === 8 && teams.length === 0 && 'No finalists are confirmed yet (Qualification page).',
   ]
     .filter(Boolean)
@@ -80,13 +79,6 @@ export default async function EventPage() {
               <Timer action="reset" label="Reset clock" confirm="Reset this timer to its full duration? Only the clock changes." />
               <Timer action="end" label="End now" confirm="Set this timer to 0 (time's up)? The phase stays the same." />
             </>
-          )}
-          {current === 6 && !event.market_confirmation && (
-            <ActionForm
-              action={startConfirmation}
-              submitLabel="Start confirmation time"
-              confirmText="Start confirmation time? Allocations lock for everyone and a 5-minute timer starts."
-            />
           )}
           {next && <Timer action="advance" label={`Advance → ${next.name}`} confirm={advanceWarning} />}
         </div>

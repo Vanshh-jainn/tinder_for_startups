@@ -5,7 +5,6 @@ import { requireAdmin } from '@/server/auth';
 import { fetchAll, getEventState, getLeaderboard } from '@/server/queries';
 import { db } from '@/server/supabase';
 import { AdminHeader } from '../AdminHeader';
-import { startConfirmation } from '../event/actions';
 import { voidInvestments } from './actions';
 
 type Investment = {
@@ -37,15 +36,8 @@ export default async function MarketplacePage() {
   const status = (teamId: string) => {
     const mine = investments.filter((i) => i.investor_team_id === teamId);
     const live = mine.filter((i) => !i.voided_at);
-    const confirmed = live.filter((i) => i.confirmed_at).length;
     const label =
-      live.length === 0
-        ? 'No allocation'
-        : confirmed === live.length
-          ? `Complete ✓ (${live.length}/${live.length})`
-          : confirmed > 0
-            ? `Confirming ${confirmed}/${live.length}`
-            : `Saved, not confirmed (0/${live.length})`;
+      live.length === 0 ? 'No allocation' : live.every((i) => i.confirmed_at) ? '🔒 Locked (counts)' : 'Draft saved (not counted)';
     return { live, label, voidedBefore: mine.some((i) => i.voided_at) };
   };
 
@@ -58,16 +50,9 @@ export default async function MarketplacePage() {
           Investment marketplace · <MarketStage event={event} />
         </h2>
         <p className="muted">
-          Decision time: teams pick and allocate. When you start confirmation time, allocations lock and teams confirm
-          each investment. Totals below count only fully confirmed teams; participants never see them on their own pages.
+          Teams pick and allocate, save drafts, then lock their whole allocation. A locked allocation counts at once;
+          drafts never count. Participants never see these totals on their own pages.
         </p>
-        {event.phase_idx === 6 && !event.market_confirmation && (
-          <ActionForm
-            action={startConfirmation}
-            submitLabel="Start confirmation time"
-            confirmText="Start confirmation time? Allocations lock for everyone and a 5-minute timer starts."
-          />
-        )}
         <LeaderboardTable board={board} />
       </section>
 
@@ -94,7 +79,7 @@ export default async function MarketplacePage() {
                   </td>
                   <td>
                     {s.live
-                      .map((i) => `T${numberOf.get(i.target_team_id) ?? '?'} ₹${i.amount}${i.confirmed_at ? ' ✓' : ''}`)
+                      .map((i) => `T${numberOf.get(i.target_team_id) ?? '?'} ₹${i.amount}`)
                       .join(', ') || '—'}
                   </td>
                   <td>

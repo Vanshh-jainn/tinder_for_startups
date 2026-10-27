@@ -72,7 +72,7 @@ The 9 phases and their default timers:
 | 3 | Rest | 10 min |
 | 4 | Field Assignment & Startup Development | 50 min |
 | 5 | Break | 5 min |
-| 6 | Investment Marketplace | 10 min decision time + 5 min confirmation time |
+| 6 | Investment Marketplace | Open for the whole phase; each team locks when ready |
 | 7 | Break & Top 7 Announcement | 5 min |
 | 8 | Final Pitching | 10 min per finalist (Pitch 7 / Q&A 2 / rollover 1) |
 
@@ -140,34 +140,27 @@ Every step starts with Admin → Event & projector → **Advance**. Watch three 
 
 ### Phase 6: Investment Marketplace
 
-**Decision time** (10 min):
-
-- [ ] Advance. The confirm dialog mentions decision time (and "fewer than 8 startups", if so). The projector shows the leaderboard with "Decision time · 10:00".
+- [ ] Advance. The confirm dialog says the marketplace opens (and "fewer than 8 startups", if so). The projector shows the leaderboard with a red live dot and "Market open · 10:00". There is no "Start confirmation time" button anywhere.
 - [ ] A team page shows cards for the other teams **with a pitch** only (not itself, not the team without a pitch).
 - [ ] The team without a pitch can still invest.
-- [ ] Try to break each rule. The page explains what's wrong and **Save** stays disabled:
+- [ ] The team page shows "Left to invest ₹5,000", "Picked 0/7", and a split bar that fills as amounts are typed. The amount turns green at ₹0 and red when over.
+- [ ] Try to break each rule. The page explains what's wrong and **Save draft** and **Lock investments** stay disabled:
   - [ ] An amount that isn't a multiple of ₹100 (₹150)
   - [ ] Less than ₹200 (₹100)
   - [ ] Two equal amounts
   - [ ] Total not ₹5,000
   - [ ] Too few picks (7, or all available with fewer than 8 teams)
-- [ ] Fix it and Save. The other member sees the saved allocation. Admin → Marketplace shows "Saved, not confirmed".
-
-**Confirmation time** (5 min):
-
-- [ ] Click **Start confirmation time** (Event or Marketplace page). Team pages switch to Confirm buttons by themselves and editing is gone. The projector says "Confirmation time · live · 05:00".
-- [ ] Most teams confirm all their investments.
-- [ ] One team confirms only some: the leaderboard doesn't change for it.
-- [ ] One team confirms nothing.
-- [ ] When a team confirms its last investment, totals appear on the projector and admin page within a second, with "X of N teams fully confirmed".
-- [ ] Admin → Marketplace → **Void** one team: its totals drop; the team can redo and re-confirm.
+- [ ] Fix it and **Save draft**. The read-only phone shows the same draft. Admin → Marketplace shows "Draft saved (not counted)"; the leaderboard doesn't change.
+- [ ] **Lock investments** (confirm dialog says it's final). The team page shows "🔒 Locked" with its portfolio. Within a second the projector rows slide to their new places, totals count up, and a green "+₹…" pops on teams that gained money. "X of N teams have locked" goes up.
+- [ ] One team never locks: it never appears in the totals.
+- [ ] Admin → Marketplace → **Void** one locked team: its totals drop; the team can redo and lock again.
 - [ ] Let the timer reach 0: nothing changes until you Advance.
 - [ ] Participant pages **never show totals**.
 
 ### Phase 7: Break & Top 7 Announcement
 
 - [ ] Before advancing, open Admin → Qualification: the result is shown but **Confirm** is not possible yet.
-- [ ] Advance. Partly confirmed and unconfirmed teams count as ₹0. The projector switches to the finalist reveal with "?" slots ("Finalists will be announced soon…").
+- [ ] Advance. Teams that didn't lock count as ₹0; their pages say so. The projector switches to the finalist reveal with "?" slots ("Finalists will be announced soon…").
 - [ ] Admin → Qualification → **Confirm** the finalists. Teams with ₹0 never appear. If a tie crosses the 7-seat cut, tick the tied teams who go through.
 - [ ] Click **Reveal next finalist** repeatedly: the projector reveals one at a time, from the lowest place up.
 

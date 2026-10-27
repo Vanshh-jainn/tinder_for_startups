@@ -57,12 +57,6 @@ export async function updatePhase(_prev: FormState, formData: FormData): Promise
   );
 }
 
-// Moves the marketplace from decision time to confirmation time (allocations lock) and starts a 5-minute display timer.
-export async function startConfirmation(): Promise<FormState> {
-  const adminId = await requireAdmin();
-  return adminResult(await rpc('start_confirmation', { p_admin: adminId }), 'Confirmation time started.');
-}
-
 // Dry runs: wipes participants, teams, swipes, investments and finalists and goes back to before Introduction.
 export async function resetEvent(_prev: FormState, formData: FormData): Promise<FormState> {
   const adminId = await requireAdmin();

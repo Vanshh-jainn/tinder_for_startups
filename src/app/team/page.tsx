@@ -168,15 +168,17 @@ async function Marketplace({ teamId, event }: { teamId: string; event: Awaited<R
     number: t.number,
     pitch: (t.submissions as unknown as { pitch: string }).pitch,
   }));
-  const live = investmentsRes.data!.filter((i) => !i.voided_at);
+  const saved = investmentsRes
+    .data!.filter((i) => !i.voided_at)
+    .map((i) => ({ target: i.target_team_id, amount: i.amount, locked: !!i.confirmed_at }));
 
   return (
     <MarketplacePanel
-      stage={marketplaceWindow(event.phase_idx, event.market_confirmation)}
+      key={JSON.stringify(saved)}
+      stage={marketplaceWindow(event.phase_idx)}
       targets={targets}
-      saved={live.map((i) => ({ target: i.target_team_id, amount: i.amount, confirmed: !!i.confirmed_at }))}
+      saved={saved}
       required={requiredPicks(targets.length)}
-      wasVoided={investmentsRes.data!.some((i) => i.voided_at)}
     />
   );
 }

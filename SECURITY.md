@@ -11,7 +11,7 @@ Found a problem? Tell the event organisers directly. Do not open a public issue 
 | Role | Authenticates with | Can do |
 |---|---|---|
 | Admin | Email + password checked by Supabase Auth, must be in `admins` → server session | Everything in the admin panel; every action is audited |
-| Team member | Their own participant session + an active membership in an approved team (no shared team code) | Their team's workspace: pitch, marketplace allocation and confirmations. Never sees investment totals |
+| Team member | Their own participant session + an active membership in an approved team (no shared team code) | Their team's workspace: pitch, marketplace allocation and lock (driver phone only; other members read-only). Never sees investment totals |
 | Participant | Admin-issued participant ID (`P12`) + login code → server session | Own profile, swiping |
 | Projector | None (public read-only page `/projector`) | Sees team numbers, member names, domains, rules, and the timer; the page is rendered by the server |
 
@@ -40,7 +40,7 @@ Found a problem? Tell the event organisers directly. Do not open a public issue 
 | IDOR (team A reads or edits team B) | `requireTeamMember()` looks up the team from the logged-in member's active membership; a team ID is never taken from the request |
 | Participant calls admin action | `requireAdmin()` first in every admin page and Server Action; it checks the session type **and** re-checks the `admins` table |
 | Brute-forcing login codes | Per-account lockout + bcrypt + ~39 bits of code entropy |
-| Double-counted investments | Idempotent `UPDATE … WHERE confirmed_at IS NULL`; partial unique indexes; totals only from the `counted_investments` view |
+| Double-counted investments | `lock_allocation` saves and locks in one transaction and refuses a second lock; partial unique indexes; totals only from the `counted_investments` view |
 | Tampered amounts/totals | `save_allocation` re-checks every rule in SQL; DB `CHECK` constraints; totals are computed in the DB, never accepted from the client |
 | Actions after a phase closes | Server checks the current phase before every participant write (profile, swipe, pitch); marketplace writes check `marketplace_window()` inside the same SQL function |
 | SQL injection | Parameterised queries via the Supabase client / SQL functions only; no string-built SQL |
@@ -57,7 +57,7 @@ Each entry records the actor, action, affected record, time, and before/after va
 - matchmaking open/close, matching runs, proposal clears;
 - team approval, rejection, manual creation, dissolve (with number and domain);
 - Google Form link changes and admin pitch edits;
-- every timer action, pitch timer start, marketplace confirmation start, projector screen change, and phase setting edit;
+- every timer action, pitch timer start, projector screen change, and phase setting edit;
 - investment voids (with the voided allocation as the before value);
 - finalist confirmations (before/after lists) and each reveal.
 

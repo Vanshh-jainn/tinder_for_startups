@@ -7,12 +7,11 @@ export const STEP = 100;
 export const MAX_PICKS = 7;
 export const MARKETPLACE_PHASE = 6;
 
-export type MarketWindow = 'closed' | 'decision' | 'confirmation';
+export type MarketWindow = 'closed' | 'open';
 
-// Decision time until the admin starts confirmation time; the timer only displays time.
-export function marketplaceWindow(phaseIdx: number | null, confirmationStarted: boolean): MarketWindow {
-  if (phaseIdx !== MARKETPLACE_PHASE) return 'closed';
-  return confirmationStarted ? 'confirmation' : 'decision';
+// Open for the whole marketplace phase; each team locks its own allocation. The timer only displays time.
+export function marketplaceWindow(phaseIdx: number | null): MarketWindow {
+  return phaseIdx === MARKETPLACE_PHASE ? 'open' : 'closed';
 }
 
 // Pick 7, or every available startup if there are fewer (OQ-35).

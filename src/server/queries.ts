@@ -45,7 +45,6 @@ export type EventState = TimerState & {
   rules: string;
   pitching_team_id: string | null;
   projector_screen: Screen | null;
-  market_confirmation: boolean;
   revealed_count: number;
   serverNow: number; // lets clients correct for their own clock being off
 };
@@ -54,7 +53,7 @@ export async function getEventState(): Promise<EventState> {
   await connection(); // live state: never prerender a page that reads it
   const { data, error } = await db()
     .from('event_state')
-    .select('phase_idx, timer_status, duration_ms, elapsed_ms, started_at, pitching_team_id, projector_screen, market_confirmation, revealed_count, phases(name, rules)')
+    .select('phase_idx, timer_status, duration_ms, elapsed_ms, started_at, pitching_team_id, projector_screen, revealed_count, phases(name, rules)')
     .single();
   if (error) throw error;
   const { phases, ...state } = data;

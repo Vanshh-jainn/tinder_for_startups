@@ -438,14 +438,18 @@ describe('event timer and projector', () => {
 describe('marketplace', () => {
   const AMOUNTS = [200, 300, 400, 500, 600, 700, 2300]; // distinct, multiples of 100, sum 5000
 
+  const driverOf = new Map<string, string>(); // team -> its driver participant (fix C)
+  const reader = new Map<string, string>(); // team -> its read-only member
+
   async function teams(n: number, withPitch = n): Promise<string[]> {
     const ids: string[] = [];
     for (let i = 0; i < n; i++) {
-      const { rows } = await call('select create_manual_team($1, $2, $3) as id', [
-        await addParticipant(`a${i}`),
-        await addParticipant(`b${i}`),
-      ]);
+      const [a, b] = [await addParticipant(`a${i}`), await addParticipant(`b${i}`)];
+      const { rows } = await call('select create_manual_team($1, $2, $3) as id', [a, b]);
       const id = (rows[0] as { id: string }).id;
+      await db.query('select set_driver($1, $2, $3)', [`participant:${a}`, id, a]);
+      driverOf.set(id, a);
+      reader.set(id, b);
       ids.push(id);
       if (i < withPitch) await db.query(`insert into submissions (team_id, pitch, updated_by) values ($1, 'p', 'x')`, [id]);
     }
@@ -454,11 +458,11 @@ describe('marketplace', () => {
   const toMarketplace = async () => {
     for (let i = 0; i < 7; i++) await call(`select timer_action($1, 'advance')`);
   };
-  const toConfirmation = () => call('select start_confirmation($1)');
   const items = (targets: string[], amounts = AMOUNTS) => targets.map((target, i) => ({ target, amount: amounts[i] }));
-  const save = (team: string, list: object[]) =>
-    db.query(`select save_allocation('participant:x', $1, $2)`, [team, JSON.stringify(list)]);
-  const confirm = (team: string, target: string) => db.query(`select confirm_investment('participant:x', $1, $2)`, [team, target]);
+  const save = (team: string, list: object[], actor = `participant:${driverOf.get(team)}`) =>
+    db.query('select save_allocation($1, $2, $3)', [actor, team, JSON.stringify(list)]);
+  const lock = (team: string, list: object[], actor = `participant:${driverOf.get(team)}`) =>
+    db.query('select lock_allocation($1, $2, $3)', [actor, team, JSON.stringify(list)]);
   const counted = async (investor: string) =>
     (await db.query<{ amount: number }>('select amount from counted_investments where investor_team_id = $1', [investor])).rows;
 
@@ -487,31 +491,36 @@ describe('marketplace', () => {
     await save(noPitch, items([a, b, c, d], [500, 1000, 1500, 2000])); // a team without a pitch can still invest
   });
 
-  it('separates decision and confirmation time, locks after the first confirm, and counts only complete submissions', async () => {
+  it('counts nothing for a draft and everything once locked; a locked allocation cannot change', async () => {
     const [me, ...others] = await teams(8);
     await toMarketplace();
     await save(me, items(others));
-    await expect(confirm(me, others[0])).rejects.toThrow(/confirmation time/);
+    expect(await counted(me)).toHaveLength(0); // draft only
 
-    await toConfirmation();
-    await expect(save(me, items(others))).rejects.toThrow(/Decision time is over/);
-    for (const target of others.slice(0, 6)) await confirm(me, target);
-    await confirm(me, others[0]); // idempotent
-    expect(await counted(me)).toHaveLength(0); // 6 of 7 confirmed: nothing counts
-
-    await confirm(me, others[6]);
+    await expect(lock(me, items(others, [200, 200, 400, 500, 600, 700, 2400]))).rejects.toThrow(/different/);
+    expect(await counted(me)).toHaveLength(0); // failed lock changed nothing
+    await lock(me, items(others));
     const rows = await counted(me);
     expect(rows).toHaveLength(7);
     expect(rows.reduce((s, r) => s + r.amount, 0)).toBe(5000);
-    await expect(confirm(me, me)).rejects.toThrow(/not in your allocation/);
+    await expect(save(me, items(others))).rejects.toThrow(/locked/);
+    await expect(lock(me, items(others))).rejects.toThrow(/locked/);
   });
 
-  it('lets a voided team redo its submission during confirmation time, and audits the void', async () => {
+  it('lets only the driver phone save or lock', async () => {
     const [me, ...others] = await teams(8);
     await toMarketplace();
-    await save(me, items(others));
-    await toConfirmation();
-    for (const target of others) await confirm(me, target);
+    await expect(save(me, items(others), `participant:${reader.get(me)}`)).rejects.toThrow(/Read-only/);
+    await expect(lock(me, items(others), `participant:${reader.get(me)}`)).rejects.toThrow(/Read-only/);
+    await expect(lock(me, items(others), `admin:${ADMIN}`)).rejects.toThrow(/Read-only/);
+    await db.query('update teams set driver_id = null where id = $1', [me]);
+    await expect(save(me, items(others), `participant:${driverOf.get(me)}`)).rejects.toThrow(/Read-only/);
+  });
+
+  it('lets a voided team redo and lock again while the marketplace is open, and audits the void', async () => {
+    const [me, ...others] = await teams(8);
+    await toMarketplace();
+    await lock(me, items(others));
     expect(await counted(me)).toHaveLength(7);
 
     await call('select void_investments($1, $2)', [me]);
@@ -519,8 +528,7 @@ describe('marketplace', () => {
     const audit = await db.query(`select 1 from audit_log where action = 'investments.void'`);
     expect(audit.rows).toHaveLength(1);
 
-    await save(me, items(others, [2300, 700, 600, 500, 400, 300, 200]));
-    for (const target of others) await confirm(me, target);
+    await lock(me, items(others, [2300, 700, 600, 500, 400, 300, 200]));
     expect(await counted(me)).toHaveLength(7);
   });
 
@@ -530,7 +538,8 @@ describe('marketplace', () => {
     await expect(call('select void_investments($1, $2)', [me])).rejects.toThrow(/no investments/);
     await save(me, items(others));
     await call(`select timer_action($1, 'advance')`);
-    await expect(confirm(me, others[0])).rejects.toThrow(/confirmation time/);
+    await expect(lock(me, items(others))).rejects.toThrow(/not open/);
+    expect(await counted(me)).toHaveLength(0); // an unlocked draft never counts
   });
 
   it('refreshes clients on investment changes, allows the leaderboard screen, and blocks anon', async () => {
@@ -545,7 +554,8 @@ describe('marketplace', () => {
     await db.exec('reset role; set role anon');
     await expect(db.query('select * from investments')).rejects.toThrow(/permission denied/);
     await expect(db.query('select * from counted_investments')).rejects.toThrow(/permission denied/);
-    await expect(db.query(`select confirm_investment('x', $1, $1)`, [me])).rejects.toThrow(/permission denied/);
+    await expect(db.query(`select lock_allocation('x', $1, '[]')`, [me])).rejects.toThrow(/permission denied/);
+    await expect(db.query(`select assert_team_driver('x', $1)`, [me])).rejects.toThrow(/permission denied/);
   });
 });
 
@@ -560,20 +570,13 @@ describe('admin-driven marketplace stages and qualification', () => {
     return (rows[0] as { id: string }).id;
   }
 
-  it('starts confirmation time only when the admin says so, whatever the clock shows', async () => {
-    await expect(call('select start_confirmation($1)')).rejects.toThrow(/marketplace phase/);
+  it('opens the marketplace for its whole phase, whatever the clock shows', async () => {
+    expect(await windowNow()).toBe('closed');
     await advance(7);
-    expect((await db.query<{ d: number }>('select duration_ms::int as d from event_state')).rows[0].d).toBe(600000);
-    await db.query('update event_state set elapsed_ms = 9999999');
-    expect(await windowNow()).toBe('decision'); // the timer no longer decides anything
-    await call('select start_confirmation($1)');
-    expect(await windowNow()).toBe('confirmation');
-    const s = (await db.query<{ d: number; t: string }>('select duration_ms::int as d, timer_status as t from event_state')).rows[0];
-    expect(s).toEqual({ d: 300000, t: 'running' });
-    await expect(call('select start_confirmation($1)')).rejects.toThrow(/already started/);
+    await db.query('update event_state set elapsed_ms = 9999999 where id');
+    expect(await windowNow()).toBe('open'); // the timer never decides anything
     await advance(1);
     expect(await windowNow()).toBe('closed');
-    expect((await db.query<{ m: boolean }>('select market_confirmation as m from event_state')).rows[0].m).toBe(false);
   });
 
   it('confirms finalists only after the marketplace, in order, replacing earlier results', async () => {
@@ -616,7 +619,6 @@ describe('admin-driven marketplace stages and qualification', () => {
   it('blocks anon from finalists and the new functions', async () => {
     await db.exec('reset role; set role anon');
     await expect(db.query('select * from finalists')).rejects.toThrow(/permission denied/);
-    await expect(db.query('select start_confirmation($1)', [ADMIN])).rejects.toThrow(/permission denied/);
     await expect(db.query(`select confirm_finalists($1, '[]')`, [ADMIN])).rejects.toThrow(/permission denied/);
     await expect(db.query('select reveal_next_finalist($1)', [ADMIN])).rejects.toThrow(/permission denied/);
   });

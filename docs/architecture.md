@@ -45,7 +45,7 @@ Rule logic stays out of UI and DB code so it can be tested alone:
 | `src/lib/security.ts` (built) | Login-code generation, participant ID parsing, audit secret redaction | §4 |
 | `src/lib/matching/` (built) | Max-cardinality, min-cost matching | §6 |
 | `src/lib/timer.ts` (built) | Remaining time, clock format, Final Pitching segments, projector screen per phase | §3, §13 |
-| `src/lib/marketplace.ts` (built) | Marketplace window (decision/confirmation), required picks, allocation errors for live feedback, leaderboard ranking. Mirrors the SQL rules, which stay the authority | §9, §15 |
+| `src/lib/marketplace.ts` (built) | Marketplace window (open/closed), required picks, allocation errors for live feedback, leaderboard ranking. Mirrors the SQL rules, which stay the authority | §9, §15 |
 | `src/lib/qualification.ts` (built) | Top-7 rules as decided (OQ-18/19): ₹0 out, shared places, whole places while they fit, tie at 7th all out, higher tie across the cut → returns the tied teams for the admin to choose | §10 |
 
 ## Layout
@@ -63,7 +63,7 @@ src/
       page.tsx          Participants: add, reset code, delete (before Matchmaking), profile/swipe/team status
       matching/         run matching, random pairing, eligible pairs
       teams/            Teams & submissions: form link, pitches, dissolve, manual team
-      marketplace/      stage, start confirmation time, counted leaderboard, per-team submission status, void
+      marketplace/      stage, live counted leaderboard, per-team submission status, void
       qualification/    top-7 result, tie choice, confirm finalists, reveal next
     projector/          public read-only display
   components/           ActionForm, Countdown, LiveRefresh, PhaseBar, MarketStage, LeaderboardTable
@@ -77,7 +77,7 @@ supabase/
 
 ## Data model
 
-Mapped from [spec.md §14](spec.md#14-suggested-data-model). Money is `integer` rupees everywhere. Tables are created by the phase that first needs them; Phase 1 created `admins`, `participants` (ID, name, code hash), `sessions`, `login_attempts`, and `audit_log`. Phase 2 added profile columns, `discovery`, `swipes`, `matching_runs`, `teams`, and `team_members`. Phase 3 added team `number`/`domain`, `submissions`, and `config`. Phase 4 added `phases` and `event_state`. Phase 5 added `investments` and the `counted_investments` view. Phase 6 added `finalists` and the `market_confirmation` / `revealed_count` columns on `event_state`.
+Mapped from [spec.md §14](spec.md#14-suggested-data-model). Money is `integer` rupees everywhere. Tables are created by the phase that first needs them; Phase 1 created `admins`, `participants` (ID, name, code hash), `sessions`, `login_attempts`, and `audit_log`. Phase 2 added profile columns, `discovery`, `swipes`, `matching_runs`, `teams`, and `team_members`. Phase 3 added team `number`/`domain`, `submissions`, and `config`. Phase 4 added `phases` and `event_state`. Phase 5 added `investments` and the `counted_investments` view. Phase 6 added `finalists` and the `market_confirmation` / `revealed_count` columns on `event_state` (`market_confirmation` is unused since 2026-10-27). Rehearsal fixes added `teams.driver_id` (C).
 
 Multi-step admin changes are **SQL functions** (`set_discovery`, `save_matching_run`, `reset_matching`, `decide_team`, `create_manual_team`, `dissolve_team`, `set_form_url`, `admin_set_pitch`, `timer_action`, `start_pitch`, `set_projector_screen`, `update_phase`, `void_investments`, `start_confirmation`, `confirm_finalists`, `reveal_next_finalist`). Team marketplace writes also go through SQL functions (`save_allocation`, `confirm_investment`) so every rule is checked in one place. Each runs in one transaction and writes its own audit row, so a change can never land without its audit entry or half-applied. The server calls them via `rpc()` in `src/server/queries.ts`. Supabase caps API responses at 1,000 rows, so large reads (swipes) go through `fetchAll()`, which pages.
 
@@ -94,7 +94,7 @@ Multi-step admin changes are **SQL functions** (`set_discovery`, `save_matching_
 | `submissions` | team_id (PK), pitch, updated_by (`participant:<id>`/`admin:<id>`), updated_at. Deck lives in the Google Form only | Pitch ≤ 2,000 chars (abuse cap, no product limit) |
 | `investments` | investor_team_id, target_team_id, amount, created_by, confirmed_at, confirmed_by, voided_at | `CHECK (investor_team_id <> target_team_id)`; `CHECK (amount >= 200 AND amount % 100 = 0)`; partial unique `(investor, target)` and `(investor, amount)` where not voided |
 | `phases` | idx 0–8, name, duration_seconds, rules (admin-edited text) | Duration 1–240 min; rules ≤ 2,000 chars |
-| `event_state` | single row: phase_idx (null = not started), timer_status, duration_ms, elapsed_ms, started_at, pitching_team_id, projector_screen (null = follow phase), market_confirmation, revealed_count, updated_at | `running` ⇔ `started_at` set; screen from a fixed list. Public read for Realtime |
+| `event_state` | single row: phase_idx (null = not started), timer_status, duration_ms, elapsed_ms, started_at, pitching_team_id, projector_screen (null = follow phase), market_confirmation (unused), revealed_count, updated_at | `running` ⇔ `started_at` set; screen from a fixed list. Public read for Realtime |
 | `finalists` | team_id, position (1 = top), place (shared on ties), total | Total > 0; written only by `confirm_finalists` |
 | `audit_log` | actor, action, entity, entity_id, before, after, created_at | Append-only (no UPDATE/DELETE grants) |
 | `login_attempts` | key (`participant:<n>` or `admin:<email>`), attempted_at | Failed logins only; per-account lockout |
@@ -102,13 +102,13 @@ Multi-step admin changes are **SQL functions** (`set_discovery`, `save_matching_
 
 ### Marketplace
 
-- **Window:** `marketplace_window()` is `closed` outside the Investment Marketplace phase, `decision` until the admin calls `start_confirmation` (which also starts a 5-minute display timer), then `confirmation`. The flag lives on `event_state`, so every page re-renders live when it flips.
+- **Window (since 2026-10-27):** `marketplace_window()` is `open` during the Investment Marketplace phase and `closed` otherwise. No confirmation stage; each team locks on its own.
 - **Targets:** approved teams with a saved pitch, except the investor (`investment_targets()`). Required picks = min(7, targets).
-- **`save_allocation`** (decision time, or after an admin void): checks every rule, then replaces the team's live rows. Refused once any row is confirmed.
-- **`confirm_investment`** (confirmation time): `UPDATE … WHERE confirmed_at IS NULL`, so repeats change nothing.
-- **Counted investments** come from the `counted_investments` view: a team's live rows count only when all of them are confirmed. The leaderboard is `SUM(amount)` per target over that view, ranked with shared ranks for ties. Drafts and partial submissions never reach it.
+- **`save_allocation`** (draft): only the team's driver (`assert_team_driver`), only while open; checks every rule, then replaces the team's live rows. Refused once the team has locked.
+- **`lock_allocation`**: runs `save_allocation` and marks every live row confirmed in the same transaction, so a team is either fully locked or not at all. Final unless an admin voids it.
+- **Counted investments** come from the `counted_investments` view: a team's live rows count only when all of them are confirmed (= locked). The leaderboard is `SUM(amount)` per target over that view, ranked with shared ranks for ties. Drafts and partial submissions never reach it.
 - **`void_investments`** (admin): marks a team's live rows voided (kept for the record, audited). Totals recalculate through the view; the team may redo it.
-- Every investment change bumps `event_state`, so the admin page and projector leaderboard update live. *Ceiling:* every open page refreshes on each confirmation (about teams × 7 events in 5 minutes); fine for tens of teams.
+- Every investment change bumps `event_state`, so the admin page and projector leaderboard update live. *Ceiling:* every open page refreshes on each save or lock (a few per team); fine for tens of teams. The leaderboard (`LeaderboardTable`, client) animates changes with transform/opacity only: FLIP row moves, count-up totals, a "+₹X" chip.
 
 ## Timer
 

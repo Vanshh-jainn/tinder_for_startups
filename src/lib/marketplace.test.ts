@@ -4,11 +4,11 @@ import { allocationErrors, marketplaceWindow, rankTotals, requiredPicks } from '
 const valid = [200, 300, 400, 500, 600, 700, 2300].map((amount, i) => ({ target: `t${i}`, amount }));
 
 describe('marketplaceWindow', () => {
-  it('is decision time until the admin starts confirmation time, and closed in other phases', () => {
-    expect(marketplaceWindow(6, false)).toBe('decision');
-    expect(marketplaceWindow(6, true)).toBe('confirmation');
-    expect(marketplaceWindow(5, true)).toBe('closed');
-    expect(marketplaceWindow(null, false)).toBe('closed');
+  it('is open for the whole marketplace phase and closed in every other', () => {
+    expect(marketplaceWindow(6)).toBe('open');
+    expect(marketplaceWindow(5)).toBe('closed');
+    expect(marketplaceWindow(7)).toBe('closed');
+    expect(marketplaceWindow(null)).toBe('closed');
   });
 });
 
