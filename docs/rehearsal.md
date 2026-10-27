@@ -95,7 +95,8 @@ Every step starts with Admin → Event & projector → **Advance**. Watch three 
 
 ### Phase 0: Introduction
 
-- [ ] Advance. The projector shows the rules and a corner timer counting down; phones show the phase bar.
+- [ ] Before advancing: a logged-in phone shows "The event hasn't started yet" instead of the profile form.
+- [ ] Advance (the dialog says participants can now fill in their profiles). The projector shows the rules and a corner timer counting down; phones show the phase bar and the profile form appears by itself.
 - [ ] Try **Pause**, **+1 min**, **Resume**, **Reset clock**, **End now**: the projector and phone timers follow each one.
 - [ ] Under Projector, pick a different screen: the projector switches. Pick **Follow the phase** to go back.
 

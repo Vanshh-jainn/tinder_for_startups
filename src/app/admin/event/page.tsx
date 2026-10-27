@@ -42,6 +42,7 @@ export default async function EventPage() {
   const advanceWarning = [
     `Move to "${next?.name}"?`,
     current !== null && 'Participants lose access to the current phase.',
+    current === null && 'Participants can now fill in their profiles.',
     next?.idx === 2 && 'Matchmaking opens: profiles lock and swipe decks are built.',
     next?.idx === 2 && incomplete > 0 && `${incomplete} incomplete profile(s) will be left out.`,
     current === 2 && 'Swiping closes.',

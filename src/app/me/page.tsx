@@ -34,7 +34,15 @@ export default async function ParticipantHome() {
         </div>
         <LogoutButton />
       </header>
-      {status === 'not_started' && <Profile me={me} />}
+      {status === 'not_started' &&
+        (event.phase_idx === null ? (
+          <Empty glyph="⏳">
+            The event hasn&apos;t started yet. Your profile form opens when the organisers start the event. This page updates
+            by itself.
+          </Empty>
+        ) : (
+          <Profile me={me} />
+        ))}
       {status === 'open' && <Discovery meId={me.id} />}
       {status === 'closed' && (
         <Empty glyph="⏳">Matchmaking is closed. Wait for the organisers to announce teams. This page updates by itself.</Empty>

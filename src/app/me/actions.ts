@@ -5,12 +5,14 @@ import { z } from 'zod';
 import type { FormState } from '@/components/ActionForm';
 import { profileSchema } from '@/lib/profile';
 import { requireParticipant } from '@/server/auth';
-import { getDiscoveryStatus } from '@/server/queries';
+import { getDiscoveryStatus, getEventState } from '@/server/queries';
 import { db } from '@/server/supabase';
 
 // Partial saves are allowed; the profile counts as complete once all four fields are filled.
 export async function saveProfile(_prev: FormState, formData: FormData): Promise<FormState> {
   const me = await requireParticipant();
+  // Profiles open when the admin starts the event (Introduction) and lock when Matchmaking opens.
+  if ((await getEventState()).phase_idx === null) return { error: "The event hasn't started yet. Profiles open when it starts." };
   if ((await getDiscoveryStatus()) !== 'not_started') return { error: 'Discovery has started, so profiles are locked.' };
 
   const parsed = profileSchema.safeParse(Object.fromEntries(formData));
