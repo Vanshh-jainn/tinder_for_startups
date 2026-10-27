@@ -11,7 +11,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 **Where things stand**
 - Phase 8 (rehearsal fixes A–E) is committed and its migrations are applied on the live project (2026-10-27).
 - Phase 7 (hardening + deployment) started with the user's answers: Vercel Hobby + Supabase Free, no custom domain; 70–90 participants; keep all data; a second admin device on the day; add admin profile editing; make the site lighter.
-- Step 7A (lighter live refresh) is built: migration `20261104000000_lighter_refresh.sql` must be run in the Supabase SQL Editor, then committed.
+- Step 7A (lighter live refresh) is committed (`3406b6c`). Supabase region is Mumbai; `vercel.json` pins Vercel functions to `bom1`.
 - Before any `npx supabase db push`, link the CLI and run `migration repair --status applied` for every migration already applied by hand (see [README](README.md#setup), step 4). "Allow new users to sign up" in Supabase Auth is not yet confirmed off.
 
 **Next:** 7B admin edits a participant's profile → 7C security tests + deployment guide (Vercel region = Supabase region, env vars, sign-ups off) + event-day runbook → user reruns the [rehearsal](docs/rehearsal.md) on the deployed site.
@@ -205,3 +205,4 @@ Record each decision with a date. Answers to open questions also go in [docs/ope
 | 2026-10-27 | "It's a Match!" fires when a team is formed (first visit to `/team`, once per phone), not on a mutual like | A mutual like isn't a team (the optimiser decides); swipes stay private |
 | 2026-10-27 | OQ-1/26: 70–90 participants. OQ-25: keep all data. OQ-27: Vercel Hobby + Supabase Free, no custom domain. Second admin device on the day. Admin profile editing wanted; overview/audit pages not needed | User decision |
 | 2026-10-27 | Only locks and voids bump `event_state`; `LiveRefresh` debounces with 0.2–1.2 s jitter and one shared client; no `backdrop-filter` | User asked for a lighter site; ~95 devices refresh on each bump |
+| 2026-10-27 | Vercel functions pinned to `bom1` (Mumbai) in `vercel.json`, next to the Supabase project (`ap-south-1`) | Each page makes several sequential DB calls; same-region keeps them at a few ms |

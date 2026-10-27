@@ -161,4 +161,4 @@ Expected cost: **₹0**. Paid tiers are needed only if capacity ([OQ-1](open-que
 
 - Each page has one `LiveRefresh`; all of them share one Supabase client per tab (no auth session) and one Realtime channel on `event_state`.
 - A signal triggers `router.refresh()` after a random 0.2–1.2 s delay; signals inside that window merge into one refresh. This spreads ~95 simultaneous server renders. The device that acted sees its change at once from its server action.
-- Biggest latency factor in production: the Vercel function region must match the Supabase region (each page does a few sequential DB round trips). `next dev` on localhost is much slower than production (on-demand compile, dev React); judge speed on the deployed build or `npm run build && npm start`.
+- Biggest latency factor in production: the Vercel function region must match the Supabase region (each page does a few sequential DB round trips). The Supabase project is in Mumbai (`ap-south-1`), so `vercel.json` pins functions to `bom1` (Mumbai). `next dev` on localhost is much slower than production (on-demand compile, dev React); judge speed on the deployed build or `npm run build && npm start`.
