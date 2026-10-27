@@ -373,7 +373,7 @@ tr.current {
   top: 10%;
   width: calc(16 * var(--u));
   height: calc(22 * var(--u));
-  margin-left: -calc(8 * var(--u));
+  margin-left: calc(-8 * var(--u));
   border-radius: var(--radius);
   background: linear-gradient(160deg, var(--surface), #33182a);
   border: 2px solid var(--muted);
@@ -404,7 +404,7 @@ tr.current {
 @keyframes mm-swipe-left {
   0% { opacity: 0; transform: scale(0.9); }
   15%, 55% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: translateX(-calc(22 * var(--u))) rotate(-18deg); }
+  100% { opacity: 0; transform: translateX(calc(-22 * var(--u))) rotate(-18deg); }
 }
 
 .mm-heart {
@@ -426,7 +426,7 @@ tr.current {
 @keyframes mm-float {
   0% { opacity: 0; transform: translateY(0); }
   20% { opacity: 1; }
-  100% { opacity: 0; transform: translateY(-calc(28 * var(--u))); }
+  100% { opacity: 0; transform: translateY(calc(-28 * var(--u))); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -467,7 +467,7 @@ ul.error {
 .projector .stage {
   font-size: calc(2.4 * var(--u));
   color: var(--warn);
-  margin: -calc(2 * var(--u)) 0 calc(1 * var(--u));
+  margin: calc(-2 * var(--u)) 0 calc(1 * var(--u));
 }
 
 fieldset {
@@ -1360,14 +1360,14 @@ body:has(.app, .projector, .admin) {
 }
 
 .projector::before {
-  top: -calc(25 * var(--u));
-  left: -calc(15 * var(--u));
+  top: calc(-25 * var(--u));
+  left: calc(-15 * var(--u));
   background: radial-gradient(circle, rgb(224 17 95 / 0.28), transparent 65%);
 }
 
 .projector::after {
-  bottom: -calc(30 * var(--u));
-  right: -calc(15 * var(--u));
+  bottom: calc(-30 * var(--u));
+  right: calc(-15 * var(--u));
   background: radial-gradient(circle, rgb(181 18 79 / 0.22), transparent 65%);
   animation-delay: -11s;
 }
@@ -1416,7 +1416,7 @@ body:has(.app, .projector, .admin) {
 
 .hearts {
   position: absolute;
-  inset: -calc(4 * var(--u));
+  inset: calc(-4 * var(--u));
   overflow: hidden;
   pointer-events: none;
   z-index: -1;
@@ -1424,7 +1424,7 @@ body:has(.app, .projector, .admin) {
 
 .hearts span {
   position: absolute;
-  bottom: -calc(5 * var(--u));
+  bottom: calc(-5 * var(--u));
   font-size: calc(3 * var(--u));
   color: var(--accent);
   opacity: 0;
@@ -1453,7 +1453,7 @@ body:has(.app, .projector, .admin) {
 }
 
 @keyframes slide-in {
-  from { opacity: 0; transform: translateX(-calc(3 * var(--u))); }
+  from { opacity: 0; transform: translateX(calc(-3 * var(--u))); }
   to { opacity: 1; transform: none; }
 }
 
@@ -1466,7 +1466,7 @@ body:has(.app, .projector, .admin) {
     linear-gradient(#3a1a2e, #3a1a2e) calc(2 * var(--u)) calc(17.6 * var(--u)) / calc(11 * var(--u)) calc(0.7 * var(--u)) no-repeat,
     var(--grad) top / 100% calc(8 * var(--u)) no-repeat,
     var(--surface);
-  box-shadow: 0 calc(2 * var(--u)) calc(4 * var(--u)) -calc(2 * var(--u)) rgb(0 0 0 / 0.9);
+  box-shadow: 0 calc(2 * var(--u)) calc(4 * var(--u)) calc(-2 * var(--u)) rgb(0 0 0 / 0.9);
 }
 
 .mm-card::after {
@@ -1476,7 +1476,7 @@ body:has(.app, .projector, .admin) {
   top: calc(4 * var(--u));
   width: calc(7.5 * var(--u));
   height: calc(7.5 * var(--u));
-  margin-left: -calc(3.75 * var(--u));
+  margin-left: calc(-3.75 * var(--u));
   border-radius: 50%;
   background: linear-gradient(160deg, #5a2a48, #33182a);
   border: calc(0.4 * var(--u)) solid var(--surface);
@@ -1533,7 +1533,7 @@ body:has(.app, .projector, .admin) {
   top: 50%;
   width: calc(70 * var(--u));
   height: calc(40 * var(--u));
-  margin: -calc(20 * var(--u)) 0 0 -calc(35 * var(--u));
+  margin: calc(-20 * var(--u)) 0 0 calc(-35 * var(--u));
   background: radial-gradient(ellipse, rgb(224 17 95 / 0.25), transparent 65%);
   animation: glow 3s ease-in-out infinite alternate;
 }
@@ -2011,7 +2011,7 @@ fieldset.bare:disabled {
     font-size: calc(1.1 * var(--u));
   }
 
-  .projector .screen > h1 {
+  .projector .screen:not(.center) > h1 {
     padding-right: calc(24 * var(--u));
   }
 
@@ -2097,4 +2097,217 @@ fieldset.bare:disabled {
 /* Last resort: a screen never scrolls; anything that still doesn't fit is clipped, not scrolled. */
 .projector .screen {
   overflow: hidden;
+}
+
+/* ── Projector revamp (2026-10-27): romantic serif titles, gradient headlines, glowing glass
+   cards, love motifs, brand strip. Projector only; no backdrop-filter (cheap on the laptop). ── */
+.projector {
+  --love: var(--font-love), Georgia, serif;
+  --glass: linear-gradient(160deg, rgb(255 255 255 / 0.07), rgb(255 255 255 / 0.015) 55%), rgb(34 16 25 / 0.72);
+  --glow: 0 0 calc(2.4 * var(--u)) rgb(255 61 127 / 0.16), inset 0 1px 0 rgb(255 255 255 / 0.08);
+  font-family: var(--font);
+}
+
+/* Titles: tall italic serif in a slow pink → red shimmer, with a beating heart. */
+.projector h1:not(.brand),
+.projector h2 {
+  font-family: var(--love);
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-variant-numeric: lining-nums; /* "Team 3", not old-style digits dipping below the line */
+}
+
+.projector .screen > h1:not(.brand),
+.projector .center h1:not(.brand) {
+  background: linear-gradient(100deg, #ffd1e0 0%, #ff6fa5 30%, #ff3d6e 55%, #ffd1e0 80%, #ff6fa5 100%);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 9s linear infinite;
+  padding-bottom: 0.08em; /* italic descenders */
+}
+
+.projector .screen > h1:not(.brand)::after,
+.projector .center h1:not(.brand)::after {
+  content: ' ♥';
+  display: inline-block;
+  font-style: normal;
+  font-size: 0.55em;
+  vertical-align: 0.35em;
+  margin-left: 0.25em; /* clear the italic overhang */
+  color: var(--accent);
+  -webkit-text-fill-color: var(--accent);
+  animation: heartbeat 1.8s ease-in-out infinite;
+}
+
+.projector .mm-stage + h1::after {
+  content: none; /* matchmaking title already has its heart */
+}
+
+/* Numbers and names stay in a clean sans for legibility. */
+.projector .stage-timer,
+.corner-timer,
+.projector .board,
+.projector .finalist .place,
+.projector .board-rank {
+  font-family: var(--font);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.projector .stage-timer {
+  font-weight: 800;
+  text-shadow: none;
+  filter: drop-shadow(0 0 calc(2 * var(--u)) rgb(255 61 127 / 0.35));
+}
+
+/* Glass cards with a soft pink glow edge. */
+.projector .card,
+.projector .board li {
+  background: var(--glass);
+  border: 1px solid rgb(255 111 165 / 0.28);
+  box-shadow: var(--glow);
+}
+
+.projector .team-grid .card {
+  background: var(--glass);
+  border: 1px solid rgb(255 111 165 / 0.35);
+}
+
+.projector .team-grid h2 {
+  font-size: 1.55em;
+  line-height: 1.1;
+}
+
+.projector .team-grid .domain {
+  font-family: var(--font);
+  font-size: 0.9em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.projector .board .top-1 {
+  background: linear-gradient(100deg, rgb(255 61 127 / 0.22), rgb(34 16 25 / 0.72) 70%);
+  border-color: rgb(255 201 77 / 0.6);
+  box-shadow: 0 0 calc(3 * var(--u)) rgb(255 201 77 / 0.18), inset 0 1px 0 rgb(255 255 255 / 0.1);
+}
+
+.projector .board-team {
+  font-weight: 700;
+}
+
+/* Rank and finalist place as round badges. */
+.projector .board-rank {
+  display: grid;
+  place-items: center;
+  width: 1.8em;
+  height: 1.8em;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.06);
+  font-size: 0.8em;
+  font-weight: 800;
+}
+
+.projector .board .top-1 .board-rank { background: rgb(255 201 77 / 0.18); }
+.projector .board .top-2 .board-rank { background: rgb(220 220 230 / 0.14); }
+.projector .board .top-3 .board-rank { background: rgb(240 168 117 / 0.16); }
+
+.projector .finalist .place {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  width: calc(5.2 * var(--u));
+  height: calc(5.2 * var(--u));
+  border-radius: 50%;
+  font-size: calc(2.2 * var(--u));
+  font-weight: 800;
+  color: #fff;
+  background: rgb(255 255 255 / 0.06);
+  border: 1px solid rgb(255 111 165 / 0.3);
+}
+
+.projector .finalist.revealed {
+  background: var(--glass);
+  border: 1px solid rgb(255 111 165 / 0.55);
+  box-shadow: 0 0 calc(2.6 * var(--u)) rgb(255 61 127 / 0.25), inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+
+.projector .finalist.revealed .place {
+  background: var(--grad);
+  border-color: transparent;
+}
+
+/* Corner timer as a glass pill. */
+.corner-timer {
+  background: var(--glass);
+  border: 1px solid rgb(255 111 165 / 0.3);
+  box-shadow: var(--glow);
+  font-weight: 800;
+}
+
+.corner-timer small {
+  font-family: var(--love);
+  font-style: italic;
+  font-weight: 600;
+  color: #ff8fb4;
+}
+
+/* Rules: heart bullets. */
+.projector .rules {
+  list-style: none;
+  padding: 0;
+}
+
+.projector .rules li {
+  position: relative;
+  padding-left: 1.5em;
+}
+
+.projector .rules li::before {
+  content: '♥';
+  position: absolute;
+  left: 0;
+  top: 0.05em;
+  font-size: 0.8em;
+  color: var(--accent);
+}
+
+/* Brand strip, bottom-left of every screen except Welcome. */
+.projector > .brand-strip {
+  position: absolute; /* beats the generic ".projector > *" relative positioning */
+  left: calc(4 * var(--u));
+  bottom: calc(0.7 * var(--u));
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: calc(0.6 * var(--u));
+  font-size: calc(1.1 * var(--u));
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  opacity: 0.85;
+}
+
+.brand-strip span {
+  color: var(--accent);
+}
+
+.brand-strip-flame {
+  width: calc(1.4 * var(--u));
+  height: auto;
+}
+
+.projector:has(.brand-strip) {
+  padding-bottom: calc(3.4 * var(--u));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .projector .screen > h1:not(.brand),
+  .projector .center h1:not(.brand),
+  .projector .screen > h1:not(.brand)::after,
+  .projector .center h1:not(.brand)::after {
+    animation: none;
+  }
 }

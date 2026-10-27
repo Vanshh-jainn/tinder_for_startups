@@ -1,16 +1,20 @@
 import type { Metadata } from 'next';
+import { Playfair_Display } from 'next/font/google';
 import { Countdown } from '@/components/Countdown';
 import { Hearts } from '@/components/Hearts';
 import { LeaderboardTable } from '@/components/LeaderboardTable';
 import { LiveRefresh } from '@/components/LiveRefresh';
 import { MarketStage } from '@/components/MarketStage';
-import { TinderLogo } from '@/components/TinderLogo';
+import { Flame, TinderLogo } from '@/components/TinderLogo';
 import { screenFor } from '@/lib/timer';
 import { getEventState, getLeaderboard, type EventState } from '@/server/queries';
 import { db } from '@/server/supabase';
 import { TeamPages } from './TeamPages';
 
 export const metadata: Metadata = { title: 'Projector · Tinder for Startups' };
+
+// Romantic italic serif for projector headings only (user decision 2026-10-27); loaded on this route only.
+const love = Playfair_Display({ subsets: ['latin'], style: ['normal', 'italic'], variable: '--font-love' });
 
 // Public, read-only. Shows only what the hall may see: team numbers, member names, domains, rules,
 // and counted investment totals (live during the marketplace, OQ-31).
@@ -19,8 +23,13 @@ export default async function ProjectorPage() {
   const screen = screenFor(event.phase_idx, event.projector_screen);
 
   return (
-    <main className="projector">
+    <main className={`projector ${love.variable}`}>
       <LiveRefresh />
+      {screen !== 'welcome' && (
+        <div className="brand-strip" aria-hidden="true">
+          <Flame className="brand-strip-flame" /> Tinder for Startups <span>♥</span> DAMRU · Rishihood University
+        </div>
+      )}
       {event.phase_idx !== null && screen !== 'pitching' && (
         <div className="corner-timer">
           <small>{event.phase_name}</small>

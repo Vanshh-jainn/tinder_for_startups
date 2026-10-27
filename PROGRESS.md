@@ -133,6 +133,8 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - [x] Backup/export plan: keep all data (OQ-25); CSV export after the marketplace and after finalists
 - [x] Deployment guide + event-day runbook: [docs/deployment.md](docs/deployment.md)
 - [x] Link-preview (OG) image generated at build time (`src/app/opengraph-image.tsx`) + Open Graph / Twitter metadata
+- [x] Participants can't fill in their profile before the admin starts the event (Introduction); page says "The event hasn't started yet", the server refuses the save too
+- [x] Projector revamp: romantic italic serif titles (Playfair Display, projector only) with gradient shimmer + beating heart, glass cards with pink glow, round rank/place badges, heart bullets, glass timer, brand strip. Also fixed negative sizes broken by the unit swap (spotlight glow, hearts, animations). Checked every screen in headless Chrome at 1920×1080
 - [x] Projector fits one 16:9 screen with no scrolling: height-aware unit, fixed frame, leaderboard top 10 (two columns), "Teams formed" pages of 12 every 8 s, compact long rules, finalists in 7 rows, timer inside the title band. Checked with 42 fake teams in headless Chrome at 1920×~860
 - [ ] **User:** deploy, smoke test, rehearse on the live URL
 
@@ -211,3 +213,5 @@ Record each decision with a date. Answers to open questions also go in [docs/ope
 | 2026-10-27 | Security §17 checks as a DB-wide permission test plus source-scan tests (`guards.test.ts`) | Catch future actions/functions that forget a guard or revoke, without an HTTP test harness |
 | 2026-10-27 | Backups: CSV export from the Table Editor (Supabase Free has no downloadable backups) | User keeps all data (OQ-25) |
 | 2026-10-27 | Projector never scrolls: leaderboard shows the top 10 only (ties at the cut are cut by order); "Teams formed" rotates pages of 12 every 8 s; projector is 16:9 | User decision |
+| 2026-10-27 | Profiles open when the event starts (Introduction, phase 1/9), not before; still lock when Matchmaking opens. Admin corrections unaffected | User decision |
+| 2026-10-27 | Projector look: romantic serif headings, glass cards, gradient headlines, love motifs, brand strip; projector only (phones/admin unchanged) | User decision |
