@@ -5,12 +5,12 @@ import { getActiveMemberships, getDiscoveryStatus, getSwipes } from '@/server/qu
 import { db } from '@/server/supabase';
 import { AdminHeader } from './AdminHeader';
 import Link from 'next/link';
-import { createParticipant, deleteParticipant, resetParticipantCode } from './actions';
+import { adminEditProfile, createParticipant, deleteParticipant, resetParticipantCode } from './actions';
 
 export default async function AdminPage() {
   await requireAdmin();
   const [{ data: participants, error }, status, swipes, active] = await Promise.all([
-    db().from('participants').select('id, number, display_name, phone, profile_complete').order('number'),
+    db().from('participants').select('id, number, display_name, phone, skills, preferences, summary, profile_complete').order('number'),
     getDiscoveryStatus(),
     getSwipes(),
     getActiveMemberships(),
@@ -34,7 +34,8 @@ export default async function AdminPage() {
         <h2>Matchmaking: {status.replace('_', ' ')}</h2>
         <p className="muted">
           Matchmaking opens and closes with its phase on <Link href="/admin/event">Event &amp; projector</Link>. Profiles
-          lock when it opens, and participants can no longer be deleted (use Reset event there to start over).
+          lock for participants when it opens, and participants can no longer be deleted (use Reset event there to start
+          over). Admins can still correct any profile with <strong>Edit</strong> (audited); swipe decks are not rebuilt.
         </p>
         {status === 'not_started' && incomplete.length > 0 && (
           <p className="warn">
@@ -62,6 +63,7 @@ export default async function AdminPage() {
               <th>Profile</th>
               <th>Swiped</th>
               <th>Team</th>
+              <th>Profile details</th>
               <th>Login code</th>
               {status === 'not_started' && <th>Remove</th>}
             </tr>
@@ -77,6 +79,34 @@ export default async function AdminPage() {
                   <td>{p.profile_complete ? 'Complete' : <span className="warn">Incomplete</span>}</td>
                   <td>{swiped ? `${swiped.seen}/${swiped.total}` : '—'}</td>
                   <td>{active.has(p.id) ? 'In team' : '—'}</td>
+                  <td>
+                    <details className="edit-profile">
+                      <summary>Edit</summary>
+                      <ActionForm action={adminEditProfile} submitLabel="Save correction">
+                        <input type="hidden" name="id" value={p.id} />
+                        <label>
+                          Name
+                          <input name="displayName" defaultValue={p.display_name} required maxLength={80} />
+                        </label>
+                        <label>
+                          Phone
+                          <input name="phone" type="tel" defaultValue={p.phone ?? ''} />
+                        </label>
+                        <label>
+                          Skills
+                          <textarea name="skills" defaultValue={p.skills} maxLength={200} rows={2} />
+                        </label>
+                        <label>
+                          Looking for
+                          <textarea name="preferences" defaultValue={p.preferences} maxLength={200} rows={2} />
+                        </label>
+                        <label>
+                          Summary
+                          <textarea name="summary" defaultValue={p.summary} maxLength={160} rows={2} />
+                        </label>
+                      </ActionForm>
+                    </details>
+                  </td>
                   <td>
                     <ActionForm
                       action={resetParticipantCode}

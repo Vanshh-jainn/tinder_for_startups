@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import type { FormState } from '@/components/ActionForm';
+import { profileSchema } from '@/lib/profile';
 import { formatParticipantId, generateLoginCode } from '@/lib/security';
 import { audit } from '@/server/audit';
 import { requireAdmin } from '@/server/auth';
@@ -89,4 +90,26 @@ export async function deleteParticipant(_prev: FormState, formData: FormData): P
   const parsed = resetSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: 'Invalid participant.' };
   return adminResult(await rpc('delete_participant', { p_admin: adminId, p_participant: parsed.data.id }), 'Deleted.');
+}
+
+const editSchema = profileSchema.extend({ id: z.uuid(), displayName: z.string().trim().min(1, 'Name is required.').max(80) });
+
+// Authorised correction (spec §12): any time, audited with before/after in the same transaction.
+export async function adminEditProfile(_prev: FormState, formData: FormData): Promise<FormState> {
+  const adminId = await requireAdmin();
+  const parsed = editSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const p = parsed.data;
+  return adminResult(
+    await rpc('admin_update_profile', {
+      p_admin: adminId,
+      p_participant: p.id,
+      p_name: p.displayName,
+      p_phone: p.phone || null,
+      p_skills: p.skills,
+      p_preferences: p.preferences,
+      p_summary: p.summary,
+    }),
+    'Profile updated.',
+  );
 }

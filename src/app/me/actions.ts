@@ -3,19 +3,10 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import type { FormState } from '@/components/ActionForm';
+import { profileSchema } from '@/lib/profile';
 import { requireParticipant } from '@/server/auth';
 import { getDiscoveryStatus } from '@/server/queries';
 import { db } from '@/server/supabase';
-
-const profileSchema = z.object({
-  phone: z
-    .string()
-    .transform((s) => s.replace(/[\s()-]/g, ''))
-    .pipe(z.union([z.literal(''), z.string().regex(/^\+?\d{10,15}$/, 'Phone must be 10–15 digits, optionally starting with +.')])),
-  skills: z.string().trim().max(200, 'Skills: max 200 characters.'),
-  preferences: z.string().trim().max(200, 'Preferences: max 200 characters.'),
-  summary: z.string().trim().max(160, 'Summary: max 160 characters.'),
-});
 
 // Partial saves are allowed; the profile counts as complete once all four fields are filled.
 export async function saveProfile(_prev: FormState, formData: FormData): Promise<FormState> {

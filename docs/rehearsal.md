@@ -113,6 +113,7 @@ Every step starts with Admin → Event & projector → **Advance**. Watch three 
 - [ ] Make several pairs swipe ♥ on each other. Everything else ✕. Use both ways: **drag** the card (it tilts and shows LIKE / NOPE; a short drag snaps back) and **tap** the buttons (the card flies out, a ♥ bursts on a like).
 - [ ] Phone with "Reduce motion" on: no hearts or fly-out animations, swiping still works.
 - [ ] Admin → Participants shows swipe progress.
+- [ ] Admin → Participants → **Edit** on someone: fix a typo in their summary and Save correction. The row updates; the participant can't edit it themselves now; `audit_log` has a `participant.edit_profile` row with before/after.
 
 ### Phase 3: Rest (matching)
 

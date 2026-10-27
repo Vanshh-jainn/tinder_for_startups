@@ -749,3 +749,38 @@ describe('team driver device', () => {
     await expect(db.query('select set_driver($1, $2, null)', ['admin:x', ADMIN])).rejects.toThrow(/permission denied/);
   });
 });
+
+describe('admin profile correction', () => {
+  const edit = (id: string, phone: string | null, summary = 'fixed summary') =>
+    call('select admin_update_profile($1, $2, $3, $4, $5, $6, $7)', [id, 'New Name', phone, 'skills', 'prefs', summary]);
+
+  it('updates any profile even after Matchmaking opened, and audits before/after', async () => {
+    const id = await addParticipant('Old', false);
+    await call(`select set_discovery($1, 'open')`);
+    await edit(id, '+919876543210');
+    const { rows } = await db.query<{ display_name: string; profile_complete: boolean }>(
+      'select display_name, profile_complete from participants where id = $1',
+      [id],
+    );
+    expect(rows[0]).toEqual({ display_name: 'New Name', profile_complete: true });
+    const audit = await db.query<{ before: { display_name: string }; after: { summary: string } }>(
+      `select before, after from audit_log where action = 'participant.edit_profile'`,
+    );
+    expect(audit.rows[0].before.display_name).toBe('Old');
+    expect(audit.rows[0].after.summary).toBe('fixed summary');
+  });
+
+  it('keeps the column rules and refuses unknown participants', async () => {
+    const id = await addParticipant('A');
+    await expect(edit(id, '123')).rejects.toThrow(/check/);
+    await expect(edit(id, null, 'x'.repeat(161))).rejects.toThrow(/check/);
+    await expect(edit(ADMIN, null)).rejects.toThrow(/not found/);
+  });
+
+  it('is not callable by anon', async () => {
+    await db.exec('reset role; set role anon');
+    await expect(
+      db.query(`select admin_update_profile($1, $1, 'n', null, '', '', '')`, [ADMIN]),
+    ).rejects.toThrow(/permission denied/);
+  });
+});

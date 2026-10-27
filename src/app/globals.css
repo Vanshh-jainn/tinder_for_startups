@@ -1927,3 +1927,13 @@ fieldset.bare:disabled {
     animation: none;
   }
 }
+
+/* Admin profile correction: native <details>, opens inline in the participants table. */
+.edit-profile summary {
+  cursor: pointer;
+  color: var(--accent);
+}
+
+.edit-profile[open] {
+  min-width: 260px;
+}

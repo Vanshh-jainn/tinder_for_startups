@@ -11,13 +11,12 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 **Where things stand**
 - Phase 8 (rehearsal fixes A–E) is committed and its migrations are applied on the live project (2026-10-27).
 - Phase 7 (hardening + deployment) started with the user's answers: Vercel Hobby + Supabase Free, no custom domain; 70–90 participants; keep all data; a second admin device on the day; add admin profile editing; make the site lighter.
-- Step 7A (lighter live refresh) is committed (`3406b6c`). Supabase region is Mumbai; `vercel.json` pins Vercel functions to `bom1`.
+- Step 7A (lighter live refresh) is committed (`3406b6c`). Step 7B (admin profile edit) is built: run migration `20261105000000_admin_edit_profile.sql` in the Supabase SQL Editor, then commit. Supabase region is Mumbai; `vercel.json` pins Vercel functions to `bom1`.
 - Before any `npx supabase db push`, link the CLI and run `migration repair --status applied` for every migration already applied by hand (see [README](README.md#setup), step 4). "Allow new users to sign up" in Supabase Auth is not yet confirmed off.
 
-**Next:** 7B admin edits a participant's profile → 7C security tests + deployment guide (Vercel region = Supabase region, env vars, sign-ups off) + event-day runbook → user reruns the [rehearsal](docs/rehearsal.md) on the deployed site.
+**Next:** 7C security tests + deployment guide (Vercel region = Supabase region, env vars, sign-ups off) + event-day runbook → user reruns the [rehearsal](docs/rehearsal.md) on the deployed site.
 
 **Known gaps to remember**
-- Admin can't edit a participant's profile yet (spec §12 "authorised corrections"); planned as step 7B.
 - No admin Overview or Audit log page yet (the audit log is readable in Supabase).
 - OQ-7 (human tie-break rule for matching) is still open; OQ-24 (judging rubric) stays out of scope.
 - If a team is dissolved during the marketplace, investments it already made still count.
@@ -34,7 +33,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 | 4 | Timers & projector | 🟨 Code done; waiting for the rehearsal | |
 | 5 | Marketplace | 🟨 Code done; waiting for the rehearsal | |
 | 6 | Qualification & rehearsal | 🟨 Code done; user runs the rehearsal checklist | |
-| 7 | Hardening & deployment | 🟨 7A built | |
+| 7 | Hardening & deployment | 🟨 7A, 7B built | |
 | 8 | Rehearsal fixes (A–E) | 🟨 Code done; waiting for the next rehearsal | |
 
 "Blocked by" means the phase needs that answer to be complete. Work can usually start, with the open part built behind config or left as a marked `TODO(OQ-n)`.
@@ -73,7 +72,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - [x] Admin: manual team creation labelled "Manual override"; edit = dissolve + recreate
 - [x] Admin participant table: phone, profile status, swipe progress, team status
 - [x] Atomic, audited SQL functions; DB tests (`supabase/db.test.ts`, PGlite) for constraints, permissions, decks, teams
-- [ ] Not built: admin editing a participant's profile (spec §12 "authorised corrections"). Add when needed.
+- [x] Admin editing a participant's profile (spec §12 "authorised corrections"): built in Phase 7B (2026-10-27)
 - [ ] **User:** check it in the [event rehearsal](docs/rehearsal.md)
 
 ### Phase 3 — Team workspace & submissions 🟨
@@ -128,7 +127,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 ### Phase 7 — Hardening & deployment 🟨
 
 - [x] **7A. Lighter site:** marketplace drafts no longer refresh every page (only lock/void do, migration `20261104000000_lighter_refresh.sql`); `LiveRefresh` shares one Supabase client per tab and spreads refreshes over 0.2–1.2 s, merging bursts; no backdrop blur on sticky bars (re-blurred every frame over the animated hearts); money-left box stays in view while scrolling. Tests: 86 pass
-- [ ] **7B. Admin edits a participant's profile** (audited)
+- [x] **7B. Admin edits a participant's profile:** Edit on the Participants table (name, phone, skills, looking for, summary), any time, via audited `admin_update_profile()`; decks aren't rebuilt. Shared validation in `src/lib/profile.ts`. Migration `20261105000000_admin_edit_profile.sql`. Tests: 89 pass
 - [ ] Security test suite (spec §17)
 - [ ] Concurrency check at the expected capacity
 - [ ] Backup/export plan
@@ -206,3 +205,4 @@ Record each decision with a date. Answers to open questions also go in [docs/ope
 | 2026-10-27 | OQ-1/26: 70–90 participants. OQ-25: keep all data. OQ-27: Vercel Hobby + Supabase Free, no custom domain. Second admin device on the day. Admin profile editing wanted; overview/audit pages not needed | User decision |
 | 2026-10-27 | Only locks and voids bump `event_state`; `LiveRefresh` debounces with 0.2–1.2 s jitter and one shared client; no `backdrop-filter` | User asked for a lighter site; ~95 devices refresh on each bump |
 | 2026-10-27 | Vercel functions pinned to `bom1` (Mumbai) in `vercel.json`, next to the Supabase project (`ap-south-1`) | Each page makes several sequential DB calls; same-region keeps them at a few ms |
+| 2026-10-27 | Admin profile corrections allowed at any time (participants stay locked after Matchmaking opens); decks are not rebuilt, so a profile completed later only joins random pairing | Spec §12 authorised corrections; rebuilding decks mid-swipe would change ranks |
