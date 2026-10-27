@@ -51,6 +51,7 @@ npx supabase db push   # apply new migrations to the linked Supabase project
 - Read live event state only through `getEventState()`: it opts the page out of prerendering.
 - `supabase/migrations/`: schema + SQL functions. Multi-step admin changes go in a SQL function that also writes the audit row; revoke `EXECUTE` from `public, anon, authenticated` on every new function. Every `update`/`delete` needs a `WHERE` (Supabase rejects them otherwise; single-row tables use `where id`).
 - `supabase/db.test.ts`: runs all migrations in PGlite and checks constraints and permissions. Add a test there for every new DB rule.
+- `src/app/guards.test.ts`: source checks for spec §17 security (guard first in every admin/team/participant action and page, nothing private on the projector, no server imports in client code, no secret in the built bundle). New protected actions must start with their guard or this test fails.
 - `src/components/ActionForm.tsx`: the one form component; wraps a server action with `useActionState` and shows `error`/`notice`.
 - Every admin page and admin server action calls `requireAdmin()` first.
 - Routes: `/login`, `/me` (participant), `/team` (team workspace), `/admin/login`, `/admin/event`, `/admin` (participants), `/admin/matching`, `/admin/teams`, `/admin/marketplace`, `/admin/qualification`, `/projector` (public).

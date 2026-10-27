@@ -11,10 +11,10 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 **Where things stand**
 - Phase 8 (rehearsal fixes A–E) is committed and its migrations are applied on the live project (2026-10-27).
 - Phase 7 (hardening + deployment) started with the user's answers: Vercel Hobby + Supabase Free, no custom domain; 70–90 participants; keep all data; a second admin device on the day; add admin profile editing; make the site lighter.
-- Step 7A (lighter live refresh) is committed (`3406b6c`). Step 7B (admin profile edit) is built: run migration `20261105000000_admin_edit_profile.sql` in the Supabase SQL Editor, then commit. Supabase region is Mumbai; `vercel.json` pins Vercel functions to `bom1`.
+- Steps 7A and 7B are committed (`3406b6c`, `ff8a445`). Step 7C (security tests, deployment guide, runbook) is built; no migration. Supabase region is Mumbai; `vercel.json` pins Vercel functions to `bom1`.
 - Before any `npx supabase db push`, link the CLI and run `migration repair --status applied` for every migration already applied by hand (see [README](README.md#setup), step 4). "Allow new users to sign up" in Supabase Auth is not yet confirmed off.
 
-**Next:** 7C security tests + deployment guide (Vercel region = Supabase region, env vars, sign-ups off) + event-day runbook → user reruns the [rehearsal](docs/rehearsal.md) on the deployed site.
+**Next:** the user deploys with [docs/deployment.md](docs/deployment.md) (checks sign-ups are off), runs the smoke test, then the full [rehearsal](docs/rehearsal.md) on the live URL. Fix what it turns up.
 
 **Known gaps to remember**
 - No admin Overview or Audit log page yet (the audit log is readable in Supabase).
@@ -33,7 +33,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 | 4 | Timers & projector | 🟨 Code done; waiting for the rehearsal | |
 | 5 | Marketplace | 🟨 Code done; waiting for the rehearsal | |
 | 6 | Qualification & rehearsal | 🟨 Code done; user runs the rehearsal checklist | |
-| 7 | Hardening & deployment | 🟨 7A, 7B built | |
+| 7 | Hardening & deployment | 🟨 Code + guide done; user deploys | |
 | 8 | Rehearsal fixes (A–E) | 🟨 Code done; waiting for the next rehearsal | |
 
 "Blocked by" means the phase needs that answer to be complete. Work can usually start, with the open part built behind config or left as a marked `TODO(OQ-n)`.
@@ -128,11 +128,11 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 
 - [x] **7A. Lighter site:** marketplace drafts no longer refresh every page (only lock/void do, migration `20261104000000_lighter_refresh.sql`); `LiveRefresh` shares one Supabase client per tab and spreads refreshes over 0.2–1.2 s, merging bursts; no backdrop blur on sticky bars (re-blurred every frame over the animated hearts); money-left box stays in view while scrolling. Tests: 86 pass
 - [x] **7B. Admin edits a participant's profile:** Edit on the Participants table (name, phone, skills, looking for, summary), any time, via audited `admin_update_profile()`; decks aren't rebuilt. Shared validation in `src/lib/profile.ts`. Migration `20261105000000_admin_edit_profile.sql`. Tests: 89 pass
-- [ ] Security test suite (spec §17)
-- [ ] Concurrency check at the expected capacity
-- [ ] Backup/export plan
-- [ ] Free-tier limits re-checked
-- [ ] Deployment + event-day recovery runbook
+- [x] **7C. Security test suite (spec §17):** DB test that anon/authenticated can execute no function and read only `event_state`; `src/app/guards.test.ts` source checks (guards first in every admin/team/participant action and page, no team id from the request, nothing private on the projector, no server imports in client code, no secret in the built bundle). Mapping in [SECURITY.md](SECURITY.md#required-security-tests). Server Supabase client cached per instance. Tests: 98 pass
+- [x] Concurrency / free-tier check for 70–90 participants (~95 devices, about half the Realtime cap): [deployment.md §4](docs/deployment.md#4-free-tier-check-for-7090-participants)
+- [x] Backup/export plan: keep all data (OQ-25); CSV export after the marketplace and after finalists
+- [x] Deployment guide + event-day runbook: [docs/deployment.md](docs/deployment.md)
+- [ ] **User:** deploy, smoke test, rehearse on the live URL
 
 ### Phase 8 — Rehearsal fixes 🟨
 
@@ -206,3 +206,5 @@ Record each decision with a date. Answers to open questions also go in [docs/ope
 | 2026-10-27 | Only locks and voids bump `event_state`; `LiveRefresh` debounces with 0.2–1.2 s jitter and one shared client; no `backdrop-filter` | User asked for a lighter site; ~95 devices refresh on each bump |
 | 2026-10-27 | Vercel functions pinned to `bom1` (Mumbai) in `vercel.json`, next to the Supabase project (`ap-south-1`) | Each page makes several sequential DB calls; same-region keeps them at a few ms |
 | 2026-10-27 | Admin profile corrections allowed at any time (participants stay locked after Matchmaking opens); decks are not rebuilt, so a profile completed later only joins random pairing | Spec §12 authorised corrections; rebuilding decks mid-swipe would change ranks |
+| 2026-10-27 | Security §17 checks as a DB-wide permission test plus source-scan tests (`guards.test.ts`) | Catch future actions/functions that forget a guard or revoke, without an HTTP test harness |
+| 2026-10-27 | Backups: CSV export from the Table Editor (Supabase Free has no downloadable backups) | User keeps all data (OQ-25) |

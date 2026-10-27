@@ -10,7 +10,7 @@ Three interfaces:
 
 ## Status
 
-🟨 **Phases 1–6 built; live Supabase project set up and admin login works.** Next: run the [event rehearsal](docs/rehearsal.md), then Phase 7 (hardening + deployment). See [PROGRESS.md](PROGRESS.md#next-session-start-here).
+🟨 **All phases built, including the rehearsal fixes and hardening.** Next: deploy with [docs/deployment.md](docs/deployment.md) and run the [event rehearsal](docs/rehearsal.md) on the live URL. See [PROGRESS.md](PROGRESS.md#next-session-start-here).
 
 ## Stack
 
@@ -27,6 +27,7 @@ Next.js (TypeScript) · Supabase (Postgres, Auth, Realtime) · Vercel. All on fr
 | [docs/matching-algorithm.md](docs/matching-algorithm.md) | The team-matching optimiser explained, with tests |
 | [docs/open-questions.md](docs/open-questions.md) | Undecided items: **do not guess these** |
 | [docs/rehearsal.md](docs/rehearsal.md) | Step-by-step manual rehearsal of the whole event, with known problems and fixes |
+| [docs/deployment.md](docs/deployment.md) | Deploying on Vercel, free-tier check, event-day runbook |
 | [PROGRESS.md](PROGRESS.md) | Phase checklist + decision log |
 | [SECURITY.md](SECURITY.md) | Roles, rules, threats, audit |
 | [AGENTS.md](AGENTS.md) / [CLAUDE.md](CLAUDE.md) | Instructions for AI coding agents |
@@ -90,4 +91,4 @@ npm run build
 
 ## Testing
 
-Automated: `npm test` (unit tests + DB tests in PGlite). End to end: the manual **[event rehearsal](docs/rehearsal.md)** on the real Supabase project: setup checks, login and security checks, every phase step by step, and known problems with their fixes.
+Automated: `npm test` (unit tests + DB tests in PGlite + source checks in `src/app/guards.test.ts`: every admin/team/participant action and page runs its guard first, nothing private on the projector, no server imports in client code, and, after `npm run build`, no secret key in the browser bundle). End to end: the manual **[event rehearsal](docs/rehearsal.md)** on the real Supabase project: setup checks, login and security checks, every phase step by step, and known problems with their fixes.

@@ -145,17 +145,14 @@ Verify the current numbers on the vendor pricing pages before the event; they ch
 
 | Service | Relevant limit (at time of writing) | Risk |
 |---|---|---|
-| Supabase Free | ~500 MB DB; ~200 concurrent Realtime connections; project **pauses after ~7 days of inactivity**; no point-in-time recovery | Open the project before the event day. Count projector + admin + one connection per participant device against the Realtime cap ([OQ-26](open-questions.md)). Run a manual `pg_dump` export before and after the event. |
+| Supabase Free | ~500 MB DB; ~200 concurrent Realtime connections; project **pauses after ~7 days of inactivity**; no point-in-time recovery | Open the project before the event day. ~95 devices for 70–90 participants is about half the Realtime cap ([OQ-26](open-questions.md)). Copies: CSV export ([deployment.md](deployment.md#5-event-day-runbook)). |
 | Vercel Hobby | Intended for non-commercial use; function duration and invocation caps | The college fest fits non-commercial use. Keep server functions short; matching on ≤100 people runs in milliseconds. |
 
 Expected cost: **₹0**. Paid tiers are needed only if capacity ([OQ-1](open-questions.md)) exceeds the free limits.
 
-## Event-day recovery (outline, finalised in Phase 7)
+## Event-day recovery
 
-- Timer and projector state live in the DB, so restarting any browser recovers them.
-- Admin can re-select projector content and correct the timer with audited actions.
-- Keep a fresh DB export from just before the event.
-- Keep a second admin device logged in.
+Timer and projector state live in the DB, so restarting any browser recovers them; a second admin device can take over at any moment. The full runbook is in [deployment.md](deployment.md#5-event-day-runbook).
 
 ### Live refresh and load (Phase 7A, 2026-10-27)
 

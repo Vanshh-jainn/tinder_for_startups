@@ -66,3 +66,13 @@ Multi-step admin changes are SQL functions that write their audit row in the sam
 ## Required security tests
 
 See [spec.md §17 Security/admin](docs/spec.md#securityadmin). These must pass before any deployment.
+
+| Spec §17 requirement | Covered by |
+|---|---|
+| Participants cannot access admin routes/actions | `src/app/guards.test.ts`: every admin action and page calls `requireAdmin()` first; `supabase/db.test.ts`: anon/authenticated can execute **no** public function |
+| Participants cannot alter roles, teams, domains, approvals, timers, totals, rankings | Same as above (all of these are admin-only SQL functions); team actions only reach `save_allocation`, `lock_allocation`, `set_driver`, pitch upsert, each with the team id from the session |
+| Team credentials cannot access another team's workspace | `requireTeamMember()` reads the team from the DB; `guards.test.ts` fails if a team action reads a team id from the request; driver-only checks in SQL (`assert_team_driver`, `set_driver` tests) |
+| Admin actions are authorised and audited | `guards.test.ts` (authorised); DB tests per admin function check the audit row |
+| Secrets absent from frontend bundles and logs | `guards.test.ts`: no secret in `.next/static` after a build, no `NEXT_PUBLIC_*SECRET*`, no server imports in client components; `redactSecrets` unit test |
+| Projector does not expose private information | `guards.test.ts`: the projector page selects no phone, code, hash, token, session or audit data; anon can read only `event_state` (DB test) |
+| Reconnecting clients receive current timer and display state | Countdown is computed from server state (`src/lib/timer.test.ts`); `LiveRefresh` refreshes on reconnect |

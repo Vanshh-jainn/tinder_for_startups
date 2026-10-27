@@ -72,6 +72,27 @@ describe('access', () => {
     await expect(db.query('delete from audit_log')).rejects.toThrow(/permission denied/);
   });
 
+  // Catches any future function or table that forgets its revoke (spec §17: participants cannot call admin actions).
+  it('lets anon/authenticated execute no function and read only event_state', async () => {
+    for (const role of ['anon', 'authenticated']) {
+      const fns = await db.query<{ name: string }>(
+        `select p.oid::regprocedure::text as name from pg_proc p
+         where p.pronamespace = 'public'::regnamespace and has_function_privilege($1, p.oid, 'EXECUTE')`,
+        [role],
+      );
+      expect(fns.rows.map((r) => r.name), role).toEqual([]);
+
+      const rels = await db.query<{ name: string; priv: string }>(
+        `select c.relname as name, p.priv from pg_class c
+         cross join unnest(array['SELECT', 'INSERT', 'UPDATE', 'DELETE']) as p(priv)
+         where c.relnamespace = 'public'::regnamespace and c.relkind in ('r', 'v')
+           and has_table_privilege($1, c.oid, p.priv)`,
+        [role],
+      );
+      expect(rels.rows, role).toEqual([{ name: 'event_state', priv: 'SELECT' }]);
+    }
+  });
+
   // Supabase's safeupdate rejects these with "UPDATE requires a WHERE clause"; PGlite doesn't.
   it('puts a WHERE on every UPDATE and DELETE inside functions', async () => {
     const { rows } = await db.query<{ proname: string; prosrc: string }>(
