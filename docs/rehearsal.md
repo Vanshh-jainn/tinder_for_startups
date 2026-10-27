@@ -83,7 +83,8 @@ The 9 phases and their default timers:
 Use one test participant (say P1) in a private window.
 
 - [ ] P1 logs in at `/login` with ID + code and sees "Hi, <name>".
-- [ ] Log out. Enter a wrong code 5 times: the 6th attempt says "Too many wrong attempts".
+- [ ] **Log out** asks "Log out?" first. Log back in with the same ID and code: it works. `P-1` and `p 1` work as the ID too.
+- [ ] An ID that doesn't exist says "There is no participant P…". Enter a wrong code 5 times: each says "Wrong code for P1"; the 6th attempt says "Too many wrong codes … Try again in N min".
 - [ ] Admin → Participants → **Reset code** for P1: P1's open session is logged out, the old code fails, the new code works (after the 15-minute lockout, or after clearing it, see [section 8](#8-if-something-breaks)).
 - [ ] While logged in as P1, open `/admin`: you are sent to the admin login.
 - [ ] P1 opens `/team` without a team: sent back to `/me`.

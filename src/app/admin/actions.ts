@@ -9,7 +9,7 @@ import { formatParticipantId, generateLoginCode } from '@/lib/security';
 import { audit } from '@/server/audit';
 import { requireAdmin } from '@/server/auth';
 import { adminResult, rpc } from '@/server/queries';
-import { clearFailures, isLockedOut, recordFailure } from '@/server/rateLimit';
+import { clearFailures, lockoutMinutesLeft, recordFailure } from '@/server/rateLimit';
 import { createSession, revokeSessions } from '@/server/session';
 import { authClient, db } from '@/server/supabase';
 
@@ -22,7 +22,8 @@ export async function adminLogin(_prev: FormState, formData: FormData): Promise<
   if (!parsed.success) return { error: 'Enter your email and password.' };
 
   const key = `admin:${parsed.data.email.toLowerCase()}`;
-  if (await isLockedOut(key)) return { error: 'Too many wrong attempts. Wait 15 minutes.' };
+  const wait = await lockoutMinutesLeft(key);
+  if (wait) return { error: `Too many wrong attempts. Try again in ${wait} min.` };
 
   const { data, error } = await authClient().auth.signInWithPassword(parsed.data);
   const userId = !error ? data.user?.id : undefined;

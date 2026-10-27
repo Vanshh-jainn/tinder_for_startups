@@ -25,8 +25,13 @@ describe('parseParticipantId', () => {
     expect(parseParticipantId('12')).toBe(12);
   });
 
+  it('accepts a space or dash after the P', () => {
+    expect(parseParticipantId('P-12')).toBe(12);
+    expect(parseParticipantId('p 12')).toBe(12);
+  });
+
   it('rejects anything else', () => {
-    for (const bad of ['', 'P', 'X12', 'P1 2', '12a', 'P1234567']) expect(parseParticipantId(bad)).toBeNull();
+    for (const bad of ['', 'P', 'X12', 'P1 2', '12a', '-12', 'PP12', 'P1234567']) expect(parseParticipantId(bad)).toBeNull();
   });
 });
 

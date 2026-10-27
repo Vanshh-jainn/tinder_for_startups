@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
 import { ActionForm } from '@/components/ActionForm';
+import { LogoutButton } from '@/components/LogoutButton';
 import { PhaseBar } from '@/components/PhaseBar';
 import { formatParticipantId } from '@/lib/security';
 import { requireParticipant } from '@/server/auth';
 import { getActiveMemberships, getDiscoveryStatus, getEventState } from '@/server/queries';
 import { db } from '@/server/supabase';
-import { logout } from '../actions';
 import { saveProfile, swipe } from './actions';
 
 type Me = Awaited<ReturnType<typeof requireParticipant>>;
@@ -29,11 +29,7 @@ export default async function ParticipantHome() {
             <p className="muted">{formatParticipantId(me.number)}</p>
           </div>
         </div>
-        <form action={logout}>
-          <button type="submit" className="secondary">
-            Log out
-          </button>
-        </form>
+        <LogoutButton />
       </header>
       {status === 'not_started' && <Profile me={me} />}
       {status === 'open' && <Discovery meId={me.id} />}

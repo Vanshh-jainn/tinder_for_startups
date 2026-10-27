@@ -6,18 +6,14 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 
 ## Next session: start here
 
-*Last updated 2026-10-26.*
+*Last updated 2026-10-27.*
 
 **Where things stand**
-- Phases 0–6 are built and committed (Phase 6 in `e19e32e`).
-- Checks: 76 tests pass (`npm test`: unit + PGlite DB tests); lint, type check, and build are clean.
-- **Live Supabase project is set up** (2026-10-26): the first 6 migrations applied (all tables present, `event_state` + 9 `phases` seeded), `.env.local` keys verified, anon access to `participants` refused, first admin created, admin login on localhost works.
-- The migrations were applied without a linked CLI here, so the remote migration history may be empty. Before the next `db push`, link and run `migration repair --status applied` for the 6 existing versions (see [README](README.md#setup), step 4).
-- Not yet confirmed: "Allow new users to sign up" is off in Supabase Auth.
-- Live bug fixed and applied (2026-10-26): Supabase rejects UPDATE/DELETE without WHERE (`UPDATE requires a WHERE clause`); migration `20261030000000_safeupdate_where.sql` adds `where id`.
-- **Dry-run cleanup built, not yet applied:** migration `20261031000000_dry_run_cleanup.sql` (admin **Delete** participant before Matchmaking; **Reset event** on Event & projector). The user must run it in the Supabase SQL Editor.
+- Phases 0–6 are built and committed. The user ran the first rehearsal (~15 participants) on 2026-10-26 and reported 5 issues. They are planned as **Phase 8, rehearsal fixes**, steps A–E below (one reviewable change each).
+- Step A (login) is done; the user commits it, then step B starts.
+- Live Supabase notes: before the next `db push`, link and run `migration repair --status applied` for the migrations already applied by hand (see [README](README.md#setup), step 4). "Allow new users to sign up" in Supabase Auth is not yet confirmed off.
 
-**Next: the user runs the [event rehearsal](docs/rehearsal.md) (login checks first, then every phase)** by hand (they chose manual testing, no automated simulation). Fix whatever it turns up.
+**Before step C, ask the user:** who may change the team's driver device: the admin only, the current driver handing over, or either member? (They answered "it can be changed" but not by whom.)
 
 **Then Phase 7, hardening + deployment.** Before writing code, ask the user about:
 - **OQ-27:** where to deploy (default: Vercel Hobby + Supabase Free) and whether a custom domain is wanted.
@@ -29,7 +25,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 **Known gaps to remember**
 - Admin can't edit a participant's profile (spec §12 "authorised corrections").
 - No admin Overview or Audit log page yet (the audit log is readable in Supabase).
-- OQ-7 (human tie-break rule for matching) and OQ-36 (odd participant count) are still open; OQ-24 (judging rubric) stays out of scope.
+- OQ-7 (human tie-break rule for matching) is still open; OQ-24 (judging rubric) stays out of scope.
 - If a team is dissolved during the marketplace, investments it already made still count.
 - Re-confirming finalists replaces the list and restarts the reveal.
 
@@ -45,6 +41,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 | 5 | Marketplace | 🟨 Code done; waiting for the rehearsal | |
 | 6 | Qualification & rehearsal | 🟨 Code done; user runs the rehearsal checklist | |
 | 7 | Hardening & deployment | ⬜ Not started | 25, 26, 27 |
+| 8 | Rehearsal fixes (A–E) | 🟨 A done | |
 
 "Blocked by" means the phase needs that answer to be complete. Work can usually start, with the open part built behind config or left as a marked `TODO(OQ-n)`.
 
@@ -142,6 +139,16 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - [ ] Free-tier limits re-checked
 - [ ] Deployment + event-day recovery runbook
 
+### Phase 8 — Rehearsal fixes 🟨
+
+Issues from the 2026-10-26 rehearsal. One reviewable change per step.
+
+- [x] **A. Login after logout:** specific errors (unknown ID / wrong code / locked with minutes left / server unreachable instead of a crash page); IDs like `P-12` and `p 12` accepted; participant **Log out** asks for confirmation. Admin **Reset code** already clears the lockout. Tests: 77 pass
+- [ ] **B. Team allotment:** matched pairs become teams immediately (no approval step); **Random pairing** button pairs the remaining complete-profile participants; an odd one out joins a random team as its 3rd member (OQ-36)
+- [ ] **C. One device per team:** pop-up asks which member's device drives; the other member's team page is read-only, enforced on the server; the driver can be changed (who: ask first)
+- [ ] **D. Marketplace:** no confirmation-time stage; a team locks its whole allocation at the end with one button and it counts at once; live animated leaderboard on the projector; team portfolio panel (₹ left to invest, split bar, rule checks). Participants still never see other teams' totals
+- [ ] **E. Love theme:** dark background with rose/red/hot-pink palette, hearts and "It's a Match!" moments, light animations (transform/opacity only, off under `prefers-reduced-motion`); swipe gestures on discovery cards, buttons kept
+
 ## Decision log
 
 Record each decision with a date. Answers to open questions also go in [docs/open-questions.md](docs/open-questions.md).
@@ -189,3 +196,10 @@ Record each decision with a date. Answers to open questions also go in [docs/ope
 | 2026-10-26 | Dry runs: **Delete** participant only before Matchmaking opens (and never in a team); **Reset event** hard-deletes participants, swipes, teams, pitches, investments, finalists, participant sessions/lockouts, restarts P1/Team 1, returns to before Introduction. Keeps admins, phase settings, form link, audit log (+ an `event.reset` row) | User decision: the event is rehearsed repeatedly with volunteers |
 | 2026-10-26 | Every UPDATE/DELETE in a SQL function has a WHERE (single-row tables use `where id`); a DB test scans all functions for it | Supabase's safeupdate rejects them and PGlite doesn't, so tests passed while the live project failed |
 | 2026-10-26 | Visual design: Tinder-style theme (dark, pink→orange gradient `--grad`) on participant, team, admin and projector pages; fonts Bricolage Grotesque (display) + Plus Jakarta Sans (body) via `next/font/google` (self-hosted at build). Participant pages phone-first with a ≥768 px laptop layout; admin tables scroll sideways on phones; projector gets ambient + per-screen entrance animations (all off under `prefers-reduced-motion`) and a portrait fallback. Buttons only on Discovery, no swipe gesture | User decision. Placeholder branding until DAMRU assets arrive; button gradient keeps white text at WCAG AA |
+| 2026-10-27 | Rehearsal fixes planned as Phase 8 (A–E): login messages, auto teams + random pairing, one driver device per team, marketplace without confirmation time, love theme | User decision after the 2026-10-26 rehearsal |
+| 2026-10-27 | Login errors are specific (unknown ID, wrong code, lockout minutes left, server unreachable) | User: "whatever the issue is, show that". IDs are sequential, so naming an unknown ID leaks nothing |
+| 2026-10-27 | **Spec deviation (§6):** pairs from the matching algorithm become teams at once, no admin approval. A **Random pairing** button pairs the leftover participants with complete profiles | User decision |
+| 2026-10-27 | **Spec deviation (§4, teams of 2):** OQ-36: with an odd count, the last participant joins a random team as its 3rd member | User decision |
+| 2026-10-27 | **Spec deviation (§9), supersedes 2026-10-28/29 marketplace rows:** no confirmation time. Each team locks its whole allocation at once at the end; it counts immediately. Leaderboard updates live with animations | User decision |
+| 2026-10-27 | Only one device per team acts (the "driver"); the other member's view is read-only; the driver can be changed | User decision |
+| 2026-10-27 | Theme: dark with rose/red/hot pink + love motifs; swipe gestures on discovery cards alongside the buttons (supersedes "buttons only" from 2026-10-26) | User decision |

@@ -1,11 +1,11 @@
 import { ActionForm } from '@/components/ActionForm';
+import { LogoutButton } from '@/components/LogoutButton';
 import { PhaseBar } from '@/components/PhaseBar';
 import { MARKETPLACE_PHASE, marketplaceWindow, requiredPicks } from '@/lib/marketplace';
 import { formatParticipantId } from '@/lib/security';
 import { requireTeamMember } from '@/server/auth';
 import { getEventState } from '@/server/queries';
 import { db } from '@/server/supabase';
-import { logout } from '../actions';
 import { savePitch } from './actions';
 import { MarketplacePanel } from './MarketplacePanel';
 
@@ -35,11 +35,7 @@ export default async function TeamPage() {
           <p className="eyebrow">Your startup</p>
           <h1>Team {team.number}</h1>
         </div>
-        <form action={logout}>
-          <button type="submit" className="secondary">
-            Log out
-          </button>
-        </form>
+        <LogoutButton />
       </header>
       <div className="panel">
         <p className="eyebrow">Domain</p>

@@ -19,7 +19,7 @@ export function formatParticipantId(number: number): string {
 }
 
 export function parseParticipantId(input: string): number | null {
-  const match = /^P?(\d{1,6})$/i.exec(input.trim());
+  const match = /^(?:P[\s-]*)?(\d{1,6})$/i.exec(input.trim()); // P12, p12, P-12, P 12, 12
   return match ? Number(match[1]) : null;
 }
 
