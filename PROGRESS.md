@@ -9,19 +9,15 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 *Last updated 2026-10-27.*
 
 **Where things stand**
-- Phases 0–6 are built and committed. The user ran the first rehearsal (~15 participants) on 2026-10-26 and reported 5 issues. They are planned as **Phase 8, rehearsal fixes**, steps A–E below (one reviewable change each).
-- Steps A–D are committed (`67b31de`, `c4823b1`, `5d46731`, `8c04cb7`). Step E (love theme) is built, no migration; the user commits it. Apply the B, C, D migrations in order if not done yet (`20261101…`, `20261102…`, `20261103…`), then rerun the [rehearsal](docs/rehearsal.md).
-- Live Supabase notes: before the next `db push`, link and run `migration repair --status applied` for the migrations already applied by hand (see [README](README.md#setup), step 4). "Allow new users to sign up" in Supabase Auth is not yet confirmed off.
+- Phase 8 (rehearsal fixes A–E) is committed and its migrations are applied on the live project (2026-10-27).
+- Phase 7 (hardening + deployment) started with the user's answers: Vercel Hobby + Supabase Free, no custom domain; 70–90 participants; keep all data; a second admin device on the day; add admin profile editing; make the site lighter.
+- Step 7A (lighter live refresh) is built: migration `20261104000000_lighter_refresh.sql` must be run in the Supabase SQL Editor, then committed.
+- Before any `npx supabase db push`, link the CLI and run `migration repair --status applied` for every migration already applied by hand (see [README](README.md#setup), step 4). "Allow new users to sign up" in Supabase Auth is not yet confirmed off.
 
-**Then Phase 7, hardening + deployment.** Before writing code, ask the user about:
-- **OQ-27:** where to deploy (default: Vercel Hobby + Supabase Free) and whether a custom domain is wanted.
-- **OQ-1 / OQ-26:** the real number of participants and teams, to check the free-tier limits (Supabase Realtime connections, etc.).
-- **OQ-25:** when to export, archive, or delete participant data, swipes, and investments after the event.
-- An event-day runbook: a backup before the event, what to do if the laptop or Wi-Fi fails, and a second admin device.
-- Whether to add the missing admin pages (Overview counts, Audit log viewer) and admin profile corrections.
+**Next:** 7B admin edits a participant's profile → 7C security tests + deployment guide (Vercel region = Supabase region, env vars, sign-ups off) + event-day runbook → user reruns the [rehearsal](docs/rehearsal.md) on the deployed site.
 
 **Known gaps to remember**
-- Admin can't edit a participant's profile (spec §12 "authorised corrections").
+- Admin can't edit a participant's profile yet (spec §12 "authorised corrections"); planned as step 7B.
 - No admin Overview or Audit log page yet (the audit log is readable in Supabase).
 - OQ-7 (human tie-break rule for matching) is still open; OQ-24 (judging rubric) stays out of scope.
 - If a team is dissolved during the marketplace, investments it already made still count.
@@ -38,7 +34,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 | 4 | Timers & projector | 🟨 Code done; waiting for the rehearsal | |
 | 5 | Marketplace | 🟨 Code done; waiting for the rehearsal | |
 | 6 | Qualification & rehearsal | 🟨 Code done; user runs the rehearsal checklist | |
-| 7 | Hardening & deployment | ⬜ Not started | 25, 26, 27 |
+| 7 | Hardening & deployment | 🟨 7A built | |
 | 8 | Rehearsal fixes (A–E) | 🟨 Code done; waiting for the next rehearsal | |
 
 "Blocked by" means the phase needs that answer to be complete. Work can usually start, with the open part built behind config or left as a marked `TODO(OQ-n)`.
@@ -129,8 +125,10 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 - [x] Full-event rehearsal checklist ([docs/rehearsal.md](docs/rehearsal.md)) (the user tests manually)
 - [ ] **User:** run the [event rehearsal](docs/rehearsal.md) on a real Supabase project
 
-### Phase 7 — Hardening & deployment
+### Phase 7 — Hardening & deployment 🟨
 
+- [x] **7A. Lighter site:** marketplace drafts no longer refresh every page (only lock/void do, migration `20261104000000_lighter_refresh.sql`); `LiveRefresh` shares one Supabase client per tab and spreads refreshes over 0.2–1.2 s, merging bursts; no backdrop blur on sticky bars (re-blurred every frame over the animated hearts); money-left box stays in view while scrolling. Tests: 86 pass
+- [ ] **7B. Admin edits a participant's profile** (audited)
 - [ ] Security test suite (spec §17)
 - [ ] Concurrency check at the expected capacity
 - [ ] Backup/export plan
@@ -205,3 +203,5 @@ Record each decision with a date. Answers to open questions also go in [docs/ope
 | 2026-10-27 | Theme: dark with rose/red/hot pink + love motifs; swipe gestures on discovery cards alongside the buttons (supersedes "buttons only" from 2026-10-26) | User decision |
 | 2026-10-27 | Marketplace lock = save + confirm every row in one SQL transaction (`lock_allocation`); `counted_investments` unchanged; `event_state.market_confirmation` left in place unused | Smallest change that keeps the counted-only rule and the existing view |
 | 2026-10-27 | "It's a Match!" fires when a team is formed (first visit to `/team`, once per phone), not on a mutual like | A mutual like isn't a team (the optimiser decides); swipes stay private |
+| 2026-10-27 | OQ-1/26: 70–90 participants. OQ-25: keep all data. OQ-27: Vercel Hobby + Supabase Free, no custom domain. Second admin device on the day. Admin profile editing wanted; overview/audit pages not needed | User decision |
+| 2026-10-27 | Only locks and voids bump `event_state`; `LiveRefresh` debounces with 0.2–1.2 s jitter and one shared client; no `backdrop-filter` | User asked for a lighter site; ~95 devices refresh on each bump |

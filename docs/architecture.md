@@ -108,7 +108,7 @@ Multi-step admin changes are **SQL functions** (`set_discovery`, `save_matching_
 - **`lock_allocation`**: runs `save_allocation` and marks every live row confirmed in the same transaction, so a team is either fully locked or not at all. Final unless an admin voids it.
 - **Counted investments** come from the `counted_investments` view: a team's live rows count only when all of them are confirmed (= locked). The leaderboard is `SUM(amount)` per target over that view, ranked with shared ranks for ties. Drafts and partial submissions never reach it.
 - **`void_investments`** (admin): marks a team's live rows voided (kept for the record, audited). Totals recalculate through the view; the team may redo it.
-- Every investment change bumps `event_state`, so the admin page and projector leaderboard update live. *Ceiling:* every open page refreshes on each save or lock (a few per team); fine for tens of teams. The leaderboard (`LeaderboardTable`, client) animates changes with transform/opacity only: FLIP row moves, count-up totals, a "+₹X" chip.
+- Only a **lock or void** bumps `event_state` (trigger on `confirmed_at`/`voided_at`, since 2026-10-27); drafts don't, so they reach the admin status column and teammates' phones on the next live refresh. *Ceiling:* every open page (~95 at the event) refreshes once per lock or void, spread over about a second by `LiveRefresh`. The leaderboard (`LeaderboardTable`, client) animates changes with transform/opacity only: FLIP row moves, count-up totals, a "+₹X" chip.
 
 ## Timer
 
@@ -156,3 +156,9 @@ Expected cost: **₹0**. Paid tiers are needed only if capacity ([OQ-1](open-que
 - Admin can re-select projector content and correct the timer with audited actions.
 - Keep a fresh DB export from just before the event.
 - Keep a second admin device logged in.
+
+### Live refresh and load (Phase 7A, 2026-10-27)
+
+- Each page has one `LiveRefresh`; all of them share one Supabase client per tab (no auth session) and one Realtime channel on `event_state`.
+- A signal triggers `router.refresh()` after a random 0.2–1.2 s delay; signals inside that window merge into one refresh. This spreads ~95 simultaneous server renders. The device that acted sees its change at once from its server action.
+- Biggest latency factor in production: the Vercel function region must match the Supabase region (each page does a few sequential DB round trips). `next dev` on localhost is much slower than production (on-demand compile, dev React); judge speed on the deployed build or `npm run build && npm start`.

@@ -152,7 +152,7 @@ Every step starts with Admin → Event & projector → **Advance**. Watch three 
   - [ ] Two equal amounts
   - [ ] Total not ₹5,000
   - [ ] Too few picks (7, or all available with fewer than 8 teams)
-- [ ] Fix it and **Save draft**. The read-only phone shows the same draft. Admin → Marketplace shows "Draft saved (not counted)"; the leaderboard doesn't change.
+- [ ] Fix it and **Save draft**. Drafts don't push a live update (to keep ~95 phones light): the read-only phone and Admin → Marketplace ("Draft saved (not counted)") show it after their next refresh; the leaderboard doesn't change.
 - [ ] **Lock investments** (confirm dialog says it's final). The team page shows "🔒 Locked" with its portfolio. Within a second the projector rows slide to their new places, totals count up, and a green "+₹…" pops on teams that gained money. "X of N teams have locked" goes up.
 - [ ] One team never locks: it never appears in the totals.
 - [ ] Admin → Marketplace → **Void** one locked team: its totals drop; the team can redo and lock again.

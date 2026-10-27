@@ -424,11 +424,6 @@ tr.current {
   }
 }
 
-.stat {
-  font-size: 1.2em;
-  font-weight: 700;
-}
-
 .target-grid {
   display: grid;
   gap: 12px;
@@ -656,9 +651,7 @@ body:has(.app, .projector, .admin) {
   padding: 10px 16px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: rgb(34 16 25 / 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--surface);
   font-size: 0.875rem;
 }
 
@@ -871,20 +864,16 @@ body:has(.app, .projector, .admin) {
   border: 1px solid currentColor;
 }
 
-/* Marketplace: picked count + budget stays in view while scrolling the cards. */
-.app .stat {
+/* Marketplace: money left + picked count stay in view while scrolling the cards. Solid, no blur:
+   a blurred sticky bar over animated content re-blurs every frame on phones. */
+.app .wallet {
   position: sticky;
   top: calc(max(8px, env(safe-area-inset-top)) + 52px);
   z-index: 5;
-  margin: 12px 0;
   padding: 10px 14px;
   border-radius: 12px;
-  background: rgb(26 11 19 / 0.92);
+  background: var(--surface);
   border: 1px solid var(--border);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  font-size: 1rem;
-  font-variant-numeric: tabular-nums;
 }
 
 .app .target-grid .card {
@@ -1138,9 +1127,7 @@ body:has(.app, .projector, .admin) {
   padding: 8px 8px 8px 20px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: rgb(34 16 25 / 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--surface);
 }
 
 .admin-brand {

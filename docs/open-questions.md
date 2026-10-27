@@ -8,7 +8,7 @@ Status values: `Open` · `Proposed` (someone suggested an answer and is waiting 
 
 | # | Area | Question | Blocks phase | Status | Answer |
 |---:|---|---|---|---|---|
-| 1 | Capacity | Earlier notes say both 20 teams and 10 participants. What is the real capacity? | 1, 7 | Open | |
+| 1 | Capacity | Earlier notes say both 20 teams and 10 participants. What is the real capacity? | 1, 7 | Resolved | 2026-10-27: about 70–90 participants (35–45 teams). |
 | 2 | Registration | Who can take part? Do people register only on Unstop, or inside this app as well? | 1, 2 | Open | |
 | 3 | Identity | Which identity fields are required beyond skills, preferences, and the two-line summary? | 2 | Resolved | 2026-10-25: display name (entered by admin) + phone (entered by participant, visible to admins only, never on cards). |
 | 4 | Credentials | How do participants get individual access before matchmaking? How are team credentials handed over after approval? | 1, 3 | Resolved | **Participants (2026-10-24):** the admin adds each participant and issues a login code (ID `P<n>` + 8-character code, shown to the admin once, reusable until reset). **Teams (2026-10-26):** no separate team code; once a team is approved, each member's own login opens the team workspace (`/me` → `/team`). |
@@ -32,9 +32,9 @@ Status values: `Open` · `Proposed` (someone suggested an answer and is waiting 
 | 22 | Schedule recovery | What happens if a phase is extended, skipped, or reset? Do the later durations stay the same? | 4 | Resolved | 2026-10-27: the admin extends the current timer (+1/+5 min); later phases keep their durations. |
 | 23 | Final results | Does the platform only show finalists and timers, or can the admin publish winners after judging? | 6 | Resolved | 2026-10-29: the platform announces the finalists (top 7, revealed one by one on the projector) and they pitch. No winners are published. |
 | 24 | Judging rubric | The earlier rubric and final-pitch tie-breaker were not approved. They stay out of enforced logic until confirmed. | 6 | Open | |
-| 25 | Privacy and retention | When should profiles, swipes, login records, and investment records be exported, archived, or deleted? | 7 | Open | |
-| 26 | Concurrency | How many participants and teams are expected? This decides quota and load needs. | 7 | Open | |
-| 27 | Deployment | Is there a preferred host or domain? The current default is the free tiers of Vercel and Supabase. | 7 | Open | |
+| 25 | Privacy and retention | When should profiles, swipes, login records, and investment records be exported, archived, or deleted? | 7 | Resolved | 2026-10-27: keep everything as it is; no automatic export, archive or deletion. |
+| 26 | Concurrency | How many participants and teams are expected? This decides quota and load needs. | 7 | Resolved | 2026-10-27: 70–90 participants, ~95 open devices incl. projector and 2 admin devices. Within Supabase Free Realtime limits (200 concurrent connections). |
+| 27 | Deployment | Is there a preferred host or domain? The current default is the free tiers of Vercel and Supabase. | 7 | Resolved | 2026-10-27: Vercel Hobby + Supabase Free; no custom domain (the default vercel.app URL). |
 | 28 | Notifications | Do participants need email or WhatsApp messages for credentials, approvals, or phase changes? | 3 | Resolved | 2026-10-26: none. |
 | 29 | Admin domain controls | Can domains change after random assignment? This overlaps with #10. | 3 | Resolved | Same as #10: no. |
 | 30 | Timer reset | Does resetting a timer reset only the clock, or also the data submitted in that phase? | 4 | Resolved | 2026-10-27: clock only; phase data is untouched. |

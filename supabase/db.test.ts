@@ -542,13 +542,21 @@ describe('marketplace', () => {
     expect(await counted(me)).toHaveLength(0); // an unlocked draft never counts
   });
 
-  it('refreshes clients on investment changes, allows the leaderboard screen, and blocks anon', async () => {
+  it('refreshes clients on lock and void but not on drafts, allows the leaderboard screen, and blocks anon', async () => {
     const [me, ...others] = await teams(8);
     await toMarketplace();
-    await db.query(`update event_state set updated_at = '2000-01-01'`);
+    const bumped = async () => {
+      const { rows } = await db.query<{ fresh: boolean }>(`select updated_at > '2001-01-01' as fresh from event_state`);
+      await db.query(`update event_state set updated_at = '2000-01-01' where id`);
+      return rows[0].fresh;
+    };
+    await bumped();
     await save(me, items(others));
-    const { rows } = await db.query<{ old: boolean }>(`select updated_at < '2001-01-01' as old from event_state`);
-    expect(rows[0].old).toBe(false);
+    expect(await bumped()).toBe(false); // drafts don't refresh every page
+    await lock(me, items(others));
+    expect(await bumped()).toBe(true);
+    await call('select void_investments($1, $2)', [me]);
+    expect(await bumped()).toBe(true);
     await call('select set_projector_screen($1, $2)', ['leaderboard']);
 
     await db.exec('reset role; set role anon');
