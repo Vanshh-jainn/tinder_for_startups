@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Hearts } from '@/components/Hearts';
 import { redirect } from 'next/navigation';
 import { ActionForm } from '@/components/ActionForm';
 import { LogoutButton } from '@/components/LogoutButton';
@@ -7,7 +8,8 @@ import { formatParticipantId } from '@/lib/security';
 import { requireParticipant } from '@/server/auth';
 import { getActiveMemberships, getDiscoveryStatus, getEventState } from '@/server/queries';
 import { db } from '@/server/supabase';
-import { saveProfile, swipe } from './actions';
+import { saveProfile } from './actions';
+import { SwipeCard } from './SwipeCard';
 
 type Me = Awaited<ReturnType<typeof requireParticipant>>;
 
@@ -18,6 +20,7 @@ export default async function ParticipantHome() {
 
   return (
     <main className="narrow app">
+      <Hearts />
       <PhaseBar event={event} />
       <header className="row">
         <div className="who">
@@ -128,29 +131,20 @@ async function Discovery({ meId }: { meId: string }) {
         Profile {seen + 1} of {deck.length}
       </p>
       <Meter value={seen} max={deck.length} />
-      <article className="card profile-card">
-        <span className="avatar" aria-hidden="true">
-          {initial(person.display_name)}
-        </span>
-        <h2>{person.display_name}</h2>
-        <p className="summary">{person.summary}</p>
-        <h3>Skills</h3>
-        <p>{person.skills}</p>
-        <h3>Looking for</h3>
-        <p>{person.preferences}</p>
-      </article>
-      <form action={swipe} className="swipe">
-        <input type="hidden" name="viewedId" value={next.viewed_id} />
-        <button type="submit" name="direction" value="left" className="pass">
-          <span aria-hidden="true">✕</span>
-          Pass
-        </button>
-        <button type="submit" name="direction" value="right" className="like">
-          <span aria-hidden="true">♥</span>
-          Interested
-        </button>
-      </form>
-      <p className="muted center-text">Choices are final.</p>
+      <SwipeCard key={next.viewed_id} viewedId={next.viewed_id}>
+        <article className="card profile-card">
+          <span className="avatar" aria-hidden="true">
+            {initial(person.display_name)}
+          </span>
+          <h2>{person.display_name}</h2>
+          <p className="summary">{person.summary}</p>
+          <h3>Skills</h3>
+          <p>{person.skills}</p>
+          <h3>Looking for</h3>
+          <p>{person.preferences}</p>
+        </article>
+      </SwipeCard>
+      <p className="muted center-text">Drag the card or tap a button. Choices are final.</p>
     </section>
   );
 }

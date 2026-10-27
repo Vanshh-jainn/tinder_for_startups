@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Countdown } from '@/components/Countdown';
+import { Hearts } from '@/components/Hearts';
 import { LeaderboardTable } from '@/components/LeaderboardTable';
 import { LiveRefresh } from '@/components/LiveRefresh';
 import { MarketStage } from '@/components/MarketStage';
@@ -64,16 +65,6 @@ function Rules({ event }: { event: EventState }) {
 }
 
 // Floating hearts behind the welcome screen.
-function Hearts() {
-  return (
-    <div className="hearts" aria-hidden="true">
-      {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
-        <span key={i}>♥</span>
-      ))}
-    </div>
-  );
-}
-
 function Matchmaking() {
   return (
     <div className="center screen">

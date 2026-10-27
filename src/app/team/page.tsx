@@ -1,4 +1,5 @@
 import { ActionForm } from '@/components/ActionForm';
+import { Hearts } from '@/components/Hearts';
 import { LogoutButton } from '@/components/LogoutButton';
 import { PhaseBar } from '@/components/PhaseBar';
 import { MARKETPLACE_PHASE, marketplaceWindow, requiredPicks } from '@/lib/marketplace';
@@ -8,6 +9,7 @@ import { getEventState } from '@/server/queries';
 import { db } from '@/server/supabase';
 import { chooseDriver, savePitch } from './actions';
 import { MarketplacePanel } from './MarketplacePanel';
+import { MatchCelebration } from './MatchCelebration';
 
 const time = (iso: string) => new Date(iso).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', timeStyle: 'short' });
 
@@ -31,6 +33,7 @@ export default async function TeamPage() {
 
   return (
     <main className="narrow app">
+      <Hearts />
       <PhaseBar event={event} />
       <header className="row">
         <div>
@@ -39,6 +42,11 @@ export default async function TeamPage() {
         </div>
         <LogoutButton />
       </header>
+      <MatchCelebration
+        teamId={teamId}
+        teamNumber={team.number}
+        names={members.filter((m) => m.id !== me.id).map((m) => m.display_name)}
+      />
       {!driverId && (
         <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="driver-title">
           <div className="panel modal">

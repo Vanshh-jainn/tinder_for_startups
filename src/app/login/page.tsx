@@ -1,10 +1,12 @@
 import { ActionForm } from '@/components/ActionForm';
+import { Hearts } from '@/components/Hearts';
 import { Flame } from '@/components/TinderLogo';
 import { participantLogin } from './actions';
 
 export default function LoginPage() {
   return (
     <main className="narrow app auth">
+      <Hearts />
       <Flame className="logo" />
       <p className="wordmark">Tinder for Startups</p>
       <div className="panel">

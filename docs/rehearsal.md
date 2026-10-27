@@ -110,7 +110,8 @@ Every step starts with Admin → Event & projector → **Advance**. Watch three 
 - [ ] Advance. The confirm dialog warns about the incomplete profile.
 - [ ] Phones switch to swipe cards by themselves ("Profile 1 of N"); profiles are now locked. The projector shows the matchmaking animation.
 - [ ] The participant with the incomplete profile sees "talk to an organiser" and can't swipe.
-- [ ] Make several pairs swipe ♥ on each other. Everything else ✕.
+- [ ] Make several pairs swipe ♥ on each other. Everything else ✕. Use both ways: **drag** the card (it tilts and shows LIKE / NOPE; a short drag snaps back) and **tap** the buttons (the card flies out, a ♥ bursts on a like).
+- [ ] Phone with "Reduce motion" on: no hearts or fly-out animations, swiping still works.
 - [ ] Admin → Participants shows swipe progress.
 
 ### Phase 3: Rest (matching)
@@ -122,6 +123,7 @@ Every step starts with Admin → Event & projector → **Advance**. Watch three 
 - [ ] The projector's "Teams formed" grows as teams are formed. Members' phones jump to `/team` by themselves.
 - [ ] Admin → Teams & submissions: each team has "Team N", one of the six domains, and its source (Algorithm, Random, or Manual override).
 - [ ] Optional: **dissolve** a team. Its members land on `/me` again and can be put in a new manual team (new number and domain).
+- [ ] Each member's phone first shows **"It's a Match!"** with the team number and teammates; after closing it, it doesn't come back on that phone.
 - [ ] **Driver phone:** each new team's phones show "Which phone drives your team?". One member picks: both phones close the pop-up by themselves. The driver phone says "This phone drives your team"; the other says "Read-only" and its pitch/marketplace controls are greyed out.
 - [ ] On the read-only phone there is no way to take over. On the driver phone, **Hand over** to the teammate: the roles swap on both phones.
 - [ ] Admin → Teams & submissions → **Driver phone**: switch a team's driver, then set "Not chosen": the pop-up comes back on that team's phones.

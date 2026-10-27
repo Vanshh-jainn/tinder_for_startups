@@ -16,20 +16,26 @@ No DAMRU or Rishihood brand assets have been supplied. Colours and fonts below a
 
 ```css
 :root {
-  --bg: #0f0f14;        --surface: #1a1a22;   --text: #f5f5f7;   --muted: #9a9aa8;
-  --accent: #ff4f6d;    /* swipe right / primary */
-  --reject: #6b6b78;    /* swipe left */
+  --bg: #14080e;        --surface: #221019;   --text: #fff2f6;   --muted: #c4a3b3;   /* deep wine */
+  --accent: #ff3d7f;    /* hot pink: swipe right / primary */
+  --reject: #7a5a6a;    /* swipe left */
   --ok: #2ecc71;        --warn: #f5a623;      --danger: #e74c3c;
   --radius: 16px;
   --font: var(--font-body), system-ui, sans-serif;   /* Plus Jakarta Sans via next/font */
   --display: var(--font-display), var(--font);        /* Bricolage Grotesque, headings + projector */
-  --grad: linear-gradient(135deg, #e0115f, #d93a1c);  /* buttons; white text stays AA */
-  --grad-text: linear-gradient(90deg, #ff4f8b, #ff7a45);
-  --border: #2c2c38;
+  --grad: linear-gradient(135deg, #e0115f, #b5124f);  /* rose → wine buttons; white text stays AA */
+  --grad-text: linear-gradient(90deg, #ff6fa5, #ff3d6e);
+  --border: #3d1c2e;
 }
 ```
 
-Tinder-style theme (2026-10-26). Participant pages (`main.app`) are phone-first with a ≥768 px laptop layout; admin pages (`main.admin`) restyle tables, panels and a sticky nav bar, with tables scrolling sideways below 900 px; the projector (`main.projector`) adds ambient and per-screen entrance animations and a portrait fallback. Logo: the official Tinder 2017 flame + wordmark (`src/components/TinderLogo.tsx`, wordmark recoloured to `currentColor` for the dark theme) with "for Startups" beside it; the flame is also the favicon (`src/app/icon.svg`).
+Tinder-style theme (2026-10-26). Participant pages (`main.app`) are phone-first with a ≥768 px laptop layout; admin pages (`main.admin`) restyle tables, panels and a sticky nav bar, with tables scrolling sideways below 900 px; the projector (`main.projector`) adds ambient and per-screen entrance animations and a portrait fallback. Logo: the official Tinder 2017 flame + wordmark (`src/components/TinderLogo.tsx`, wordmark recoloured to `currentColor` for the dark theme) with "for Startups" beside it; the flame is also the favicon (`src/app/icon.svg`). The logo keeps Tinder's own pink-orange flame colours.
+
+**Love theme (2026-10-27, rehearsal fix E):** dark wine background with rose, red and hot-pink accents (tokens above; the neutral greys became wine-tinted). Love touches, all transform/opacity only and off under `prefers-reduced-motion`:
+- Floating hearts behind participant pages and the projector welcome (`src/components/Hearts.tsx`, 8 CSS-animated spans).
+- Swipe card: drag left/right (it tilts, shows LIKE / NOPE stamps), or tap the buttons; the card flies out, a big ♥ bursts on a like, then the swipe is saved. The ♥ button beats gently.
+- "It's a Match!" overlay the first time each phone opens its new team (once per phone, `localStorage`). It celebrates the team being formed; individual mutual likes are never revealed.
+- Live leaderboard animations (fix D).
 
 Every text/background pair must meet WCAG AA contrast (4.5:1). The projector should aim for AAA (7:1).
 
@@ -43,7 +49,7 @@ Every text/background pair must meet WCAG AA contrast (4.5:1). The projector sho
    - A completion indicator: "Profile 3/4 complete".
 2. **Discovery / swipe** (Matchmaking phase)
    - One card at a time: summary, skills, and preferences. Show no private fields.
-   - Visible ✕ Pass / ♥ Interested buttons (built). A swipe gesture can be added later on top, never instead.
+   - Visible ✕ Pass / ♥ Interested buttons plus a drag gesture on the card (built 2026-10-27); the buttons always stay.
    - Progress: "Profile 12 of 30".
    - No undo: swipes are final ([OQ-6](open-questions.md)).
    - Participants whose profile was incomplete when Matchmaking began are told to see an organiser.

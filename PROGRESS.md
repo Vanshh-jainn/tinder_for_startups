@@ -10,7 +10,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 
 **Where things stand**
 - Phases 0–6 are built and committed. The user ran the first rehearsal (~15 participants) on 2026-10-26 and reported 5 issues. They are planned as **Phase 8, rehearsal fixes**, steps A–E below (one reviewable change each).
-- Steps A–C are committed (`67b31de`, `c4823b1`, `5d46731`). Step D (marketplace lock + live leaderboard) is built; the user applies migration `20261103000000_marketplace_lock.sql` in the Supabase SQL Editor (after the B and C migrations) and commits, then step E (love theme) starts.
+- Steps A–D are committed (`67b31de`, `c4823b1`, `5d46731`, `8c04cb7`). Step E (love theme) is built, no migration; the user commits it. Apply the B, C, D migrations in order if not done yet (`20261101…`, `20261102…`, `20261103…`), then rerun the [rehearsal](docs/rehearsal.md).
 - Live Supabase notes: before the next `db push`, link and run `migration repair --status applied` for the migrations already applied by hand (see [README](README.md#setup), step 4). "Allow new users to sign up" in Supabase Auth is not yet confirmed off.
 
 **Then Phase 7, hardening + deployment.** Before writing code, ask the user about:
@@ -39,7 +39,7 @@ Status: `⬜ Not started` · `🟨 In progress` · `✅ Done` · `⛔ Blocked`
 | 5 | Marketplace | 🟨 Code done; waiting for the rehearsal | |
 | 6 | Qualification & rehearsal | 🟨 Code done; user runs the rehearsal checklist | |
 | 7 | Hardening & deployment | ⬜ Not started | 25, 26, 27 |
-| 8 | Rehearsal fixes (A–E) | 🟨 A–D done | |
+| 8 | Rehearsal fixes (A–E) | 🟨 Code done; waiting for the next rehearsal | |
 
 "Blocked by" means the phase needs that answer to be complete. Work can usually start, with the open part built behind config or left as a marked `TODO(OQ-n)`.
 
@@ -145,7 +145,8 @@ Issues from the 2026-10-26 rehearsal. One reviewable change per step.
 - [x] **B. Team allotment:** matched pairs become teams immediately (no approval step); **Random pairing** button pairs the remaining complete-profile participants after Matchmaking closes; an odd one out joins a random 2-person team as its 3rd member (OQ-36). Migration `20261101000000_auto_teams.sql`. Tests: 81 pass
 - [x] **C. One device per team:** pop-up asks which member's phone drives (first pick by any member wins); other members' team page is read-only, enforced in every team server action; only the current driver (hand over) or an admin (switch or clear, Teams page) can change it, via audited `set_driver()`. Migration `20261102000000_team_driver.sql`. Tests: 85 pass
 - [x] **D. Marketplace:** no confirmation-time stage (start_confirmation and confirm_investment dropped); drafts never count; `lock_allocation` saves + locks the whole allocation in one transaction and it counts at once; driver phone only, also enforced in SQL; live animated leaderboard (FLIP row moves, count-up, "+₹X" chip, bars) on admin + projector; team portfolio panel (₹ left to invest, split bar, holdings, rule list). Participants still never see other teams' totals. Migration `20261103000000_marketplace_lock.sql`. Tests: 86 pass
-- [ ] **E. Love theme:** dark background with rose/red/hot-pink palette, hearts and "It's a Match!" moments, light animations (transform/opacity only, off under `prefers-reduced-motion`); swipe gestures on discovery cards, buttons kept
+- [x] **E. Love theme:** wine/rose/hot-pink palette (tokens + wine-tinted greys), floating hearts on participant pages, drag-to-swipe card with LIKE/NOPE stamps and ♥ burst (buttons kept, same server action), "It's a Match!" overlay once per phone when a team is formed; transform/opacity only, off under `prefers-reduced-motion`. Tests: 86 pass; `/` and `/login` render on the dev server
+- [ ] **User:** rerun the [rehearsal](docs/rehearsal.md) with the new steps (login, random pairing, driver phone, lock marketplace, swipe gesture)
 
 ## Decision log
 
@@ -203,3 +204,4 @@ Record each decision with a date. Answers to open questions also go in [docs/ope
 | 2026-10-27 | Random pairing runs only after Matchmaking has closed; a single leftover with no 2-person team to join is refused with a message | Nobody is pulled out of swiping; avoids a team of 4 |
 | 2026-10-27 | Theme: dark with rose/red/hot pink + love motifs; swipe gestures on discovery cards alongside the buttons (supersedes "buttons only" from 2026-10-26) | User decision |
 | 2026-10-27 | Marketplace lock = save + confirm every row in one SQL transaction (`lock_allocation`); `counted_investments` unchanged; `event_state.market_confirmation` left in place unused | Smallest change that keeps the counted-only rule and the existing view |
+| 2026-10-27 | "It's a Match!" fires when a team is formed (first visit to `/team`, once per phone), not on a mutual like | A mutual like isn't a team (the optimiser decides); swipes stay private |

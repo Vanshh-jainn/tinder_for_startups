@@ -1,9 +1,11 @@
 import Link from 'next/link';
+import { Hearts } from '@/components/Hearts';
 import { TinderLogo } from '@/components/TinderLogo';
 
 export default function Home() {
   return (
     <main className="narrow app auth">
+      <Hearts />
       <h1 className="brand">
         <TinderLogo className="brand-logo" />
         <span className="wordmark">for Startups</span>
